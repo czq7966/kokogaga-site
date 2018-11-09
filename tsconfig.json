@@ -1,0 +1,27 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "outDir": "./dist",
+    "sourceMap": false,
+    "declaration": false,
+    "moduleResolution": "node",      
+    "experimentalDecorators": true,
+    // "allowJs": true,
+    // "noImplicitThis": true,
+    "target": "es5",
+    "types": [
+      "socket.io"
+    ],
+    "lib": [
+      "es2017",
+      "dom",
+      "es5"      
+    ]
+  },
+  "exclude": [
+    "node_modules",
+    "gulp",
+    "*.js",
+    "dist"
+  ]
+}
