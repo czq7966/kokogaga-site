@@ -13,6 +13,7 @@
     "@types/events": "^1.2.0",
     "@types/node": "^10.12.3",
     "@types/socket.io": "^2.1.0",
+    "@types/socket.io-client": "^1.4.32",
     "copy-webpack-plugin": "^4.6.0",
     "rimraf": "^2.6.2",
     "socket.io": "^2.1.1",

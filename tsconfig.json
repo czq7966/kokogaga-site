@@ -10,7 +10,8 @@
     // "noImplicitThis": true,
     "target": "es5",
     "types": [
-      "socket.io"
+      "socket.io",
+      "socket.io-client"
     ],
     "lib": [
       "es2017",
