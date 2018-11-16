@@ -28,9 +28,13 @@ export class Client {
         this.url = url;   
     }
     destroy() {
+        this.eventEmitter.removeAllListeners();
         this.socket && this.socket.connected && this.socket.disconnect();
         delete this.eventEmitter;
         delete this.socket;
+    }
+    get id(): string {
+        return this.socket && this.socket.id;
     }
 
     connect(url?: string): Promise<any> {
@@ -68,6 +72,7 @@ export class Client {
     }    
 
     openRoom(query: IUserQuery): Promise<string> {
+        query.from = query.from || this.socket.id;
         return new Promise((resolve, reject) => {
             this.connect()
             .then(() => {
@@ -115,6 +120,7 @@ export class Client {
                 this.socket.emit(ECustomEvents.leaveRoom, query, (result: boolean, msg: string) => {
                     if (result) {
                         console.log('leave room success: ' + msg);
+                        this.eventEmitter.emit(ECustomEvents.leaveRoom, query)
                         resolve(msg)                    
                     } else {
                         console.log('leave room failed: ' + msg);

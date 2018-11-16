@@ -10,17 +10,18 @@ export enum EReservedEvents {
 }
 
 export enum ECustomEvents {
-    message = 'message',
-    openRoom = 'open-room',
-    closeRoom = 'close-room',
-    joinRoom = 'join-room',
-    leaveRoom = 'leave-room',
+    message = 'room-message',
+    openRoom = 'room-open',
+    joinRoom = 'room-join',    
+    closeRoom = 'room-close',
+    leaveRoom = 'room-leave'
 }
 
 export interface IUserQuery {
     roomid?: string,
     password?: string,
     isOwner?: boolean,
+    max?: number,
     from?: string,
     to?: string,
     msg?: any
@@ -106,7 +107,7 @@ export class SocketUser  {
         let room = this.socket.adapter.rooms[roomid];
         if (room) {
             query.from = query.from || this.socket.id;            
-            this.socket.to(query.to).emit(ECustomEvents.message, query);   
+            this.socket.to(roomid).emit(ECustomEvents.message, query);   
             callback && callback(true);
         } else {
             callback && callback(false, 'room not exists: ' + roomid);
