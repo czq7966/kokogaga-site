@@ -1,6 +1,23 @@
 import * as io from 'socket.io-client'
 import { EventEmitter } from 'events';
-import { ECustomEvents, IUserQuery } from './user';
+
+export enum ECustomEvents {
+    message = 'room-message',
+    openRoom = 'room-open',
+    joinRoom = 'room-join',    
+    closeRoom = 'room-close',
+    leaveRoom = 'room-leave'
+}
+
+export interface IUserQuery {
+    roomid?: string,
+    password?: string,
+    isOwner?: boolean,
+    max?: number,
+    from?: string,
+    to?: string,
+    msg?: any
+}
 
 export enum EClientBaseEvents {
     connect = 'connect',
@@ -44,7 +61,10 @@ export class Client {
         return new Promise((resolve, reject) => {
             delete this.socket;
             this.url = url || this.url;
-            this.socket = io(this.url, {autoConnect: false});        
+            this.socket = io(this.url, {
+                autoConnect: false,
+                reconnection: false
+            });        
             this.initEvents(this.socket);
 
             this.socket.on(EClientBaseEvents.connect, () => {
@@ -62,23 +82,21 @@ export class Client {
         [EClientBaseEvents, ECustomEvents].forEach(events => {
             Object.keys(events).forEach(key => {
                 let value = events[key];
-                let _this = this;
-                socket.on(value, function() {
-                    console.log('Client Event:', value, arguments)
-                    _this.eventEmitter.emit(value, arguments)
+                socket.on(value, (...args:any[]) => {
+                    console.log('Client Event:', value, ...args)
+                    this.eventEmitter.emit(value, ...args)
                 })
             })
         })
     }    
 
     openRoom(query: IUserQuery): Promise<string> {
-        query.from = query.from || this.socket.id;
         return new Promise((resolve, reject) => {
             this.connect()
             .then(() => {
                 this.socket.emit(ECustomEvents.openRoom, query, (result: boolean, msg: string) => {
                     if (result) {
-                        console.log('open room success: ' + msg);
+                        console.log('open room success: ' + this.socket.id);
                         resolve(msg)                    
                     } else {
                         console.log('open room failed: ' + msg);

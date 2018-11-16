@@ -1,24 +1,38 @@
-import { Client } from "./client";
+import { Connection } from "./client/connection";
+import { IUserQuery } from "./user";
+
 
 
 export class Test {
-    io1: Client;
-    io2: Client;
+    conn1: Connection;
+    conn2: Connection;
     constructor() {
-        this.io1 = new Client('http://localhost:3000');
-        this.io2 = new Client('http://localhost:3000');
+        this.conn1 = new Connection('http://localhost:3000');
+        this.conn2 = new Connection('http://localhost:3000');
         this.test()
     }
 
 
     test() {
-        this.io1.connect().then(() => {
-            this.io1.openRoom({roomid: '123'}).then(() => {
-                this.io2.joinRoom({roomid: '1231'}).then(() => {
-                    this.io1.leaveRoom({roomid: '123'})
-                })
+        try {
+            let query: IUserQuery = {
+                roomid: '123'
+            }
+            this.conn1.openRoom(query).then(() => {
+                this.conn2.joinRoom(query);
             })
-        })
+                
+        } catch (error) {
+            console.error(error)
+            
+        }
+        // this.conn1.connect().then(() => {
+        //     this.conn1.openRoom({roomid: '123'}).then(() => {
+        //         this.io2.joinRoom({roomid: '1231'}).then(() => {
+        //             this.conn1.leaveRoom({roomid: '123'})
+        //         })
+        //     })
+        // })
 
         // this.io2.connect();
 

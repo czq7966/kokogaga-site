@@ -63,9 +63,8 @@ export class SocketUser  {
         [EReservedEvents, ECustomEvents].forEach(events => {
             Object.keys(events).forEach(key => {
                 let value = events[key];
-                let _this = this;
-                this.socket.addListener(value, function() {
-                    console.log('ServerEvent', value, arguments)
+                this.socket.addListener(value, (...args: any[]) => {
+                    console.log('ServerEvent', value, ...args)
                 })
             })
         })
@@ -104,7 +103,7 @@ export class SocketUser  {
     /////////////////////////////////////
     onMessage = (query: IUserQuery, callback?: (result: boolean, msg?: string) => void) => {
         let roomid = query.to || query.roomid;
-        let room = this.socket.adapter.rooms[roomid];
+        let room = this.socket.adapter.rooms[roomid] || this.socket.nsp.sockets[roomid];
         if (room) {
             query.from = query.from || this.socket.id;            
             this.socket.to(roomid).emit(ECustomEvents.message, query);   
