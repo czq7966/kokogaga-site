@@ -5,12 +5,15 @@ export interface IBase {
     destroy()
 }
 export class Base {
+    notDestroyed: boolean
     eventEmitter: EventEmitter
     constructor() {
+        this.notDestroyed = true;
         this.eventEmitter = new EventEmitter();
     }
     destroy() {
         this.eventEmitter.removeAllListeners();
         delete this.eventEmitter;
+        delete this.notDestroyed;
     }
 }

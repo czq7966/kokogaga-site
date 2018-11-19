@@ -5,18 +5,22 @@ var Server = require('socket.io');
 var io = new Server() as SocketIO.Server;
 
 export class Main {
+    port: number
     eventEmitter: EventEmitter;
-    constructor() {
+    constructor(port: number) {
+        this.port = port;
         this.eventEmitter = new EventEmitter();
-        this.initEvents();        
+        this.initEvents();       
+        this.run(); 
     }
 
     initEvents() {
         io.on('connect', (socket: SocketIO.Socket) => {
             new SocketUser(io, socket)
         })
-        var port = 3000;
-        console.log('lisent on port ' + port)
-        io.listen(port)        
+    }
+    run() {
+        console.log('lisent on port ' + this.port)
+        io.listen(this.port)     
     }
 }

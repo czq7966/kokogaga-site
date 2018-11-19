@@ -1,16 +1,18 @@
 import { Signaler, ISignalerMessage, ESignalerMessageType } from "./signaler";
-import { Peer } from "./peer";
+import { Peer, ERTCPeerEvents } from "./peer";
 import { IBase, Base } from "./bast";
 import { Room } from "./room";
 import { IUserQuery, ECustomEvents } from "./client";
 
 export interface IUserParams {
-    userId: string,
+    socketId: string,
     isOwner: boolean,
     isReady?: boolean;
     signaler?: Signaler;
     peer?: Peer;
     room?: Room;
+    stream?: MediaStream;
+    video?: HTMLVideoElement;
 }
 
 export interface IUser extends IBase , IUserParams {
@@ -18,12 +20,19 @@ export interface IUser extends IBase , IUserParams {
     unInitEvents()
     onMessage(query: IUserQuery)
     onReady(query: IUserQuery)
+    onTrack(ev: RTCTrackEvent) 
+    onRecvStreamInactive(stream: MediaStream)
+    onSendStreamInactive(stream: MediaStream) 
+    stopSharing(): Promise<any>
     imReady()
     sayHello(to?: string)
+    addStream(stream: MediaStream)
+    doICE()
+    sendMessage(msg: any)
 }
 
 export class User extends Base implements IUser {
-    userId: string;    
+    socketId: string;    
     isOwner: boolean;
     isReady: boolean;
     signaler: Signaler;
@@ -32,40 +41,52 @@ export class User extends Base implements IUser {
     stream: MediaStream;
     constructor(user: IUserParams) {
         super();
-        this.userId = user.userId;
+        this.socketId = user.socketId;
         this.isOwner = user.isOwner;
         this.isReady = user.isReady;
         this.signaler = user.signaler;
         this.peer = new Peer(this);
         this.room = user.room;
+        this.stream = user.stream;
         this.initEvents();
     }
     destroy() {        
         this.unInitEvents();
         this.peer.destroy();
+        delete this.stream;
         delete this.peer;
         super.destroy();
     }
     initEvents() {
-        this.eventEmitter.addListener(ECustomEvents.message, this.onMessage)        
+        this.eventEmitter.addListener(ECustomEvents.message, this.onMessage);    
+        this.peer.eventEmitter.addListener(ERTCPeerEvents.ontrack, this.onTrack);
+        this.peer.eventEmitter.addListener(ERTCPeerEvents.onrecvstreaminactive, this.onRecvStreamInactive);
+        this.peer.eventEmitter.addListener(ERTCPeerEvents.onsendstreaminactive, this.onSendStreamInactive);
     }
     unInitEvents() {
-        this.eventEmitter.removeListener(ECustomEvents.message, this.onMessage)        
+        this.eventEmitter.removeListener(ECustomEvents.message, this.onMessage); 
+        this.peer.eventEmitter.removeListener(ERTCPeerEvents.ontrack, this.onTrack);      
+        this.peer.eventEmitter.removeListener(ERTCPeerEvents.onrecvstreaminactive, this.onRecvStreamInactive);
+        this.peer.eventEmitter.removeListener(ERTCPeerEvents.onsendstreaminactive, this.onSendStreamInactive);        
     }
     onMessage = (query: IUserQuery) => {
-        if (query.from == this.userId) {
+        if (query.from == this.socketId) {
             let msg = query.msg as ISignalerMessage;
             switch (msg.type) {
                 case ESignalerMessageType.offer :
+                    console.log('on offer:', this.socketId)
                     this.peer.eventEmitter.emit(ESignalerMessageType.offer, msg.data)
                     break;
                 case ESignalerMessageType.answer:
+                    console.log('on answer:', this.socketId)
                     this.peer.eventEmitter.emit(ESignalerMessageType.answer, msg.data)
                     break;
                 case ESignalerMessageType.candidate:
+                    console.log('on candidate:', this.socketId)
                     this.peer.eventEmitter.emit(ESignalerMessageType.candidate, msg.data)
                     break;
                 case ESignalerMessageType.ready:
+                    console.log('on ready:', this.socketId)
                     this.onReady(query)
                     break;
                 default:
@@ -79,6 +100,21 @@ export class User extends Base implements IUser {
         this.isReady = true;
         currUser.isOwner && this.doICE();
     }
+    onTrack = (ev: RTCTrackEvent) => {
+        this.eventEmitter.emit(ERTCPeerEvents.ontrack, ev, this);
+    }
+    onRecvStreamInactive = (stream: MediaStream) => {
+        this.eventEmitter.emit(ERTCPeerEvents.onrecvstreaminactive, stream, this);
+    }
+    onSendStreamInactive = (stream: MediaStream) => {
+        this.eventEmitter.emit(ERTCPeerEvents.onsendstreaminactive, stream, this);
+        if (stream === this.stream) {
+            delete this.stream;
+        }        
+    }    
+    stopSharing(): Promise<any> {
+        return this.peer.stopSharing();
+    }
 
     imReady() {
         let msg: ISignalerMessage = {
@@ -86,6 +122,7 @@ export class User extends Base implements IUser {
         }
         let query: IUserQuery = {
             roomid: this.room.roomid,
+            from: this.socketId,
             isOwner: this.isOwner,
             msg: msg
         }
@@ -98,20 +135,31 @@ export class User extends Base implements IUser {
         let query: IUserQuery = {
             roomid: this.room.roomid,
             isOwner: this.isOwner,
-            from: this.userId,
+            from: this.socketId,
             to: to,
             msg: msg                
         }
         this.signaler.sendMessage(query);
     }   
+    sendMessage(msg: any) {
+        let query: IUserQuery = {
+            roomid: this.room.roomid,
+            to:  this.socketId,
+            msg: msg
+        }
+        this.signaler.sendMessage(query)
+    }    
     addStream(stream: MediaStream) {
-        this.stream = stream;   
+        this.stream = stream; 
+        this.peer.addStream(stream);
         this.doICE();     
     } 
     doICE() {
-        if (this.isReady) {
-            this.peer.doICE(this.stream);
-
+        let stream = this.room.currUser().stream;
+        if (stream && this.isReady) {
+            console.log('2222222222222222222')
+            console.dir(this)
+            this.peer.doICE(stream);
         }
     }
 }

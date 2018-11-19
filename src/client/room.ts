@@ -2,6 +2,7 @@ import { IBase, Base } from "./bast";
 import { IUser, User } from "./user";
 import { Signaler, ISignalerMessage, ESignalerMessageType } from "./signaler";
 import { ECustomEvents, IUserQuery } from "./client";
+import { ERTCPeerEvents } from "./peer";
 
 export interface IRoomParams {
     roomid: string
@@ -12,9 +13,9 @@ export interface IRoomParams {
 export interface IRoom extends IBase, IRoomParams {
     users: {[id: string]: IUser}
     getOwner():IUser
-    isOwner(userId: string): boolean
+    isOwner(socketId: string): boolean
     addUser(user: IUser): IUser
-    delUser(userId: string)
+    delUser(socketId: string)
     currUser(): IUser
 }
 
@@ -34,32 +35,33 @@ export class Room extends Base implements IRoom {
         this.initEvents();
     }
     destroy() {
-        Object.keys(this.users).forEach(key => {
-            let user = this.users[key];
-            user.destroy();
-            delete this.users[key]
-        })
-        this.unInitEvents();    
+        this.unInitEvents();   
+        this.clearUsers(); 
         delete this.users;
         super.destroy();
     }
     initEvents() {
         this.eventEmitter.addListener(ECustomEvents.joinRoom, this.onJoinRoom);
+        this.eventEmitter.addListener(ECustomEvents.leaveRoom, this.onLeaveRoom);
         this.eventEmitter.addListener(ECustomEvents.message, this.onMessage);
     }
     unInitEvents() {
         this.eventEmitter.removeListener(ECustomEvents.joinRoom, this.onJoinRoom)
+        this.eventEmitter.removeListener(ECustomEvents.leaveRoom, this.onLeaveRoom);
         this.eventEmitter.removeListener(ECustomEvents.message, this.onMessage)
     }
     onJoinRoom = (query: IUserQuery) => {
         if (!this.users[query.from]) {
             let user = new User({
-                userId: query.from,
+                socketId: query.from,
                 isOwner: query.isOwner
             })
             this.addUser(user);
-            this.currUser().sayHello(user.userId);
+            this.currUser().sayHello(user.socketId);
         }
+    }
+    onLeaveRoom = (query: IUserQuery) => {
+        this.delUser(query.from);
     }
     onMessage = (query: IUserQuery) => {
         let msg = query.msg as ISignalerMessage;
@@ -68,7 +70,7 @@ export class Room extends Base implements IRoom {
             case ESignalerMessageType.hello:
                 if (!user) {
                     user = new User({
-                        userId: query.from,
+                        socketId: query.from,
                         isOwner: query.isOwner
                     })
                     this.addUser(user); 
@@ -79,7 +81,15 @@ export class Room extends Base implements IRoom {
         }
         user && user.eventEmitter.emit(ECustomEvents.message, query);        
     }
-
+    onTrack = (ev: RTCTrackEvent, user: IUser) => {
+        this.eventEmitter.emit(ERTCPeerEvents.ontrack, ev, user);
+    }
+    onRecvStreamInactive = (stream: MediaStream, user: IUser) => {
+        this.eventEmitter.emit(ERTCPeerEvents.onrecvstreaminactive, stream, user);
+    }
+    onSendStreamInactive = (stream: MediaStream, user: IUser) => {
+        this.eventEmitter.emit(ERTCPeerEvents.onsendstreaminactive, stream, user);
+    }      
 
     getOwner():IUser {
         let user: IUser
@@ -91,26 +101,38 @@ export class Room extends Base implements IRoom {
         })
         return user;
     }
-    isOwner(userId: string): boolean {
-        return this.users[userId] && this.users[userId].isOwner;        
+    isOwner(socketId: string): boolean {
+        return this.users[socketId] && this.users[socketId].isOwner;        
     }
     addUser(user: IUser): IUser {
-        if (user && user.userId) {
+        if (user && user.socketId) {
             user.room = this;
             user.signaler = user.signaler || this.signaler;
-            this.users[user.userId] = user;
-            return this.users[user.userId]
+            user.eventEmitter.addListener(ERTCPeerEvents.ontrack, this.onTrack);
+            user.eventEmitter.addListener(ERTCPeerEvents.onrecvstreaminactive, this.onRecvStreamInactive);
+            user.eventEmitter.addListener(ERTCPeerEvents.onsendstreaminactive, this.onSendStreamInactive);
+            this.users[user.socketId] = user;
+
+            return this.users[user.socketId]
         }
     }
-    delUser(userId: string) {
-        let user = this.users[userId];
+    delUser(socketId: string) {
+        let user = this.users[socketId];
         if (user) {
+            user.eventEmitter.removeListener(ERTCPeerEvents.ontrack, this.onTrack);
+            user.eventEmitter.removeListener(ERTCPeerEvents.onrecvstreaminactive, this.onRecvStreamInactive);
+            user.eventEmitter.removeListener(ERTCPeerEvents.onsendstreaminactive, this.onSendStreamInactive);
             user.destroy();
         }
-        delete this.users[userId];
+        delete this.users[socketId];
     }
-    getUser(userId: string) {
-        return this.users[userId];
+    clearUsers() {
+        Object.keys(this.users).forEach(key => {
+            this.delUser(key)
+        })
+    }
+    getUser(socketId: string) {
+        return this.users[socketId];
     }
     currUser(): IUser {
         return this.getUser(this.signaler.id);

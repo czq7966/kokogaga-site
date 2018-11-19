@@ -32,9 +32,10 @@ export class Connection extends Base {
     openRoom(query: IUserQuery): Promise<any> {
         let promise =  this.signaler.openRoom(query);
         promise.then((result) => {
+            query = result;
             let room = this.rooms.newRoom(query.roomid, query.password);
             let user = new User({ 
-                userId: this.signaler.id,
+                socketId: this.signaler.id,
                 isOwner: true,
                 signaler: this.signaler
             });
@@ -48,12 +49,19 @@ export class Connection extends Base {
         promise.then(() => {
             let room = this.rooms.newRoom(query.roomid, query.password);
             let user = new User({ 
-                userId: this.signaler.id,
+                socketId: this.signaler.id,
                 isOwner: false
             });
             room.addUser(user);
             user.imReady();
         })
         return promise;        
-    }               
+    }         
+    leaveRoom(query: IUserQuery): Promise<any> {
+        let promise =  this.signaler.leaveRoom(query);
+        promise.then(() => {
+            this.rooms.delRoom(query.roomid);
+        })
+        return promise;          
+    }      
 }

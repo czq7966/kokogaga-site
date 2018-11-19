@@ -54,6 +54,10 @@ export class Client {
         return this.socket && this.socket.id;
     }
 
+    get connected(): boolean {
+        return this.socket && this.socket.connected
+    }
+
     connect(url?: string): Promise<any> {
         if (this.socket && this.socket.connected) {
             return Promise.resolve()
@@ -90,11 +94,11 @@ export class Client {
         })
     }    
 
-    openRoom(query: IUserQuery): Promise<string> {
+    openRoom(query: IUserQuery): Promise<any> {
         return new Promise((resolve, reject) => {
             this.connect()
             .then(() => {
-                this.socket.emit(ECustomEvents.openRoom, query, (result: boolean, msg: string) => {
+                this.socket.emit(ECustomEvents.openRoom, query, (result: boolean, msg: any) => {
                     if (result) {
                         console.log('open room success: ' + this.socket.id);
                         resolve(msg)                    
@@ -131,25 +135,22 @@ export class Client {
         })
     }
 
-    leaveRoom(query: IUserQuery) {
-        return new Promise((resolve, reject) => {
-            this.connect()
-            .then(() => {
-                this.socket.emit(ECustomEvents.leaveRoom, query, (result: boolean, msg: string) => {
-                    if (result) {
-                        console.log('leave room success: ' + msg);
-                        this.eventEmitter.emit(ECustomEvents.leaveRoom, query)
-                        resolve(msg)                    
-                    } else {
-                        console.log('leave room failed: ' + msg);
-                        reject(msg)
-                    }
-                })  
+    leaveRoom(query: IUserQuery): Promise<any> {
+        if (this.connected) {
+            return new Promise((resolve, reject) => {
+                    this.socket.emit(ECustomEvents.leaveRoom, query, (result: boolean, msg: string) => {
+                        if (result) {
+                            console.log('leave room success: ' + msg);
+                            this.eventEmitter.emit(ECustomEvents.leaveRoom, query)
+                            resolve(msg)                    
+                        } else {
+                            console.log('leave room failed: ' + msg);
+                            reject(msg)
+                        }
+                    })  
             })
-            .catch(error => {
-                reject(error)
-            }) 
-        })
+        } 
+        return Promise.resolve();
     }    
 
     sendMessage(query: IUserQuery): Promise<any> {

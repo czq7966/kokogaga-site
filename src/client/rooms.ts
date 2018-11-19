@@ -1,6 +1,7 @@
 import { Base } from "./bast";
 import { Room } from "./room";
 import { Signaler } from "./signaler";
+import { ECustomEvents, IUserQuery } from "./client";
 
 
 export class Rooms extends Base {
@@ -10,8 +11,10 @@ export class Rooms extends Base {
         super();
         this.signaler = signaler;
         this.rooms = {}
+        this.initEvents();
     }
     destroy() {
+        this.unInitEvents();
         Object.keys(this.rooms).forEach(key => {
             let room = this.rooms[key];
             room.destroy();
@@ -19,6 +22,19 @@ export class Rooms extends Base {
         delete this.signaler;
         delete this.rooms;
         super.destroy();
+    }
+
+    initEvents() {
+        this.eventEmitter.addListener(ECustomEvents.closeRoom, this.onCloseRoom)
+
+    }
+    unInitEvents() {
+        this.eventEmitter.removeListener(ECustomEvents.closeRoom, this.onCloseRoom)
+    }
+
+
+    onCloseRoom = (query: IUserQuery) => {
+        this.delRoom(query.roomid);
     }
     newRoom(roomid: string, password?: string): Room {
         if (roomid) {

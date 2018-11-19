@@ -80,7 +80,6 @@ export class SocketUser  {
         this.initEvents();  
     }
 
-
     onError = (err) => {
         console.error(err)
     }
@@ -101,6 +100,14 @@ export class SocketUser  {
     }    
 
     /////////////////////////////////////
+    createRoomId(): string {
+        let roomid = Math.floor(Math.random() * 100000).toString();
+        if(this.socket.adapter.rooms[roomid]) {
+            roomid = this.createRoomId();
+        }
+        return roomid;
+
+    }
     onMessage = (query: IUserQuery, callback?: (result: boolean, msg?: string) => void) => {
         let roomid = query.to || query.roomid;
         let room = this.socket.adapter.rooms[roomid] || this.socket.nsp.sockets[roomid];
@@ -112,7 +119,8 @@ export class SocketUser  {
             callback && callback(false, 'room not exists: ' + roomid);
         }
     }
-    onOpenRoom = (query: IUserQuery, callback?: (result: boolean, msg?: string) => void) => {
+    onOpenRoom = (query: IUserQuery, callback?: (result: boolean, msg?: any) => void) => {
+        query.roomid = query.roomid || this.createRoomId();
         let room = this.socket.adapter.rooms[query.roomid];
         if (room) {
             callback && callback(false, 'room exists: ' + query.roomid);
@@ -121,7 +129,7 @@ export class SocketUser  {
             this.query = Object.assign({}, query);
             this.query.isOwner = true;
             this.socket.user = this;
-            callback && callback(true);
+            callback && callback(true, query);
         }
     }
     onCloseRoom = (query: IUserQuery, callback?: (result: boolean, msg?: string) => void) => {
