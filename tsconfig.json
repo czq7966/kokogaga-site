@@ -6,10 +6,13 @@
     "declaration": false,
     "moduleResolution": "node",      
     "experimentalDecorators": true,
+    "jsx": "react",
     // "allowJs": true,
     // "noImplicitThis": true,
     "target": "es5",
     "types": [
+      "react",
+      "react-dom",      
       "socket.io",
       "socket.io-client"
     ],

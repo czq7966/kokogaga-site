@@ -32,6 +32,10 @@ export class Rooms extends Base {
         this.eventEmitter.removeListener(ECustomEvents.closeRoom, this.onCloseRoom)
     }
 
+    get count() {
+        return Object.keys(this.rooms).length
+    }
+
 
     onCloseRoom = (query: IUserQuery) => {
         this.delRoom(query.roomid);

@@ -1,8 +1,12 @@
 import { EventEmitter } from "events";
 import { SocketUser } from "./user";
+import * as http from 'http'
+import { App } from './app'
 
-var Server = require('socket.io');
-var io = new Server() as SocketIO.Server;
+
+var app = new App();
+var server = http.createServer(app.express);
+var io = require('socket.io')(server) as SocketIO.Server;
 
 export class Main {
     port: number
@@ -21,6 +25,7 @@ export class Main {
     }
     run() {
         console.log('lisent on port ' + this.port)
-        io.listen(this.port)     
+        // io.listen(this.port)     
+        server.listen(this.port)
     }
 }

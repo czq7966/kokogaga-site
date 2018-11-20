@@ -1,4 +1,4 @@
-import { Connection } from "./client/connection";
+import { Connection } from "../client/connection/connection";
 import { IUserQuery } from "./user";
 
 

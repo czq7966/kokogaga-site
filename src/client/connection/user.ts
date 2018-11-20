@@ -157,8 +157,6 @@ export class User extends Base implements IUser {
     doICE() {
         let stream = this.room.currUser().stream;
         if (stream && this.isReady) {
-            console.log('2222222222222222222')
-            console.dir(this)
             this.peer.doICE(stream);
         }
     }

@@ -43,11 +43,13 @@ export class Room extends Base implements IRoom {
     initEvents() {
         this.eventEmitter.addListener(ECustomEvents.joinRoom, this.onJoinRoom);
         this.eventEmitter.addListener(ECustomEvents.leaveRoom, this.onLeaveRoom);
+        this.eventEmitter.addListener(ECustomEvents.closeRoom, this.onCloseRoom);
         this.eventEmitter.addListener(ECustomEvents.message, this.onMessage);
     }
     unInitEvents() {
         this.eventEmitter.removeListener(ECustomEvents.joinRoom, this.onJoinRoom)
         this.eventEmitter.removeListener(ECustomEvents.leaveRoom, this.onLeaveRoom);
+        this.eventEmitter.removeListener(ECustomEvents.closeRoom, this.onCloseRoom);
         this.eventEmitter.removeListener(ECustomEvents.message, this.onMessage)
     }
     onJoinRoom = (query: IUserQuery) => {
@@ -62,6 +64,9 @@ export class Room extends Base implements IRoom {
     }
     onLeaveRoom = (query: IUserQuery) => {
         this.delUser(query.from);
+    }
+    onCloseRoom = (query: IUserQuery) => {
+        
     }
     onMessage = (query: IUserQuery) => {
         let msg = query.msg as ISignalerMessage;

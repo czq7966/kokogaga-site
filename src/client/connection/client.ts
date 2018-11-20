@@ -47,6 +47,7 @@ export class Client {
     destroy() {
         this.eventEmitter.removeAllListeners();
         this.socket && this.socket.connected && this.socket.disconnect();
+        this.unInitEvents(this.socket);
         delete this.eventEmitter;
         delete this.socket;
     }
@@ -67,7 +68,8 @@ export class Client {
             this.url = url || this.url;
             this.socket = io(this.url, {
                 autoConnect: false,
-                reconnection: false
+                reconnection: false,
+                transports: ['websocket']
             });        
             this.initEvents(this.socket);
 
@@ -81,6 +83,9 @@ export class Client {
             this.socket.connect();
         })      
     }
+    disconnect() {
+        this.socket && this.socket.disconnect();
+    }
 
     initEvents(socket: SocketIOClient.Socket) {
         [EClientBaseEvents, ECustomEvents].forEach(events => {
@@ -92,7 +97,13 @@ export class Client {
                 })
             })
         })
+        socket.on(EClientBaseEvents.disconnect, () => {
+            this.unInitEvents(socket);
+        })
     }    
+    unInitEvents(socket: SocketIOClient.Socket) {
+        socket && socket.removeAllListeners();
+    }     
 
     openRoom(query: IUserQuery): Promise<any> {
         return new Promise((resolve, reject) => {

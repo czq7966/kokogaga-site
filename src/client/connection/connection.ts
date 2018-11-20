@@ -2,7 +2,7 @@ import { Signaler } from "./signaler";
 import { Rooms } from "./rooms";
 import { Base } from "./bast";
 import { User } from "./user";
-import { IUserQuery } from "./client";
+import { IUserQuery, EClientBaseEvents, ECustomEvents } from "./client";
 import { Dispatcher } from "./dispatcher";
 
 
@@ -17,13 +17,24 @@ export class Connection extends Base {
         this.signaler = new Signaler(url);
         this.rooms = new Rooms(this.signaler);
         this.dispatcher = new Dispatcher(this.signaler, this.rooms);
+        this.initEvents();
     }    
     destroy() {
+        this.unInitEvents();
         this.signaler.destroy();
         this.rooms.destroy();
         delete this.signaler;
         delete this.rooms;
         super.destroy();
+    }
+    initEvents() {
+        this.signaler.eventEmitter.addListener(EClientBaseEvents.disconnect, this.onDisconnect)
+        this.rooms.eventEmitter.addListener(ECustomEvents.closeRoom, this.onCloseRoom)
+
+    }
+    unInitEvents() {
+        this.rooms.eventEmitter.removeListener(ECustomEvents.closeRoom, this.onCloseRoom)
+        this.signaler.eventEmitter.removeListener(EClientBaseEvents.disconnect, this.onDisconnect)
     }
     get id(): string {
         return this.signaler && this.signaler.id;
@@ -63,5 +74,14 @@ export class Connection extends Base {
             this.rooms.delRoom(query.roomid);
         })
         return promise;          
-    }      
+    }    
+    
+    onDisconnect = (reason) => {
+        this.eventEmitter.emit(EClientBaseEvents.disconnect, reason)
+    }
+    onCloseRoom = () => {
+        if (this.rooms.count <= 0) {
+            this.signaler.disconnect();            
+        }
+    }
 }
