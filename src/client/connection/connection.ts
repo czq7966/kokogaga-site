@@ -36,8 +36,8 @@ export class Connection extends Base {
         this.rooms.eventEmitter.removeListener(ECustomEvents.closeRoom, this.onCloseRoom)
         this.signaler.eventEmitter.removeListener(EClientBaseEvents.disconnect, this.onDisconnect)
     }
-    get id(): string {
-        return this.signaler && this.signaler.id;
+    id(): string {
+        return this.signaler && this.signaler.id();
     }
 
     openRoom(query: IUserQuery): Promise<any> {
@@ -46,7 +46,7 @@ export class Connection extends Base {
             query = result;
             let room = this.rooms.newRoom(query.roomid, query.password);
             let user = new User({ 
-                socketId: this.signaler.id,
+                socketId: this.signaler.id(),
                 isOwner: true,
                 signaler: this.signaler
             });
@@ -60,11 +60,14 @@ export class Connection extends Base {
         promise.then(() => {
             let room = this.rooms.newRoom(query.roomid, query.password);
             let user = new User({ 
-                socketId: this.signaler.id,
+                socketId: this.signaler.id(),
                 isOwner: false
             });
             room.addUser(user);
             user.imReady();
+        })
+        .catch((err) => {
+
         })
         return promise;        
     }         
@@ -80,7 +83,7 @@ export class Connection extends Base {
         this.eventEmitter.emit(EClientBaseEvents.disconnect, reason)
     }
     onCloseRoom = () => {
-        if (this.rooms.count <= 0) {
+        if (this.rooms.count() <= 0) {
             this.signaler.disconnect();            
         }
     }

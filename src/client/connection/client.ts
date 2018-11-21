@@ -51,11 +51,11 @@ export class Client {
         delete this.eventEmitter;
         delete this.socket;
     }
-    get id(): string {
+    id(): string {
         return this.socket && this.socket.id;
     }
 
-    get connected(): boolean {
+    connected(): boolean {
         return this.socket && this.socket.connected
     }
 

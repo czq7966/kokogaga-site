@@ -17,13 +17,14 @@
     "server:clean": "rimraf ./dist/server",
     "server:start": "node ./dist/server/index.js",
     "server": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs && npm run server:start",
-    "server1": "npm run server:clean && tsc && npm run server:start",
     "build": "npm run server:build && npm run client:build",
-    "compile": "npm run server:compile && npm run client:compile"
+    "compile": "npm run server:compile && npm run client:compile",
+    "start": "npm run server:start "
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@sdp.nd/performancetracker": "^0.1.0",
     "@types/events": "^1.2.0",
     "@types/express": "^4.16.0",
     "@types/node": "^10.12.3",

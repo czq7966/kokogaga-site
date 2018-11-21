@@ -25,7 +25,6 @@ export class Main {
     }
     run() {
         console.log('lisent on port ' + this.port)
-        // io.listen(this.port)     
         server.listen(this.port)
     }
 }

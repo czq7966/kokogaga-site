@@ -64,7 +64,7 @@ export class SocketUser  {
             Object.keys(events).forEach(key => {
                 let value = events[key];
                 this.socket.addListener(value, (...args: any[]) => {
-                    console.log('ServerEvent', value, ...args)
+                    console.log('ServerEvent', value, ...args ? args[0]: '')
                 })
             })
         })

@@ -1,4 +1,4 @@
-// import "webrtc-adapter"
+import "webrtc-adapter"
 import React = require("react");
 import ReactDOM = require("react-dom");
 import { Connection } from "./connection/connection";
@@ -22,27 +22,28 @@ export interface PreviewState {
 export class Preview extends React.Component<PreviewProps, PreviewState> {
     conn: Connection;
     params: URLSearchParams;
-    // connection: Connection;
-
+    reJoinTimer: number;
 
     constructor(props) {
         super(props);  
-        this.params = new URLSearchParams(window.location.search);        
-        this.conn = new Connection('http://192.168.251.97:3000');
+        // this.params = new URLSearchParams(window.location.search);        
+        // let roomid = this.params.get('roomid') || ''; 
+        // let signalerUrl = this.params.get('signaler') || window.location.origin;
+        let signalerUrl = window.location.origin;
+        this.conn = new Connection(signalerUrl);
         this.initEvents();
-        let roomid = this.params.get('roomid') || prompt('Enter Room ID:');        
+     
         this.state = {
-            roomid: roomid,
+            // roomid: roomid,
             info:'loading...'
         };
-        this.doJoinRoom();
     }
     destroy() {
         this.unInitEvents();
     }   
 
     componentDidMount() {
-
+        this.doJoinRoom();
     }
     componentWillUnmount() {
         this.destroy();
@@ -59,8 +60,16 @@ export class Preview extends React.Component<PreviewProps, PreviewState> {
     }
 
     render() {
+        let enterRoomid =   <div>
+                                <div id="options-div-signaler"><span>Enter Connection ID：</span>
+                                    <input value={this.state.roomid} onChange={this.onRoomidChange} ></input>
+                                    <button onClick={this.doJoinRoom}>Go</button>
+                                </div>
+
+                            </div>
         return (
             <div>
+                {enterRoomid}
                 {this.state.info ?
                     <h1>{this.state.info}</h1>
                     :
@@ -69,7 +78,7 @@ export class Preview extends React.Component<PreviewProps, PreviewState> {
                 
                 {
                     this.state.stream && !this.state.offline ? 
-                        <video id="video" autoPlay playsinline muted width="100%" height="100%" ></video>
+                        <video id="video" autoPlay playsInline muted width="100%" height="100%" ></video>
                         : 
                         null
                 }                
@@ -84,6 +93,15 @@ export class Preview extends React.Component<PreviewProps, PreviewState> {
     }
     stop() {
 
+    }
+    onRoomidChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (this.reJoinTimer) {
+            clearTimeout(this.reJoinTimer);
+            this.reJoinTimer = 0;
+        }
+        this.setState({
+            roomid: event.target.value.trim()
+        })   
     }
 
     onDisconnect = (reason) => {
@@ -114,24 +132,28 @@ export class Preview extends React.Component<PreviewProps, PreviewState> {
         }, 0)
         
     }
-    doJoinRoom() {
-        this.setState({ info: 'checking room: ' + this.state.roomid })
-        let query: IUserQuery = {
-            roomid: this.state.roomid,
-            password: '',
-        }        
-        this.conn.joinRoom(query)
-        .then(() => {
-            this.setState({ info: 'joined, waiting sharing! '})
-            let room = this.conn.rooms.getRoom(this.state.roomid);
-            room.eventEmitter.addListener(ERTCPeerEvents.ontrack, this.onTrack)            
-        })
-        .catch(msg => {
-            this.setState({ info: msg})
-            setTimeout(() => {
-                this.doJoinRoom()
-            }, 2000)
-        })        
+    doJoinRoom = () => {
+        if (this.state.roomid && this.state.roomid.length > 0) {
+            this.setState({ info: 'checking room: ' + this.state.roomid })
+            let query: IUserQuery = {
+                roomid: this.state.roomid,
+                password: '',
+            }        
+            this.conn.joinRoom(query)
+            .then(() => {
+                this.setState({ info: 'joined, waiting sharing! '})
+                let room = this.conn.rooms.getRoom(this.state.roomid);
+                room.eventEmitter.addListener(ERTCPeerEvents.ontrack, this.onTrack)            
+            })
+            .catch(msg => {
+                this.setState({ info: msg});
+                this.reJoinTimer = window.setTimeout(() => {
+                    this.doJoinRoom()
+                }, 2000)
+            })        
+        } else {
+            this.setState({ info: 'Please enter connection id and Go'});
+        }
     }
 }
 

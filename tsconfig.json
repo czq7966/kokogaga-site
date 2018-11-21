@@ -9,7 +9,7 @@
     "jsx": "react",
     // "allowJs": true,
     // "noImplicitThis": true,
-    "target": "es5",
+    "target": "es3",
     "types": [
       "react",
       "react-dom",      

@@ -32,7 +32,7 @@ export class Rooms extends Base {
         this.eventEmitter.removeListener(ECustomEvents.closeRoom, this.onCloseRoom)
     }
 
-    get count() {
+    count() {
         return Object.keys(this.rooms).length
     }
 

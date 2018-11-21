@@ -140,6 +140,6 @@ export class Room extends Base implements IRoom {
         return this.users[socketId];
     }
     currUser(): IUser {
-        return this.getUser(this.signaler.id);
+        return this.getUser(this.signaler.id());
     }
 }
