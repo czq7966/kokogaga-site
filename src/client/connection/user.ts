@@ -1,6 +1,6 @@
 import { Signaler, ISignalerMessage, ESignalerMessageType } from "./signaler";
 import { Peer, ERTCPeerEvents } from "./peer";
-import { IBase, Base } from "./bast";
+import { IBase, Base } from "./base";
 import { Room } from "./room";
 import { IUserQuery, ECustomEvents } from "./client";
 
@@ -60,12 +60,15 @@ export class User extends Base implements IUser {
     initEvents() {
         this.eventEmitter.addListener(ECustomEvents.message, this.onMessage);    
         this.peer.eventEmitter.addListener(ERTCPeerEvents.ontrack, this.onTrack);
+        this.peer.eventEmitter.addListener(ERTCPeerEvents.oniceconnectionstatechange, this.onIceConnectionStateChange);
+        
         this.peer.eventEmitter.addListener(ERTCPeerEvents.onrecvstreaminactive, this.onRecvStreamInactive);
         this.peer.eventEmitter.addListener(ERTCPeerEvents.onsendstreaminactive, this.onSendStreamInactive);
     }
     unInitEvents() {
         this.eventEmitter.removeListener(ECustomEvents.message, this.onMessage); 
         this.peer.eventEmitter.removeListener(ERTCPeerEvents.ontrack, this.onTrack);      
+        this.peer.eventEmitter.removeListener(ERTCPeerEvents.oniceconnectionstatechange, this.onIceConnectionStateChange);
         this.peer.eventEmitter.removeListener(ERTCPeerEvents.onrecvstreaminactive, this.onRecvStreamInactive);
         this.peer.eventEmitter.removeListener(ERTCPeerEvents.onsendstreaminactive, this.onSendStreamInactive);        
     }
@@ -102,6 +105,9 @@ export class User extends Base implements IUser {
     }
     onTrack = (ev: RTCTrackEvent) => {
         this.eventEmitter.emit(ERTCPeerEvents.ontrack, ev, this);
+    }
+    onIceConnectionStateChange = (ev: Event) => {
+        this.eventEmitter.emit(ERTCPeerEvents.oniceconnectionstatechange, ev, this);
     }
     onRecvStreamInactive = (stream: MediaStream) => {
         this.eventEmitter.emit(ERTCPeerEvents.onrecvstreaminactive, stream, this);

@@ -1,4 +1,4 @@
-import { Base, IBase } from "./bast";
+import { Base, IBase } from "./base";
 import { Signaler } from "./signaler";
 import { Rooms } from "./rooms";
 import { ECustomEvents, IUserQuery } from "./client";

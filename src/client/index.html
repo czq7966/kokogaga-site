@@ -1,21 +1,14 @@
 ﻿ <!DOCTYPE html>
 <html>
 <head>
-    <script src='http://cs.101.com/v0.1/static/performancetracker/rel/umd/PerformanceTracker.min.js'></script>
+    <script src="libs/vconsole.min.js"></script>
     <script>
-        PerformanceTracker({ 
-            //这4个属性必填
-            app_id: "5be542e945ceff41aff8e9f4", //sdp上的appid，必填
-            app_name: 'adhoc_cast_signaler_server',   //sdp上的应用或组件名称，必填
-            app_version: '0.0.1',              //版本号，必填
-            env: 'prod'  // 环境: dev 平开发环境, debug 测试环境, qa 压测环境,aws AWS新加坡,awsca AWS加州 ,prep 或 beta 预生产环境,prod 或 oth 生产环境
-        })        
+        var vConsole = new VConsole();
     </script>
 </head>
 <body>
     
     <div >
-        <span id="preview-agent"></span>
         <hr></hr>
         <div>            
             <div id="options-div-signaler"><span>Enter Connection ID：</span>
@@ -28,13 +21,24 @@
         <hr></hr>
         <video id="preview-video" autoPlay playsInline muted width="100%" height="100%" ></video>
     </div>
-    <div id="root"></div>    
-    <script>
-        document.getElementById('preview-agent').innerText = navigator.appVersion || navigator.userAgent;
-    
-    </script>
 
+    <div id="root"></div>    
     <script  src="index.js"></script>
+    <!-- <script>
+        var config = {
+            iceServers: [],
+            iceTransportPolicy: "all"
+        }        
+        var rtc = new webkitRTCPeerConnection(config)
+        console.log(rtc)
+        rtc.onicecandidate = function(candidate) {
+            console.log('onicecandidate:', candidate)    
+        }
+        rtc.createOffer(function(){}, function(){});
+        console.log('33333333333333333')
+
+
+    </script> -->
     
 </body>
 </html>

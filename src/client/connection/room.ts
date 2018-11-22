@@ -1,4 +1,4 @@
-import { IBase, Base } from "./bast";
+import { IBase, Base } from "./base";
 import { IUser, User } from "./user";
 import { Signaler, ISignalerMessage, ESignalerMessageType } from "./signaler";
 import { ECustomEvents, IUserQuery } from "./client";
@@ -89,6 +89,9 @@ export class Room extends Base implements IRoom {
     onTrack = (ev: RTCTrackEvent, user: IUser) => {
         this.eventEmitter.emit(ERTCPeerEvents.ontrack, ev, user);
     }
+    onIceConnectionStateChange = (ev: RTCTrackEvent, user: IUser) => {
+        this.eventEmitter.emit(ERTCPeerEvents.oniceconnectionstatechange, ev, user);
+    }    
     onRecvStreamInactive = (stream: MediaStream, user: IUser) => {
         this.eventEmitter.emit(ERTCPeerEvents.onrecvstreaminactive, stream, user);
     }
@@ -114,6 +117,7 @@ export class Room extends Base implements IRoom {
             user.room = this;
             user.signaler = user.signaler || this.signaler;
             user.eventEmitter.addListener(ERTCPeerEvents.ontrack, this.onTrack);
+            user.eventEmitter.addListener(ERTCPeerEvents.oniceconnectionstatechange, this.onIceConnectionStateChange);
             user.eventEmitter.addListener(ERTCPeerEvents.onrecvstreaminactive, this.onRecvStreamInactive);
             user.eventEmitter.addListener(ERTCPeerEvents.onsendstreaminactive, this.onSendStreamInactive);
             this.users[user.socketId] = user;
@@ -125,6 +129,7 @@ export class Room extends Base implements IRoom {
         let user = this.users[socketId];
         if (user) {
             user.eventEmitter.removeListener(ERTCPeerEvents.ontrack, this.onTrack);
+            user.eventEmitter.removeListener(ERTCPeerEvents.oniceconnectionstatechange, this.onIceConnectionStateChange);
             user.eventEmitter.removeListener(ERTCPeerEvents.onrecvstreaminactive, this.onRecvStreamInactive);
             user.eventEmitter.removeListener(ERTCPeerEvents.onsendstreaminactive, this.onSendStreamInactive);
             user.destroy();

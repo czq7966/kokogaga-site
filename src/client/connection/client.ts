@@ -105,9 +105,9 @@ export class Client {
         socket && socket.removeAllListeners();
     }     
 
-    openRoom(query: IUserQuery): Promise<any> {
+    openRoom(query: IUserQuery, url?: string): Promise<any> {
         return new Promise((resolve, reject) => {
-            this.connect()
+            this.connect(url)
             .then(() => {
                 this.socket.emit(ECustomEvents.openRoom, query, (result: boolean, msg: any) => {
                     if (result) {

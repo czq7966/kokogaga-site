@@ -1,6 +1,6 @@
 import { Signaler } from "./signaler";
 import { Rooms } from "./rooms";
-import { Base } from "./bast";
+import { Base } from "./base";
 import { User } from "./user";
 import { IUserQuery, EClientBaseEvents, ECustomEvents } from "./client";
 import { Dispatcher } from "./dispatcher";
@@ -10,7 +10,6 @@ export class Connection extends Base {
     signaler: Signaler;
     rooms: Rooms;
     dispatcher: Dispatcher
-    signalerUrl: string;
     stream: MediaStream;
     constructor(url: string) {
         super()
@@ -40,8 +39,8 @@ export class Connection extends Base {
         return this.signaler && this.signaler.id();
     }
 
-    openRoom(query: IUserQuery): Promise<any> {
-        let promise =  this.signaler.openRoom(query);
+    openRoom(query: IUserQuery, url?: string): Promise<any> {
+        let promise =  this.signaler.openRoom(query, url);
         promise.then((result) => {
             query = result;
             let room = this.rooms.newRoom(query.roomid, query.password);

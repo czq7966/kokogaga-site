@@ -23,7 +23,11 @@ module.exports = env => {
             {
                 from: path.resolve(__dirname, 'src', 'client/index.html'),
                 to: 'client/index.html',
-            }            
+            },
+            {
+                from: path.resolve(__dirname, 'src', 'client/libs'),
+                to: 'client/libs',
+            }                     
         ])
     )
 

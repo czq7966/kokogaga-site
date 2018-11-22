@@ -1,7 +1,6 @@
 import { ESignalerMessageType, ISignalerMessage } from "./signaler";
-import { Base } from "./bast";
+import { Base } from "./base";
 import { IUser } from "./user";
-import { IUserQuery } from "./client";
 
 var iceServers = [
     // {
@@ -206,7 +205,34 @@ export class Peer extends Base {
         }    
     }
 
-    createOffer(): Promise<any> {
+    // createOffer2(): Promise<any> {        
+    //     return new Promise((resolve, reject) => {
+    //         let rtc = this.rtc as any;
+    //         let getOffer = (sdp) => {
+    //             rtc.setLocalDescription()
+
+    //         }
+    //         rtc.createOffer(())
+    //         {
+    //             offerToReceiveAudio: true,
+    //             offerToReceiveVideo: true
+    //         }).then((sdp) => {
+    //             this.rtc.setLocalDescription(sdp)
+    //             .then(() => {
+    //                 this.sendOffer(sdp);
+    //                 resolve();
+    //             })           
+    //             .catch((err) => {
+    //                 console.error(err)
+    //                 reject(err)
+    //             })             
+    //         }).catch((err) => {
+    //             console.error(err)
+    //             reject(err)
+    //         })
+    //     })
+    // }
+    createOffer(): Promise<any> {        
         return new Promise((resolve, reject) => {
             this.rtc.createOffer({
                 offerToReceiveAudio: true,
@@ -236,7 +262,7 @@ export class Peer extends Base {
         this.user.sendMessage(msg)
     }
 
-    createAnswer(): Promise<any> {
+    createAnswer_bak(): Promise<any> {
         return new Promise((resolve, reject) => {
             this.rtc.createAnswer({
                 offerToReceiveAudio: true,
@@ -257,6 +283,38 @@ export class Peer extends Base {
             })
         })
     }    
+    createAnswer(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            let rtc = this.rtc as any;
+            let createAnswerSuccess = (sdp) => {
+                console.log('createAnswerSuccess', sdp)
+                rtc.setLocalDescription(sdp);
+                this.sendAnswer(sdp);
+                resolve();
+
+            }
+            let createAnswerFailed = (err) => {
+                console.log('createAnswerFailed', err)
+                reject(err)
+            }
+            rtc.createAnswer(createAnswerSuccess, createAnswerFailed);
+            // .then((sdp) => {
+            //     this.rtc.setLocalDescription(sdp)
+            //     .then(() => {
+            //         this.sendAnswer(sdp);
+            //         resolve();
+            //     })           
+            //     .catch((err) => {
+            //         console.error(err)
+            //         reject(err)
+            //     })             
+            // }).catch((err) => {
+            //     console.error(err)
+            //     reject(err)
+            // })
+        })
+    }  
+
     sendAnswer(sdp?: RTCSessionDescriptionInit) {
         sdp = sdp || this.rtc.localDescription.toJSON();
         let msg: ISignalerMessage = {
@@ -304,19 +362,42 @@ export class Peer extends Base {
     }
 
     //网络事件
-    onOffer = (data: any) => {
+    onOffer_bak = (data: any) => {
         console.log('on offer')
         this.rtc.setRemoteDescription(data)
         .then(() => {
             this.createAnswer()
             .catch((err => {
-                console.error(err)
+                console.log('Error', err)
             }))         
         })
         .catch(err => {
-            console.error(err)
+            console.log('Error',err)
         })
     }   
+    onOffer = (data: any) => {
+        console.log('on offer')
+        let rtc = this.rtc as any;
+        let setRemoteDescriptionSuccess = () => {
+            console.log('setRemoteDescriptionSuccess');
+            this.createAnswer()
+        }
+        let setRemoteDescriptionFailed = (err) => {
+            console.log('setRemoteDescriptionFailed', err)
+
+        }
+        rtc.setRemoteDescription(data, setRemoteDescriptionSuccess, setRemoteDescriptionFailed)
+        // .then(() => {
+        //     this.createAnswer()
+        //     .catch((err => {
+        //         console.log('Error', err)
+        //     }))         
+        // })
+        // .catch(err => {
+        //     console.log('Error',err)
+        // })
+    }   
+
     onAnswer = (data: any) => {
         console.log('on answer')
         this.rtc.setRemoteDescription(data)
@@ -325,8 +406,17 @@ export class Peer extends Base {
         })
     }     
     onCandidate = (data: any) => {
-        console.log(this.user.socketId, 'add candidate', data)
+        console.log('add candidate', data, this.user.socketId)
         this.rtc.addIceCandidate(data)
+        .then(() => {
+
+        })
+        .catch(err => {
+            console.log('11111111111111111111111111111')
+            console.log(err)
+        })
+        console.log('222222222222222')
+        console.log(this);
     }
     onIceComplete = () => {
         // console.log()
