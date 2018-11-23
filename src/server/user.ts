@@ -4,7 +4,7 @@ export enum EReservedEvents {
     disconnect = 'disconnect',
     disconnecting = 'disconnecting',
     // newListener = 'newListener',
-    removeListener = 'removeListener',
+    // removeListener = 'removeListener',
     ping = 'ping',
     pong = 'pong',
 }
@@ -63,6 +63,7 @@ export class SocketUser  {
         [EReservedEvents, ECustomEvents].forEach(events => {
             Object.keys(events).forEach(key => {
                 let value = events[key];
+                value != ECustomEvents.message &&
                 this.socket.addListener(value, (...args: any[]) => {
                     console.log('ServerEvent', value, ...args ? args[0]: '')
                 })

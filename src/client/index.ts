@@ -1,4 +1,5 @@
 require('es6-object-assign').polyfill();
+import "url-search-params-polyfill";
 import "webrtc-adapter";
 import { Connection } from "./connection/connection";
 import { EClientBaseEvents, IUserQuery } from "./connection/client";
@@ -15,18 +16,9 @@ export interface IPreviewState {
     trackUser?: IUser
 }
 
-function getQueryString(name) {
-    var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i');
-    var r = window.location.search.substr(1).match(reg);
-    if (r != null) {
-        return unescape(r[2]);
-    }
-    return null;
-}
-    
-
 
 export class Preview {
+    params: URLSearchParams;
     state: IPreviewState;
     conn: Connection;
     reJoinTimer: number;
@@ -36,17 +28,21 @@ export class Preview {
     elemVideo: HTMLVideoElement;
     elemLog: HTMLSpanElement;
     
+    
 
     constructor() {
+        this.params = new URLSearchParams(location.search);
         let signalerUrl = window.location.origin;        
         this.conn = new Connection(signalerUrl);
-        this.initElems();
-        this.initEvents();
-     
+
         this.state = {
-            roomid: getQueryString('roomid'),
+            roomid: this.params.get('roomid'),
             info:'loading...'
         };
+
+        this.initElems();
+        this.initEvents();
+
         this.render();
         this.doJoinRoom();
     }
@@ -59,7 +55,8 @@ export class Preview {
         this.elemInfo = document.getElementById("preview-info") as HTMLElement;
         this.elemVideo = document.getElementById("preview-video") as HTMLVideoElement;
 
-        this.elemGo.onclick = this.doJoinRoom;
+        this.elemInput.value = this.state.roomid || '';        
+        this.elemGo.onclick = this.doGo;
     }
     initEvents() {
         window.addEventListener('offline', this.onOffline, false);
@@ -72,18 +69,9 @@ export class Preview {
         window.removeEventListener('online', this.onOnline, false);        
     }
 
-    render() {
-        this.elemInput.value = this.state.roomid || '';
+    render() {        
         this.elemInfo.innerText = this.state.info;
     }
-
-    // onRoomidChange = (event: Event) => {
-    //     if (this.reJoinTimer) {
-    //         clearTimeout(this.reJoinTimer);
-    //         this.reJoinTimer = 0;
-    //     }
-    //     this.state.roomid = this.elemInput.value.trim()
-    // }
 
     onDisconnect = (reason) => {
         if (!this.state.offline) {
@@ -96,7 +84,24 @@ export class Preview {
         this.render();
     }
     onOnline = () => {
-        window.location = window.location
+        let search = '';
+        let roomid = this.state.roomid && this.state.roomid.length > 0 ? this.state.roomid : '';      
+        this.params.forEach((value, key) => {
+            let param = '';
+            if (key == 'roomid') {
+                roomid = roomid ? roomid : value
+            } else {                
+                param = key + '=' + value;                        
+            }
+            search = search ? search + '&'+ param : param;
+        })
+        roomid = roomid ? 'roomid='+roomid : '';
+        search = search ? '?' + search : '';
+        roomid = roomid ? (search ? '&' + roomid : '?' + roomid) : '';
+        search =  search + roomid;
+        
+        let href = window.location.origin + window.location.pathname + search;
+        window.location.href =  href;
     }
     onTrack = (ev: RTCTrackEvent, user: IUser) => {                
         console.log('on track');
@@ -125,15 +130,21 @@ export class Preview {
             this.render();
         }
     }
-
-    doJoinRoom = () => {
+    doGo = () => {
         this.state.roomid = this.elemInput.value.trim();
+        if (this.state.roomid) {
+            this.onOnline();
+        }
+    }
+
+    doJoinRoom = () => {        
         if (this.state.roomid && this.state.roomid.length > 0) {
             this.state.info = 'checking room: ' + this.state.roomid;
             let query: IUserQuery = {
                 roomid: this.state.roomid,
                 password: '',
-            }        
+            }                    
+
             this.conn.joinRoom(query)
             .then(() => {
                 this.state.info = 'joined, waiting sharing! ';
@@ -158,90 +169,3 @@ export class Preview {
 }
 
 new Preview();
-
-
-
-function Test() {
-    var RTCPeerEvents = {
-        onconnectionstatechange: 'connectionstatechange',
-        ondatachannel: 'datachannel',
-        onicecandidate : 'icecandidate',
-        onicecandidateerror: 'icecandidateerror',
-        oniceconnectionstatechange : 'iceconnectionstatechange',
-        onicegatheringstatechange : 'icegatheringstatechange',
-        onnegotiationneeded : 'negotiationneeded',
-        onsignalingstatechange : 'signalingstatechange',
-        onstatsended : 'statsended',
-        ontrack: 'track',
-        onrecvstreaminactive : 'recvstreaminactive',
-        onsendstreaminactive : 'sendstreaminactive'
-    }
-
-
-    var config: RTCConfiguration = {
-        iceServers: [
-            {
-                'urls': [
-                    'stun:webrtcweb.com:7788', // coTURN
-                    // 'stun:webrtcweb.com:7788?transport=udp', // coTURN
-                ],
-                'username': 'muazkh',
-                'credential': 'muazkh'
-            },
-        ],
-        iceTransportPolicy: "all"
-    }
-    var rtc1 = new webkitRTCPeerConnection(config)
-    var rtc2 = new webkitRTCPeerConnection(config)
-    console.log(rtc1)
-    console.log(rtc2)
-    Object.keys(RTCPeerEvents).forEach(key => {
-        let value = RTCPeerEvents[key];
-        let event = (...args: any[]) => {
-            console.log('rtc1 PeerEvent:', value, ...args)
-        }
-
-        rtc1['on'+value] = event;
-    })
-
-    Object.keys(RTCPeerEvents).forEach(key => {
-        let value = RTCPeerEvents[key];
-        let event = (...args: any[]) => {
-            console.log('rtc2 PeerEvent:', value, ...args)
-        }
-
-        rtc2['on'+value] = event;
-    })
-
-
-    rtc1.onicecandidate = (candidate) => {
-        console.log('rtc1 onicecandidate:', candidate)    
-    }
-    rtc1.onicecandidate = (candidate) => {
-        console.log('rtc2 onicecandidate:', candidate)    
-    }
-
-    (rtc1 as any).createOffer((sdp) => {
-        console.log('rtc1 createOffer', sdp);
-        (rtc1 as any).setLocalDescription(sdp, () => {
-            (rtc1 as any).updateIce();
-            console.log('rtc1 setLocalDescription');
-            (rtc2 as any).setRemoteDescription(sdp, () => {
-                    console.log('rtc2 setRemoveDescription');
-                    (rtc2 as any).createAnswer((sdp) => {
-                        console.log('rtc2 createAnswer', sdp);
-                        rtc2.setLocalDescription(sdp);
-                        rtc1.setRemoteDescription(sdp);
-                    })
-
-                }, () => {
-
-                });
-        }, () => {console.log('222')})
-    
-
-    }, (err) => {
-        console.log(err)
-
-    });
-}

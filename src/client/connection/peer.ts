@@ -288,30 +288,20 @@ export class Peer extends Base {
             let rtc = this.rtc as any;
             let createAnswerSuccess = (sdp) => {
                 console.log('createAnswerSuccess', sdp)
-                rtc.setLocalDescription(sdp);
-                this.sendAnswer(sdp);
-                resolve();
-
+                let setLocalDescriptionSuccess = () => {
+                    this.sendAnswer(sdp);
+                    resolve();
+                }
+                let setLocalDescriptionFailed = (err) => {
+                    console.log('createAnswerFailed', err)
+                }
+                rtc.setLocalDescription(sdp, setLocalDescriptionSuccess, setLocalDescriptionFailed)
             }
             let createAnswerFailed = (err) => {
                 console.log('createAnswerFailed', err)
                 reject(err)
             }
             rtc.createAnswer(createAnswerSuccess, createAnswerFailed);
-            // .then((sdp) => {
-            //     this.rtc.setLocalDescription(sdp)
-            //     .then(() => {
-            //         this.sendAnswer(sdp);
-            //         resolve();
-            //     })           
-            //     .catch((err) => {
-            //         console.error(err)
-            //         reject(err)
-            //     })             
-            // }).catch((err) => {
-            //     console.error(err)
-            //     reject(err)
-            // })
         })
     }  
 
