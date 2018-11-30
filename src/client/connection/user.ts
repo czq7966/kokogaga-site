@@ -157,7 +157,7 @@ export class User extends Base implements IUser {
     }    
     addStream(stream: MediaStream) {
         this.stream = stream; 
-        this.peer.addStream(stream);
+        // this.peer.addStream(stream);
         this.doICE();     
     } 
     doICE() {

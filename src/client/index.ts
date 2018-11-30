@@ -1,6 +1,7 @@
 require('es6-object-assign').polyfill();
 import "url-search-params-polyfill";
 import "webrtc-adapter";
+import "./index.css"
 import { Connection } from "./connection/connection";
 import { EClientBaseEvents, IUserQuery } from "./connection/client";
 import { IUser, User } from "./connection/user";
@@ -27,6 +28,8 @@ export class Preview {
     elemInfo: HTMLElement;
     elemVideo: HTMLVideoElement;
     elemLog: HTMLSpanElement;
+    elemRoom: HTMLDivElement;
+    elemHeader: HTMLDivElement;
     
     
 
@@ -54,9 +57,22 @@ export class Preview {
         this.elemGo = document.getElementById("preview-go") as HTMLButtonElement;
         this.elemInfo = document.getElementById("preview-info") as HTMLElement;
         this.elemVideo = document.getElementById("preview-video") as HTMLVideoElement;
+        this.elemRoom = document.getElementById("preview-room") as HTMLDivElement;
+        this.elemHeader = document.getElementById("preview-header") as HTMLDivElement;
 
         this.elemInput.value = this.state.roomid || '';        
         this.elemGo.onclick = this.doGo;
+
+        // this.elemVideo.onclick = () => {
+        //     var ele = document.documentElement;
+        //     if (ele .requestFullscreen) {
+        //         ele .requestFullscreen();
+        //     } else if (ele['mozRequestFullScreen']) {
+        //         ele['mozRequestFullScreen']();
+        //     } else if (ele['webkitRequestFullScreen']) {
+        //         ele['webkitRequestFullScreen']();
+        //     }
+        // }
     }
     initEvents() {
         window.addEventListener('offline', this.onOffline, false);
@@ -69,8 +85,12 @@ export class Preview {
         window.removeEventListener('online', this.onOnline, false);        
     }
 
-    render() {        
+    render() {       
+        let isSharing = this.state.stream && (this.state.iceState == "connected" || this.state.iceState == "completed");
+
+        // this.elemRoom.style.display = this.state.roomid ? "none" : "visible"
         this.elemInfo.innerText = this.state.info;
+        this.elemHeader.style.display = isSharing ? "none" : "visible"
     }
 
     onDisconnect = (reason) => {
@@ -104,8 +124,8 @@ export class Preview {
         window.location.href =  href;
     }
     onTrack = (ev: RTCTrackEvent, user: IUser) => {                
-        console.log('on track');
-        console.dir(user)
+        console.log('on track111');
+        console.dir(ev)
         this.state.trackUser = user;
         this.state.info = 'waiting track...';
         this.state.stream = ev.streams[0];
@@ -126,6 +146,7 @@ export class Preview {
             this.state.info = 'sharing...';
             setTimeout(() => {
                 this.elemVideo.srcObject = this.state.stream;
+                // this.elemVideo.controls = true;   
             }, 0)
             this.render();
         }
@@ -139,7 +160,7 @@ export class Preview {
 
     doJoinRoom = () => {        
         if (this.state.roomid && this.state.roomid.length > 0) {
-            this.state.info = 'checking room: ' + this.state.roomid;
+            this.state.info = 'checking connection: ' + this.state.roomid;
             let query: IUserQuery = {
                 roomid: this.state.roomid,
                 password: '',
@@ -155,7 +176,7 @@ export class Preview {
                 this.render();          
             })
             .catch(msg => {
-                this.state.info = msg;
+                this.state.info = 'waiting for connection: ' + this.state.roomid;
                 this.reJoinTimer = window.setTimeout(() => {
                     this.doJoinRoom()
                 }, 3000)
@@ -169,3 +190,15 @@ export class Preview {
 }
 
 new Preview();
+
+export class Test {
+    conn: Connection;
+    constructor() {
+        this.conn = new Connection('');
+        console.dir(this.conn)
+
+    }
+
+}
+
+// new Test();

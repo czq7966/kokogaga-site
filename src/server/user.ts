@@ -21,6 +21,7 @@ export interface IUserQuery {
     roomid?: string,
     password?: string,
     isOwner?: boolean,
+    autoCreate?: boolean
     max?: number,
     from?: string,
     to?: string,
@@ -117,14 +118,14 @@ export class SocketUser  {
             this.socket.to(roomid).emit(ECustomEvents.message, query);   
             callback && callback(true);
         } else {
-            callback && callback(false, 'room not exists: ' + roomid);
+            callback && callback(false, 'Connection id not exists: ' + roomid);
         }
     }
     onOpenRoom = (query: IUserQuery, callback?: (result: boolean, msg?: any) => void) => {
         query.roomid = query.roomid || this.createRoomId();
         let room = this.socket.adapter.rooms[query.roomid];
         if (room) {
-            callback && callback(false, 'room exists: ' + query.roomid);
+            callback && callback(false, 'Connection id already exists: ' + query.roomid);
         } else {
             this.socket.join(query.roomid);
             this.query = Object.assign({}, query);
@@ -145,7 +146,7 @@ export class SocketUser  {
         }
         room = this.socket.adapter.rooms[query.roomid];
         if(room) {
-            callback && callback(false, 'close failed: ' + query.roomid + ', length ' + room.length);
+            callback && callback(false, 'Connection close failed: ' + query.roomid + ', length ' + room.length);
         } else {
             callback && callback(true);
         }
@@ -159,7 +160,7 @@ export class SocketUser  {
             this.socket.to(query.roomid).emit(ECustomEvents.joinRoom, query);
             callback && callback(true);
         } else  {
-            callback && callback(false, 'room not exist: ' + query.roomid);
+            callback && callback(false, 'Connection id not exist: ' + query.roomid);
         }
     }
     onLeaveRoom = (query: IUserQuery, callback?: (result: boolean, msg?: string) => void) => {      

@@ -49,35 +49,88 @@ export enum ERTCPeerEvents {
     onsignalingstatechange = 'signalingstatechange',
     onstatsended = 'statsended',
     ontrack = 'track',
+    onstream = 'stream',
     onrecvstreaminactive = 'recvstreaminactive',
     onsendstreaminactive = 'sendstreaminactive'
 }
 
 export class Peer extends Base {
     user: IUser
-    rtc: RTCPeerConnection
-    sendStreams: Array<MediaStream>;
-    recvStreams: ReadonlyArray<MediaStream>;
+    sendStreams: {[id: string]: MediaStream};
+    recvStreams: {[id: string]: MediaStream};
     private _rtcevents;
+    private _rtc: RTCPeerConnection    
     constructor(user: IUser) {
         super()
-        this.sendStreams = [];
+        this.sendStreams = {};
+        this.recvStreams = {};
         this._rtcevents = {};
-        this.user = user;
-        this.rtc = new RTCPeerConnection(config);
+        this.user = user;        
         this.initEvents();
     }
-    destroy() {                
-        this.unInitEvents();
-        this.rtc.close();
+    destroy() {      
+        this._rtc && this._rtc.close();
+        Object.keys(this.sendStreams).forEach(id => {delete this.sendStreams[id]});
+        Object.keys(this.recvStreams).forEach(id => {delete this.recvStreams[id]});
+        this.unInitEvents();        
         delete this._rtcevents
-        delete this.rtc;
+        delete this._rtc;
         delete this.user;
         delete this.sendStreams;
         delete this.recvStreams;
         super.destroy();
     }
-    initEvents() {
+    initEvents() {        
+        this.eventEmitter.addListener(ESignalerMessageType.offer, this.onOffer)
+        this.eventEmitter.addListener(ESignalerMessageType.answer, this.onAnswer)
+        this.eventEmitter.addListener(ESignalerMessageType.candidate, this.onCandidate)
+        this.eventEmitter.addListener(ESignalerMessageType.icecomplete, this.onIceComplete)
+
+        this.eventEmitter.addListener(ERTCPeerEvents.ontrack, this.onTrack)
+        this.eventEmitter.addListener(ERTCPeerEvents.onstream, this.onStream)        
+        this.eventEmitter.addListener(ERTCPeerEvents.onicecandidate, this.onIceCandidate)    
+        
+        //Log监视RTC状态变化
+        this.eventEmitter.addListener(ERTCPeerEvents.onconnectionstatechange, (ev) => {
+            console.log('on'+ERTCPeerEvents.onconnectionstatechange+':', this.rtc().connectionState, this.user.socketId)
+        })
+        this.eventEmitter.addListener(ERTCPeerEvents.ondatachannel, ev => {
+            console.log('on'+ERTCPeerEvents.ondatachannel+':', ev, this.user.socketId)
+        })
+        this.eventEmitter.addListener(ERTCPeerEvents.onicecandidate, ev => {
+            console.log('on'+ERTCPeerEvents.onicecandidate+':', ev.candidate && ev.candidate.candidate, this.user.socketId)
+        })
+        this.eventEmitter.addListener(ERTCPeerEvents.onicecandidateerror, ev => {
+            console.log('on'+ERTCPeerEvents.onicecandidateerror+':', ev.errorText, this.user.socketId)
+        })
+        this.eventEmitter.addListener(ERTCPeerEvents.oniceconnectionstatechange, ev => {
+            console.log('on'+ERTCPeerEvents.oniceconnectionstatechange+':', this.rtc().iceConnectionState, this.user.socketId)
+        })
+        this.eventEmitter.addListener(ERTCPeerEvents.onicegatheringstatechange, ev => {
+            console.log('on'+ERTCPeerEvents.onicegatheringstatechange+':', this.rtc().iceGatheringState, this.user.socketId)
+        })    
+        this.eventEmitter.addListener(ERTCPeerEvents.onnegotiationneeded, ev => {
+            console.log('on'+ERTCPeerEvents.onnegotiationneeded+':')
+        })   
+        this.eventEmitter.addListener(ERTCPeerEvents.onsignalingstatechange, ev => {
+            console.log('on'+ERTCPeerEvents.onsignalingstatechange+':', this.rtc().signalingState, this.user.socketId, this.user.socketId)
+        })  
+        this.eventEmitter.addListener(ERTCPeerEvents.onstatsended, ev => {
+            console.log('on'+ERTCPeerEvents.onstatsended+':', this.user.socketId)
+        })
+        this.eventEmitter.addListener(ERTCPeerEvents.ontrack, ev => {            
+            console.warn('ontrack:', this.user.socketId);
+        })  
+    }
+    unInitEvents() {
+        this.unInitRTCEvents(this._rtc);
+        this.eventEmitter.removeListener(ESignalerMessageType.offer, this.onOffer)
+        this.eventEmitter.removeListener(ESignalerMessageType.answer, this.onAnswer)
+        this.eventEmitter.removeListener(ESignalerMessageType.candidate, this.onCandidate)
+        this.eventEmitter.removeListener(ESignalerMessageType.icecomplete, this.onIceComplete)                
+    }
+    initRTCEvents(rtc: RTCPeerConnection) {
+        rtc &&
         [ERTCPeerEvents].forEach(events => {
             Object.keys(ERTCPeerEvents).forEach(key => {
                 let value = events[key];
@@ -86,98 +139,23 @@ export class Peer extends Base {
                     this.eventEmitter.emit(value, ...args)
                 }
                 this._rtcevents[value] = event;
-                this.rtc.addEventListener(value, event)
+                rtc.addEventListener(value, event)
             })
-        })
-        this.rtc.addEventListener(ERTCPeerEvents.onicecandidate, this.onIceCandidate)
-        this.eventEmitter.addListener(ESignalerMessageType.offer, this.onOffer)
-        this.eventEmitter.addListener(ESignalerMessageType.answer, this.onAnswer)
-        this.eventEmitter.addListener(ESignalerMessageType.candidate, this.onCandidate)
-        this.eventEmitter.addListener(ESignalerMessageType.icecomplete, this.onIceComplete)
-        this.eventEmitter.addListener(ERTCPeerEvents.ontrack, this.onTrack)
-
-        this.rtc.addEventListener('connectionstatechange', (ev) => {
-            if (this.rtc) {
-                console.log('onconnectionstatechange:', this.rtc.connectionState, this.user.socketId)
-            } else {
-                console.log('onconnectionstatechange:', ev)
-            }
-        })
-        this.rtc.addEventListener('datachannel', ev => {
-            if (this.rtc) {
-                console.log('ondatachannel:', ev, this.user.socketId)
-            } else {
-                console.log('ondatachannel:', ev)
-            }
-        })
-        this.rtc.addEventListener('icecandidate', ev => {
-            if (this.rtc) {
-                console.log('onicecandidate:', ev.candidate && ev.candidate.candidate, this.user.socketId)
-            } else {
-                console.log('onicecandidate:', ev)
-            }            
-        })
-        this.rtc.addEventListener('icecandidateerror', ev => {
-            if (this.rtc) {
-                console.log('onicecandidateerror:', ev.errorText, this.user.socketId)
-            } else {
-                console.log('onicecandidateerror:', ev)                
-            }            
-        })
-        this.rtc.addEventListener('iceconnectionstatechange', ev => {
-            if (this.rtc) {
-                console.log('oniceconnectionstatechange:', this.rtc.iceConnectionState, this.user.socketId)
-            } else {
-                console.log('oniceconnectionstatechange:', ev)                
-            }            
-        })
-        this.rtc.addEventListener('icegatheringstatechange', ev => {
-            if (this.rtc) {
-                console.log('onicegatheringstatechange:', this.rtc.iceGatheringState, this.user.socketId)
-            } else {
-                console.log('onicegatheringstatechange:', ev)                
-            }            
-        })
-        this.rtc.addEventListener('negotiationneeded', ev => {
-            if (this.rtc) {
-                console.log('onnegotiationneeded:')
-            } else {
-                console.log('onnegotiationneeded:')                
-            }            
-        })
-        this.rtc.addEventListener('signalingstatechange', ev => {
-            if (this.rtc) {
-                console.log('onsignalingstatechange:', this.rtc.signalingState, this.user.socketId, this.user.socketId)
-            } else {
-                console.log('onsignalingstatechange:', ev)                
-            }            
-        })
-        this.rtc.addEventListener('statsended', ev => {
-            if (this.rtc) {
-                console.log('onstatsended:', this.user.socketId)
-            } else {
-                console.log('onstatsended:', ev)                
-            }            
-        })
-        this.rtc.addEventListener('track', ev => {            
-            if (this.rtc) {
-                console.warn('ontrack:', this.user.socketId, this.user.socketId);
-                console.dir(this)
-            } else {
-                console.warn('ontrack:', ev);                
-            }
-        })        
+        })      
     }
-    unInitEvents() {
+    unInitRTCEvents(rtc: RTCPeerConnection) {
+        rtc &&
         Object.keys(this._rtcevents).forEach(key => {
             let value = this._rtcevents[key];
-            this.rtc.removeEventListener(key, value)
+            this.rtc().removeEventListener(key, value)
         })
-        this.eventEmitter.removeListener(ESignalerMessageType.offer, this.onOffer)
-        this.eventEmitter.removeListener(ESignalerMessageType.answer, this.onAnswer)
-        this.eventEmitter.removeListener(ESignalerMessageType.candidate, this.onCandidate)
-        this.eventEmitter.removeListener(ESignalerMessageType.icecomplete, this.onIceComplete)    
-            
+    }    
+    rtc() {
+        if (!this._rtc) {
+            this._rtc = new RTCPeerConnection(config);
+            this.initRTCEvents(this._rtc);
+        }
+        return this._rtc
     }
 
 
@@ -186,22 +164,18 @@ export class Peer extends Base {
         this.createOffer();        
     }
     addStream(stream: MediaStream) {    
-        if (stream) {
-            let idx = this.sendStreams.indexOf(stream);
-            if (idx < 0) {
-                this.sendStreams.push(stream);
-                let onInactive = (ev) => {
-                    stream.removeEventListener('inactive', onInactive);
-                    this.notDestroyed && this.onSendStreamsInactive(stream);
-                }
-                stream.addEventListener('inactive', onInactive);
-
-                stream.getTracks().forEach(track => {
-                    console.log('add track', this.user.socketId)
-                    console.dir(this)
-                    this.rtc.addTrack(track)
-                })                        
+        if (stream && !this.sendStreams[stream.id]) {
+            let id = stream.id;
+            this.sendStreams[id] = stream;
+            let onInactive = (ev) => {
+                stream.removeEventListener('inactive', onInactive);
+                if (this.notDestroyed) {
+                    this.onSendStreamsInactive(stream);
+                    delete this.sendStreams[id];
+                }                 
             }
+            stream.addEventListener('inactive', onInactive);
+            (this.rtc() as any).addStream(stream)
         }    
     }
 
@@ -217,7 +191,7 @@ export class Peer extends Base {
     //             offerToReceiveAudio: true,
     //             offerToReceiveVideo: true
     //         }).then((sdp) => {
-    //             this.rtc.setLocalDescription(sdp)
+    //             this.rtc().setLocalDescription(sdp)
     //             .then(() => {
     //                 this.sendOffer(sdp);
     //                 resolve();
@@ -234,11 +208,11 @@ export class Peer extends Base {
     // }
     createOffer(): Promise<any> {        
         return new Promise((resolve, reject) => {
-            this.rtc.createOffer({
+            this.rtc().createOffer({
                 offerToReceiveAudio: true,
                 offerToReceiveVideo: true
             }).then((sdp) => {
-                this.rtc.setLocalDescription(sdp)
+                this.rtc().setLocalDescription(sdp)
                 .then(() => {
                     this.sendOffer(sdp);
                     resolve();
@@ -254,7 +228,7 @@ export class Peer extends Base {
         })
     }    
     sendOffer(sdp?: RTCSessionDescriptionInit) {
-        sdp = sdp || this.rtc.localDescription.toJSON();
+        sdp = sdp || this.rtc().localDescription.toJSON();
         let msg: ISignalerMessage = {
             type: ESignalerMessageType.offer,
             data: sdp
@@ -264,11 +238,11 @@ export class Peer extends Base {
 
     createAnswer_bak(): Promise<any> {
         return new Promise((resolve, reject) => {
-            this.rtc.createAnswer({
+            this.rtc().createAnswer({
                 offerToReceiveAudio: true,
                 offerToReceiveVideo: true
             }).then((sdp) => {
-                this.rtc.setLocalDescription(sdp)
+                this.rtc().setLocalDescription(sdp)
                 .then(() => {
                     this.sendAnswer(sdp);
                     resolve();
@@ -285,7 +259,7 @@ export class Peer extends Base {
     }    
     createAnswer(): Promise<any> {
         return new Promise((resolve, reject) => {
-            let rtc = this.rtc as any;
+            let rtc = this.rtc() as any;
             let createAnswerSuccess = (sdp) => {
                 console.log('createAnswerSuccess', sdp)
                 let setLocalDescriptionSuccess = () => {
@@ -306,7 +280,7 @@ export class Peer extends Base {
     }  
 
     sendAnswer(sdp?: RTCSessionDescriptionInit) {
-        sdp = sdp || this.rtc.localDescription.toJSON();
+        sdp = sdp || this.rtc().localDescription.toJSON();
         let msg: ISignalerMessage = {
             type: ESignalerMessageType.answer,
             data: sdp
@@ -330,22 +304,22 @@ export class Peer extends Base {
     }
 
     stopSharing(): Promise<any> {
-        if (this.sendStreams.length > 0) {
-            let promises = [];
-            this.sendStreams.forEach(stream => {
-                let promise = new Promise((resolve, reject) => {
-                    let onInactive = () => {
-                        resolve();
-                    }             
-                    stream.addEventListener('inactive', onInactive);
-                    stream.getTracks().forEach(track => {
-                        track.stop();
-                    })
+        let promises = [];
+        Object.keys(this.sendStreams).forEach(id => {
+            let stream = this.sendStreams[id];
+            let promise = new Promise((resolve, reject) => {
+                let onInactive = () => {
+                    resolve();
+                }             
+                stream.addEventListener('inactive', onInactive);
+                stream.getTracks().forEach(track => {
+                    track.stop();
                 })
-                promises.push(promise);
-            })            
+            })
+            promises.push(promise);
+        })
+        if (promises.length > 0) {
             return Promise.all(promises);
-
         } else {
             return Promise.resolve();
         }
@@ -354,7 +328,7 @@ export class Peer extends Base {
     //网络事件
     onOffer_bak = (data: any) => {
         console.log('on offer')
-        this.rtc.setRemoteDescription(data)
+        this.rtc().setRemoteDescription(data)
         .then(() => {
             this.createAnswer()
             .catch((err => {
@@ -367,7 +341,7 @@ export class Peer extends Base {
     }   
     onOffer = (data: any) => {
         console.log('on offer')
-        let rtc = this.rtc as any;
+        let rtc = this.rtc() as any;
         let setRemoteDescriptionSuccess = () => {
             console.log('setRemoteDescriptionSuccess');
             this.createAnswer()
@@ -377,49 +351,45 @@ export class Peer extends Base {
 
         }
         rtc.setRemoteDescription(data, setRemoteDescriptionSuccess, setRemoteDescriptionFailed)
-        // .then(() => {
-        //     this.createAnswer()
-        //     .catch((err => {
-        //         console.log('Error', err)
-        //     }))         
-        // })
-        // .catch(err => {
-        //     console.log('Error',err)
-        // })
     }   
 
     onAnswer = (data: any) => {
         console.log('on answer')
-        this.rtc.setRemoteDescription(data)
+        this.rtc().setRemoteDescription(data)
         .catch(err => {
             console.error(err)
         })
     }     
     onCandidate = (data: any) => {
         console.log('add candidate', data, this.user.socketId)
-        this.rtc.addIceCandidate(data)
-        .then(() => {
-
-        })
+        this.rtc().addIceCandidate(data)
         .catch(err => {
-            console.log('11111111111111111111111111111')
-            console.log(err)
+            console.log('add Ic eCandidate error:', err)
         })
-        console.log('222222222222222')
-        console.log(this);
     }
     onIceComplete = () => {
         // console.log()
     }    
     onTrack = (ev: RTCTrackEvent) => {
-        this.recvStreams = ev.streams;
-        this.recvStreams.forEach(stream => {
-            let onInactive = (ev) => {
-                stream.removeEventListener('inactive', onInactive);
-                this.onRecvStreamsInactive(stream);
+        let streams = ev.streams;
+        streams.forEach(stream => {
+            if (!this.recvStreams[stream.id]) {
+                this.recvStreams[stream.id] = stream;
+                let onInactive = (ev) => {
+                    stream.removeEventListener('inactive', onInactive);
+                    this.onRecvStreamsInactive(stream);
+                }
+                stream.addEventListener('inactive', onInactive);  
             }
-            stream.addEventListener('inactive', onInactive);
         })
+    }
+    onStream = (ev: any) => {
+        let stream = ev.stream as MediaStream;
+        let onInactive = (ev) => {
+            stream.removeEventListener('inactive', onInactive);
+            this.onRecvStreamsInactive(stream);
+        }
+        stream.addEventListener('inactive', onInactive);
     }
     onRecvStreamsInactive = (stream: MediaStream) => {
         if (this.notDestroyed) {
@@ -428,11 +398,7 @@ export class Peer extends Base {
     }
     onSendStreamsInactive = (stream: MediaStream) => {
         if (this.notDestroyed) {
-            let idx = this.sendStreams.indexOf(stream);
-            if (idx >= 0) {
-                this.sendStreams.splice(idx, 1)
-            }        
-            this.eventEmitter.emit(ERTCPeerEvents.onrecvstreaminactive, stream, this)        
+            this.eventEmitter.emit(ERTCPeerEvents.onsendstreaminactive, stream, this)        
         }
     }    
 }
