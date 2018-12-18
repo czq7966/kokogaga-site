@@ -3,7 +3,9 @@ import { Room } from "./room";
 import { Signaler } from "./signaler";
 import { ECustomEvents, IUserQuery } from "./client";
 
-
+export enum ERoomsEvents {
+    onnewroom = 'onnewroom'
+}
 export class Rooms extends Base {
     signaler: Signaler
     rooms: {[id: string]: Room}
@@ -45,6 +47,7 @@ export class Rooms extends Base {
             let room = new Room({roomid: roomid, password: password});
             room.signaler = this.signaler;
             this.rooms[roomid] = room;
+            this.eventEmitter.emit(ERoomsEvents.onnewroom, room)
             return room;
         }
     }
@@ -56,5 +59,9 @@ export class Rooms extends Base {
         room && room.destroy();
         delete this.rooms[roomid];
     }
-
+    close() {
+        Object.keys(this.rooms).forEach(key => {
+            this.rooms[key].close();
+        })       
+    }
 }

@@ -3,7 +3,11 @@ import { IUser, User } from "./user";
 import { Signaler, ISignalerMessage, ESignalerMessageType } from "./signaler";
 import { ECustomEvents, IUserQuery } from "./client";
 import { ERTCPeerEvents } from "./peer";
+import { Streams } from "./streams";
 
+export enum ERoomEvents {
+    onadduser = 'onadduser'
+}
 export interface IRoomParams {
     roomid: string
     password: string
@@ -12,11 +16,13 @@ export interface IRoomParams {
 }
 export interface IRoom extends IBase, IRoomParams {
     users: {[id: string]: IUser}
+    streams: Streams;    
     getOwner():IUser
     isOwner(socketId: string): boolean
     addUser(user: IUser): IUser
     delUser(socketId: string)
     currUser(): IUser
+    addSendStream(stream: MediaStream, user?: IUser)
 }
 
 export class Room extends Base implements IRoom {
@@ -25,8 +31,11 @@ export class Room extends Base implements IRoom {
     max: number
     signaler: Signaler
     users: {[id: string]: IUser}
+    streams: Streams;
+
     constructor(room: IRoomParams) {
         super();
+        this.streams = new Streams(this);     
         this.roomid = room.roomid;
         this.password = room.password;
         this.max = room.max;
@@ -34,10 +43,12 @@ export class Room extends Base implements IRoom {
         this.users = {}
         this.initEvents();
     }
-    destroy() {
+    destroy() {                
         this.unInitEvents();   
+        this.streams.destroy();
         this.clearUsers(); 
         delete this.users;
+        delete this.streams;
         super.destroy();
     }
     initEvents() {
@@ -45,12 +56,18 @@ export class Room extends Base implements IRoom {
         this.eventEmitter.addListener(ECustomEvents.leaveRoom, this.onLeaveRoom);
         this.eventEmitter.addListener(ECustomEvents.closeRoom, this.onCloseRoom);
         this.eventEmitter.addListener(ECustomEvents.message, this.onMessage);
+
+        this.eventEmitter.addListener(ERTCPeerEvents.oniceconnectionstatechange, this.onIceConnectionStateChange);
+        this.eventEmitter.addListener(ERTCPeerEvents.onrecvstream, this.onRecvStream);        
     }
     unInitEvents() {
         this.eventEmitter.removeListener(ECustomEvents.joinRoom, this.onJoinRoom)
         this.eventEmitter.removeListener(ECustomEvents.leaveRoom, this.onLeaveRoom);
         this.eventEmitter.removeListener(ECustomEvents.closeRoom, this.onCloseRoom);
         this.eventEmitter.removeListener(ECustomEvents.message, this.onMessage)
+
+        this.eventEmitter.removeListener(ERTCPeerEvents.oniceconnectionstatechange, this.onIceConnectionStateChange);
+        this.eventEmitter.removeListener(ERTCPeerEvents.onrecvstream, this.onRecvStream);        
     }
     onJoinRoom = (query: IUserQuery) => {
         if (!this.users[query.from]) {
@@ -86,18 +103,12 @@ export class Room extends Base implements IRoom {
         }
         user && user.eventEmitter.emit(ECustomEvents.message, query);        
     }
-    onTrack = (ev: RTCTrackEvent, user: IUser) => {
-        this.eventEmitter.emit(ERTCPeerEvents.ontrack, ev, user);
+    onRecvStream = (stream: MediaStream, user: IUser) => {
+        this.streams.addRecvStream(stream);
     }
     onIceConnectionStateChange = (ev: RTCTrackEvent, user: IUser) => {
-        this.eventEmitter.emit(ERTCPeerEvents.oniceconnectionstatechange, ev, user);
+        // this.eventEmitter.emit(ERTCPeerEvents.oniceconnectionstatechange, ev, user);
     }    
-    onRecvStreamInactive = (stream: MediaStream, user: IUser) => {
-        this.eventEmitter.emit(ERTCPeerEvents.onrecvstreaminactive, stream, user);
-    }
-    onSendStreamInactive = (stream: MediaStream, user: IUser) => {
-        this.eventEmitter.emit(ERTCPeerEvents.onsendstreaminactive, stream, user);
-    }      
 
     getOwner():IUser {
         let user: IUser
@@ -116,11 +127,8 @@ export class Room extends Base implements IRoom {
         if (user && user.socketId) {
             user.room = this;
             user.signaler = user.signaler || this.signaler;
-            user.eventEmitter.addListener(ERTCPeerEvents.ontrack, this.onTrack);
-            user.eventEmitter.addListener(ERTCPeerEvents.oniceconnectionstatechange, this.onIceConnectionStateChange);
-            user.eventEmitter.addListener(ERTCPeerEvents.onrecvstreaminactive, this.onRecvStreamInactive);
-            user.eventEmitter.addListener(ERTCPeerEvents.onsendstreaminactive, this.onSendStreamInactive);
             this.users[user.socketId] = user;
+            this.eventEmitter.emit(ERoomEvents.onadduser, user)
 
             return this.users[user.socketId]
         }
@@ -128,10 +136,6 @@ export class Room extends Base implements IRoom {
     delUser(socketId: string) {
         let user = this.users[socketId];
         if (user) {
-            user.eventEmitter.removeListener(ERTCPeerEvents.ontrack, this.onTrack);
-            user.eventEmitter.removeListener(ERTCPeerEvents.oniceconnectionstatechange, this.onIceConnectionStateChange);
-            user.eventEmitter.removeListener(ERTCPeerEvents.onrecvstreaminactive, this.onRecvStreamInactive);
-            user.eventEmitter.removeListener(ERTCPeerEvents.onsendstreaminactive, this.onSendStreamInactive);
             user.destroy();
         }
         delete this.users[socketId];
@@ -144,7 +148,37 @@ export class Room extends Base implements IRoom {
     getUser(socketId: string) {
         return this.users[socketId];
     }
+    getUsers(): Array<IUser> {
+        let result = [];
+        Object.keys(this.users).forEach(id => {
+            result.push(this.users[id])
+        })
+        return result;
+    }
     currUser(): IUser {
         return this.getUser(this.signaler.id());
     }
+    addSendStream(stream: MediaStream, user?: IUser) {    
+        if (stream) {
+            if (!this.streams.getSendStream(stream.id)) {
+                this.streams.addSendStream(stream);
+            }
+        }
+        this.sendStreamsToUser();  
+    }
+    sendStreamsToUser(user?: IUser) {
+        let streams = this.streams.getSendStreams();
+        if (user) {
+            user.addSendStreams(streams)
+        } else {
+            this.getUsers().forEach(user => {
+                user.addSendStreams(streams)
+            })            
+        }
+    }
+    close() {
+        Object.keys(this.users).forEach(key => {
+            this.users[key].close();
+        })      
+    }    
 }

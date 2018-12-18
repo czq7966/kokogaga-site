@@ -5,7 +5,6 @@ import { User } from "./user";
 import { IUserQuery, EClientBaseEvents, ECustomEvents } from "./client";
 import { Dispatcher } from "./dispatcher";
 
-
 export class Connection extends Base {
     signaler: Signaler;
     rooms: Rooms;
@@ -86,4 +85,8 @@ export class Connection extends Base {
             this.signaler.disconnect();            
         }
     }
+    close() {
+        this.rooms.close();
+        this.signaler.disconnect();        
+    }    
 }
