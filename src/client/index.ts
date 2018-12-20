@@ -1,12 +1,16 @@
-require('es6-object-assign').polyfill();
+import Es6ObjectAssign = require('es6-object-assign');
+Es6ObjectAssign.polyfill();
 import "url-search-params-polyfill";
 import "webrtc-adapter";
 import "./index.css"
-import { Connection } from "./connection/connection";
-import { EClientBaseEvents, IUserQuery } from "./connection/client";
-import { IUser, User } from "./connection/user";
-import { ERTCPeerEvents, Peer } from "./connection/peer";
+// import { Connection } from "../main/connection";
+// import { EClientBaseEvents, IUserQuery } from "../main/client";
+// import { IUser, User } from "../main/user";
+// import { ERTCPeerEvents, Peer } from "../main/peer";
 
+import * as ADHOCCAST from '../../../adhoc-cast-connection'
+ADHOCCAST.Config.platform = ADHOCCAST.EPlatform.browser;
+ADHOCCAST.AssignWebRTC({});
 
 export interface IPreviewState {
     roomid?: string
@@ -14,17 +18,17 @@ export interface IPreviewState {
     stream?: any;
     iceState?: string;
     offline?: boolean
-    trackUser?: IUser
+    trackUser?: ADHOCCAST.IUser
 }
 
 
 export class Preview {
     params: URLSearchParams;
     state: IPreviewState;
-    conn: Connection;
+    conn: ADHOCCAST.Connection;
     reJoinTimer: number;
     elemInput: HTMLInputElement;
-    elemGo: HTMLButtonElement;
+    elemGo: HTMLButtonElement; 
     elemInfo: HTMLElement;
     elemVideo: HTMLVideoElement;
     elemLog: HTMLSpanElement;
@@ -36,7 +40,8 @@ export class Preview {
     constructor() {
         this.params = new URLSearchParams(location.search);
         let signalerUrl = window.location.origin;        
-        this.conn = new Connection(signalerUrl);
+        // signalerUrl = 'http://192.168.252.87:13170'
+        this.conn = new ADHOCCAST.Connection(signalerUrl);
 
         this.state = {
             roomid: this.params.get('roomid'),
@@ -62,33 +67,20 @@ export class Preview {
 
         this.elemInput.value = this.state.roomid || '';        
         this.elemGo.onclick = this.doGo;
-
-        // this.elemVideo.onclick = () => {
-        //     var ele = document.documentElement;
-        //     if (ele .requestFullscreen) {
-        //         ele .requestFullscreen();
-        //     } else if (ele['mozRequestFullScreen']) {
-        //         ele['mozRequestFullScreen']();
-        //     } else if (ele['webkitRequestFullScreen']) {
-        //         ele['webkitRequestFullScreen']();
-        //     }
-        // }
     }
     initEvents() {
         window.addEventListener('offline', this.onOffline, false);
         window.addEventListener('online', this.onOnline, false);
-        this.conn.eventEmitter.addListener(EClientBaseEvents.disconnect, this.onDisconnect)
+        this.conn.eventEmitter.addListener(ADHOCCAST.EClientBaseEvents.disconnect, this.onDisconnect)
     }
     unInitEvents() {
-        this.conn.eventEmitter.removeListener(EClientBaseEvents.disconnect, this.onDisconnect)
+        this.conn.eventEmitter.removeListener(ADHOCCAST.EClientBaseEvents.disconnect, this.onDisconnect)
         window.removeEventListener('offline', this.onOffline, false);
         window.removeEventListener('online', this.onOnline, false);        
     }
 
     render() {       
         let isSharing = this.state.stream && (this.state.iceState == "connected" || this.state.iceState == "completed");
-
-        // this.elemRoom.style.display = this.state.roomid ? "none" : "visible"
         this.elemInfo.innerText = this.state.info;
         this.elemHeader.style.display = isSharing ? "none" : "visible"
     }
@@ -123,17 +115,17 @@ export class Preview {
         let href = window.location.origin + window.location.pathname + search;
         window.location.href =  href;
     }
-    onTrack = (ev: RTCTrackEvent, user: IUser) => {                
-        console.log('on track111');
-        console.dir(ev)
+    onRecvStream = (stream: MediaStream, user: ADHOCCAST.IUser) => {                
+        console.log('on recv stream');
+        console.dir(stream)
         this.state.trackUser = user;
-        this.state.info = 'waiting track...';
-        this.state.stream = ev.streams[0];
+        this.state.info = 'waiting stream...';
+        this.state.stream = stream;
         this.render();        
         this.doPlay();        
     }
 
-    onIceConnectionStateChange = (ev: Event, user: IUser) => {
+    onIceConnectionStateChange = (ev: Event, user: ADHOCCAST.IUser) => {
         let peer = ev.target as RTCPeerConnection;
         this.state.iceState = peer.iceConnectionState;
         this.state.info = 'waiting p2p...' + peer.iceConnectionState;
@@ -145,9 +137,9 @@ export class Preview {
         if (this.state.stream && (this.state.iceState == "connected" || this.state.iceState == "completed")) {
             this.state.info = 'sharing...';
             setTimeout(() => {
-                this.elemVideo.srcObject = this.state.stream;
-                // this.elemVideo.controls = true;   
-            }, 0)
+                // this.elemVideo.srcObject = this.state.stream;
+                this.elemVideo.src = URL.createObjectURL(this.state.stream);
+            }, 100)
             this.render();
         }
     }
@@ -161,7 +153,7 @@ export class Preview {
     doJoinRoom = () => {        
         if (this.state.roomid && this.state.roomid.length > 0) {
             this.state.info = 'checking connection: ' + this.state.roomid;
-            let query: IUserQuery = {
+            let query: ADHOCCAST.IUserQuery = {
                 roomid: this.state.roomid,
                 password: '',
             }                    
@@ -170,8 +162,8 @@ export class Preview {
             .then(() => {
                 this.state.info = 'joined, waiting sharing! ';
                 let room = this.conn.rooms.getRoom(this.state.roomid);
-                room.eventEmitter.addListener(ERTCPeerEvents.ontrack, this.onTrack)  
-                room.eventEmitter.addListener(ERTCPeerEvents.oniceconnectionstatechange, this.onIceConnectionStateChange)  
+                room.eventEmitter.addListener(ADHOCCAST.ERTCPeerEvents.onrecvstream, this.onRecvStream)  
+                room.eventEmitter.addListener(ADHOCCAST.ERTCPeerEvents.oniceconnectionstatechange, this.onIceConnectionStateChange)  
                 
                 this.render();          
             })
@@ -192,9 +184,9 @@ export class Preview {
 new Preview();
 
 export class Test {
-    conn: Connection;
+    conn: ADHOCCAST.Connection;
     constructor() {
-        this.conn = new Connection('');
+        this.conn = new ADHOCCAST.Connection('');
         console.dir(this.conn)
 
     }

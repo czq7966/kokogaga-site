@@ -6,7 +6,13 @@ import { App } from './app'
 
 var app = new App();
 var server = http.createServer(app.express);
-var io = require('socket.io')(server) as SocketIO.Server;
+var io = require('socket.io')(server, {
+        // upgradeTimeout: 30000
+        transports: ['websocket'],
+        // pingTimeout:  10000,
+        // pingInterval: 5000,
+        // allowUpgrades: false
+    }) as SocketIO.Server;
 
 export class Main {
     port: number
