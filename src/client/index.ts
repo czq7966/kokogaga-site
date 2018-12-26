@@ -8,9 +8,8 @@ import "./index.css"
 // import { IUser, User } from "../main/user";
 // import { ERTCPeerEvents, Peer } from "../main/peer";
 
-import * as ADHOCCAST from '../../../adhoc-cast-connection'
+import * as ADHOCCAST from '../../../adhoc-cast-connection/src/main/dts'
 ADHOCCAST.Config.platform = ADHOCCAST.EPlatform.browser;
-ADHOCCAST.AssignWebRTC({});
 
 export interface IPreviewState {
     roomid?: string
@@ -18,7 +17,7 @@ export interface IPreviewState {
     stream?: any;
     iceState?: string;
     offline?: boolean
-    trackUser?: ADHOCCAST.IUser
+    user?: ADHOCCAST.IUser
 }
 
 
@@ -67,6 +66,15 @@ export class Preview {
 
         this.elemInput.value = this.state.roomid || '';        
         this.elemGo.onclick = this.doGo;
+
+        this.elemVideo.onmousedown = this.onVideoMouseEvent
+        this.elemVideo.onmouseup = this.onVideoMouseEvent
+        this.elemVideo.onmouseenter = this.onVideoMouseEvent
+        this.elemVideo.onmouseleave = this.onVideoMouseEvent
+        this.elemVideo.onmousemove = this.onVideoMouseEvent
+        this.elemVideo.onmouseover = this.onVideoMouseEvent
+        this.elemVideo.onmouseout = this.onVideoMouseEvent
+        this.elemVideo.onwheel = this.onVideoMouseEvent
     }
     initEvents() {
         window.addEventListener('offline', this.onOffline, false);
@@ -118,7 +126,7 @@ export class Preview {
     onRecvStream = (stream: MediaStream, user: ADHOCCAST.IUser) => {                
         console.log('on recv stream');
         console.dir(stream)
-        this.state.trackUser = user;
+        this.state.user = user;
         this.state.info = 'waiting stream...';
         this.state.stream = stream;
         this.render();        
@@ -132,13 +140,34 @@ export class Preview {
         this.render();
         this.doPlay();
     }
+
+    onVideoMouseEvent = (ev: MouseEvent) => {        
+        let type = ADHOCCAST.EInputDeviceMouseType[ev.type];
+        let user = this.state.user;
+        if (type && user ) {            
+            let event: ADHOCCAST.IMouseEvent = {
+                type: type,
+                x:  ev.clientX,
+                y:  ev.clientY,
+                deltaX: (ev as WheelEvent).deltaX,
+                deltaY: (ev as WheelEvent).deltaY,
+                destX: (ev.target as HTMLVideoElement).offsetWidth,
+                destY: (ev.target as HTMLVideoElement).offsetHeight,
+                button: ev.button == 0 ? 'left': ev.button == 1 ? 'middle' : ev.button == 2 ? 'right' : 'none',
+                clickCount:  ev.buttons
+            }
+            user.peer.input.sendEvent(event)            
+        }        
+        ev.preventDefault();
+    }
+
     doPlay() {
         //"new" | "checking" | "connected" | "completed" | "disconnected" | "failed" | "closed";
         if (this.state.stream && (this.state.iceState == "connected" || this.state.iceState == "completed")) {
             this.state.info = 'sharing...';
             setTimeout(() => {
-                // this.elemVideo.srcObject = this.state.stream;
-                this.elemVideo.src = URL.createObjectURL(this.state.stream);
+                this.elemVideo.srcObject = this.state.stream;
+                // this.elemVideo.src = URL.createObjectURL(this.state.stream);
             }, 100)
             this.render();
         }
@@ -180,6 +209,7 @@ export class Preview {
         this.render();
     }    
 }
+
 
 new Preview();
 
