@@ -166,8 +166,14 @@ export class Preview {
         if (this.state.stream && (this.state.iceState == "connected" || this.state.iceState == "completed")) {
             this.state.info = 'sharing...';
             setTimeout(() => {
+                this.elemVideo.oncanplay = () => {
+                    this.elemVideo.play().catch((err) => {
+                        console.error(err)
+                        this.elemVideo.muted = true;
+                        this.elemVideo.play();
+                    })
+                }
                 this.elemVideo.srcObject = this.state.stream;
-                // this.elemVideo.src = URL.createObjectURL(this.state.stream);
             }, 100)
             this.render();
         }
