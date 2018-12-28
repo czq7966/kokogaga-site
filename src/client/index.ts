@@ -3,10 +3,6 @@ Es6ObjectAssign.polyfill();
 import "url-search-params-polyfill";
 import "webrtc-adapter";
 import "./index.css"
-// import { Connection } from "../main/connection";
-// import { EClientBaseEvents, IUserQuery } from "../main/client";
-// import { IUser, User } from "../main/user";
-// import { ERTCPeerEvents, Peer } from "../main/peer";
 
 import * as ADHOCCAST from '../../../adhoc-cast-connection/src/main/dts'
 ADHOCCAST.Config.platform = ADHOCCAST.EPlatform.browser;
@@ -22,6 +18,7 @@ export interface IPreviewState {
 
 
 export class Preview {
+    touchMode: boolean;
     params: URLSearchParams;
     state: IPreviewState;
     conn: ADHOCCAST.Connection;
@@ -75,6 +72,10 @@ export class Preview {
         this.elemVideo.onmouseover = this.onVideoMouseEvent
         this.elemVideo.onmouseout = this.onVideoMouseEvent
         this.elemVideo.onwheel = this.onVideoMouseEvent
+        this.elemVideo.ontouchstart = this.onVideoTouchEvent
+        this.elemVideo.ontouchmove = this.onVideoTouchEvent
+        this.elemVideo.ontouchend = this.onVideoTouchEvent
+        this.elemVideo.ontouchcancel = this.onVideoTouchEvent
     }
     initEvents() {
         window.addEventListener('offline', this.onOffline, false);
@@ -141,10 +142,10 @@ export class Preview {
         this.doPlay();
     }
 
-    onVideoMouseEvent = (ev: MouseEvent) => {        
+    onVideoMouseEvent = (ev: MouseEvent) => {   
         let type = ADHOCCAST.EInputDeviceMouseType[ev.type];
         let user = this.state.user;
-        if (type && user ) {            
+        if (!this.touchMode && type && user ) {
             let event: ADHOCCAST.IMouseEvent = {
                 type: type,
                 x:  ev.clientX,
@@ -156,8 +157,41 @@ export class Preview {
                 button: ev.button == 0 ? 'left': ev.button == 1 ? 'middle' : ev.button == 2 ? 'right' : 'none',
                 clickCount:  ev.buttons
             }
-            user.peer.input.sendEvent(event)            
+            user.peer.input.sendEvent(event)
+            ev.preventDefault();
         }        
+        
+    }
+
+    onVideoTouchEvent = (ev: TouchEvent) => {
+        this.touchMode = true;
+        let type = ADHOCCAST.EInputDeviceTouchType[ev.type];
+        let user = this.state.user;
+        if (type && user ) {       
+            let points: ADHOCCAST.ITouchPoint[] = [];            
+            let touches = ev.touches.length > 0 ? ev.touches : ev.changedTouches;
+            for (let i = 0; i < touches.length; i++) {
+                let touch = touches[i];
+                points.push({
+                    x: touch.clientX,
+                    y: touch.clientY,
+                    radiusX: touch.radiusX,
+                    radiusY: touch.radiusY,
+                    rotationAngle: touch.rotationAngle,
+                    force: touch.force,
+                    id: touch.identifier
+                })
+            }
+            
+            let event: ADHOCCAST.ITouchEvent = {
+                type: type,
+                points: points,                
+                destX: (ev.target as HTMLVideoElement).offsetWidth,
+                destY: (ev.target as HTMLVideoElement).offsetHeight,
+            }
+            user.peer.input.sendEvent(event)
+        }    
+
         ev.preventDefault();
     }
 
@@ -198,7 +232,7 @@ export class Preview {
                 this.state.info = 'joined, waiting sharing! ';
                 let room = this.conn.rooms.getRoom(this.state.roomid);
                 room.eventEmitter.addListener(ADHOCCAST.ERTCPeerEvents.onrecvstream, this.onRecvStream)  
-                room.eventEmitter.addListener(ADHOCCAST.ERTCPeerEvents.oniceconnectionstatechange, this.onIceConnectionStateChange)  
+                room.eventEmitter.addListener(ADHOCCAST.ERTCPeerEvents.oniceconnectionstatechange, this.onIceConnectionStateChange) 
                 
                 this.render();          
             })
@@ -219,14 +253,3 @@ export class Preview {
 
 new Preview();
 
-export class Test {
-    conn: ADHOCCAST.Connection;
-    constructor() {
-        this.conn = new ADHOCCAST.Connection('');
-        console.dir(this.conn)
-
-    }
-
-}
-
-// new Test();
