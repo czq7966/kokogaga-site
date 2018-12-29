@@ -168,11 +168,11 @@ export class Preview {
         let type = ADHOCCAST.EInputDeviceTouchType[ev.type];
         let user = this.state.user;
         if (type && user ) {       
-            let points: ADHOCCAST.ITouchPoint[] = [];            
-            let touches = ev.touches.length > 0 ? ev.touches : ev.changedTouches;
-            for (let i = 0; i < touches.length; i++) {
-                let touch = touches[i];
-                points.push({
+            let touches: ADHOCCAST.ITouchPoint[] = [];          
+            let changedTouches: ADHOCCAST.ITouchPoint[] = [];
+            for (let i = 0; i < ev.touches.length; i++) {
+                let touch = ev.touches[i];
+                touches.push({
                     x: touch.clientX,
                     y: touch.clientY,
                     radiusX: touch.radiusX,
@@ -182,10 +182,23 @@ export class Preview {
                     id: touch.identifier
                 })
             }
+            for (let i = 0; i < ev.changedTouches.length; i++) {
+                let touch = ev.changedTouches[i];
+                changedTouches.push({
+                    x: touch.clientX,
+                    y: touch.clientY,
+                    radiusX: touch.radiusX,
+                    radiusY: touch.radiusY,
+                    rotationAngle: touch.rotationAngle,
+                    force: touch.force,
+                    id: touch.identifier
+                })
+            }            
             
             let event: ADHOCCAST.ITouchEvent = {
                 type: type,
-                points: points,                
+                touches: touches,
+                changedTouches: changedTouches,
                 destX: (ev.target as HTMLVideoElement).offsetWidth,
                 destY: (ev.target as HTMLVideoElement).offsetHeight,
             }
