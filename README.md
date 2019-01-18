@@ -1,3 +1,5 @@
+Version 0.2.0 开始
+===
 Adhoc Cast Signaler-Server
 ===
 自组网WebRTC信令服务器，基于开源的socket.io上开发
