@@ -9,6 +9,7 @@ var server = http.createServer(app.express);
 var io = require('socket.io')(server, {
         // upgradeTimeout: 30000
         transports: ['websocket'],
+        serveClient: false,
         // pingTimeout:  10000,
         // pingInterval: 5000,
         // allowUpgrades: false

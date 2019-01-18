@@ -17,6 +17,9 @@
     "server:clean": "rimraf ./dist/server",
     "server:start": "node ./dist/server/index.js",
     "server": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs && npm run server:start",
+    "android:server:clean": "rimraf ./dist/android/server",
+    "android:server:start": "node ./dist/android/server/index.js",
+    "android:server":"npm run android:server:clean && cross-env NODE_MODULE=android-server webpack --env.cjs && npm run android:server:start",
     "build": "npm run server:build && npm run client:build",
     "compile": "npm run server:compile && npm run client:compile",
     "start": "npm run server:start "
