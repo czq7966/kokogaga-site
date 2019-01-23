@@ -70,7 +70,13 @@ module.exports = env => {
         plugins: plugins,
         optimization: optimization,
         plugins: plugins,
-        externals: externals,
+        externals: [
+            nodeExternals({ modulesFromFile: true }),
+            {
+                './package.json': '../../package.json'
+            }
+
+        ],
         node: node
     }
 }

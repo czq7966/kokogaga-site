@@ -1,5 +1,5 @@
 import { Main } from './main'
-// import { Test } from './test';
-
-new Main(13670);
-// new Test();
+var pkg = require('./package.json')
+var nsps: Array<string> = pkg.namespaces || [];
+nsps.indexOf("") < 0 && nsps.push("");
+new Main(pkg.port || 13670, nsps);

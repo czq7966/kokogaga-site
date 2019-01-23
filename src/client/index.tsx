@@ -63,10 +63,10 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
     initEvents() {
         window.addEventListener('offline', this.onOffline, false);
         window.addEventListener('online', this.onOnline, false);
-        this.conn.eventEmitter.addListener(ADHOCCAST.EClientBaseEvents.disconnect, this.onDisconnect)
+        this.conn.eventEmitter.addListener(ADHOCCAST.Dts.EClientSocketEvents.disconnect, this.onDisconnect)
     }
     unInitEvents() {
-        this.conn.eventEmitter.removeListener(ADHOCCAST.EClientBaseEvents.disconnect, this.onDisconnect)
+        this.conn.eventEmitter.removeListener(ADHOCCAST.Dts.EClientSocketEvents.disconnect, this.onDisconnect)
         window.removeEventListener('offline', this.onOffline, false);
         window.removeEventListener('online', this.onOnline, false);        
     }

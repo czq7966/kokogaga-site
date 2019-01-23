@@ -1,6 +1,6 @@
 {
   "name": "adhoc-cast-signaler-server",
-  "version": "0.0.15",
+  "version": "0.2.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -55,5 +55,9 @@
     "webpack-cli": "^3.1.2",
     "webpack-node-externals": "^1.7.2",
     "webrtc-adapter": "^6.4.6"
-  }
+  },
+  "port": 13670,
+  "namespaces": [
+    "prometheus"
+  ]
 }

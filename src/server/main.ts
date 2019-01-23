@@ -1,7 +1,8 @@
+import './cmds/index'
 import { EventEmitter } from "events";
-import { SocketUser } from "./user";
 import * as http from 'http'
 import { App } from './app'
+import { SocketUsers } from "./users";
 
 
 var app = new App();
@@ -17,21 +18,24 @@ var io = require('socket.io')(server, {
 
 export class Main {
     port: number
+    namespaces: Array<string>
     eventEmitter: EventEmitter;
-    constructor(port: number) {
+    constructor(port: number, namespaces: Array<string>) {
         this.port = port;
+        this.namespaces = namespaces
         this.eventEmitter = new EventEmitter();
         this.initEvents();       
         this.run(); 
     }
 
     initEvents() {
-        io.on('connect', (socket: SocketIO.Socket) => {
-            new SocketUser(io, socket)
+        this.namespaces.forEach(name => {
+            let nsp = io.of(name);
+            let users = new SocketUsers(nsp);
         })
     }
     run() {
-        console.log('lisent on port ' + this.port)
         server.listen(this.port)
+        console.log('lisent on port ' + this.port)        
     }
 }

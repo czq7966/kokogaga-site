@@ -80,10 +80,10 @@ export class Preview {
     initEvents() {
         window.addEventListener('offline', this.onOffline, false);
         window.addEventListener('online', this.onOnline, false);
-        this.conn.eventEmitter.addListener(ADHOCCAST.EClientBaseEvents.disconnect, this.onDisconnect)
+        this.conn.eventEmitter.addListener(ADHOCCAST.Dts.EClientSocketEvents.disconnect, this.onDisconnect)
     }
     unInitEvents() {
-        this.conn.eventEmitter.removeListener(ADHOCCAST.EClientBaseEvents.disconnect, this.onDisconnect)
+        this.conn.eventEmitter.removeListener(ADHOCCAST.Dts.EClientSocketEvents.disconnect, this.onDisconnect)
         window.removeEventListener('offline', this.onOffline, false);
         window.removeEventListener('online', this.onOnline, false);        
     }
@@ -226,10 +226,15 @@ export class Preview {
         }
     }
     doGo = () => {
-        this.state.roomid = this.elemInput.value.trim();
-        if (this.state.roomid) {
-            this.onOnline();
-        }
+        // this.state.roomid = this.elemInput.value.trim();
+        // if (this.state.roomid) {
+        //     this.onOnline();
+        // }
+
+        this.doGoLogin();
+    }
+    doGoLogin = () => {
+        this.conn.login();        
     }
 
     doJoinRoom = () => {        
