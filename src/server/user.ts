@@ -1,27 +1,6 @@
 import { SocketUsers, ISocketNamespace } from "./users";
 import * as Dts from "./dts";
-// import { dispatcher } from "./cmds/index";
-import { Debug } from "./helper";
 import { Dispatcher } from "./dispatcher";
-
-export enum EReservedEvents {
-    error = 'error',
-    connect = 'connect',
-    disconnect = 'disconnect',
-    disconnecting = 'disconnecting',
-    // newListener = 'newListener',
-    // removeListener = 'removeListener',
-    ping = 'ping',
-    pong = 'pong',
-}
-
-export enum ECustomEvents {
-    message = 'room-message',
-    openRoom = 'room-open',
-    joinRoom = 'room-join',    
-    closeRoom = 'room-close',
-    leaveRoom = 'room-leave'
-}
 
 export interface IUserQuery {
     roomid?: string,
@@ -45,7 +24,7 @@ export class SocketUser  {
     socket: IUserSocket;
     dispatcher: Dispatcher;
     constructor(socket: IUserSocket) {
-        this.dispatcher = Dispatcher.getInstance();
+        this.dispatcher = Dispatcher.getInstance(Dts.dispatcherInstanceName);
         this.socket = socket;
         this.socket.user = this;  
         this.users = (socket.nsp as ISocketNamespace).users;
@@ -63,13 +42,11 @@ export class SocketUser  {
     initEvents() {
         this.socket.on(Dts.EServerSocketEvents.error, this.onError);
         this.socket.on(Dts.EServerSocketEvents.disconnecting, this.onDisconnecting);
-        this.socket.on(Dts.EServerSocketEvents.disconnect, this.onDisconnect);
         this.socket.on(Dts.CommandID, this.onCommand);
 
-        [EReservedEvents, ECustomEvents].forEach(events => {
+        [Dts.EServerSocketEvents].forEach(events => {
             Object.keys(events).forEach(key => {
                 let value = events[key];
-                value != ECustomEvents.message &&
                 this.socket.addListener(value, (...args: any[]) => {
                     console.log('ServerEvent', value, ...args ? args[0]: '')
                 })
@@ -89,9 +66,7 @@ export class SocketUser  {
 
 
     onDisconnecting = () => {
-        if (this.isLogin()) {
-            this.users.delSocketUser(this.user.id)
-        } 
+        this.logout();
     }
 
     onDisconnect = () => {
@@ -101,6 +76,7 @@ export class SocketUser  {
 
     // Command business
     onCommand = (cmd: Dts.ICommandData, cb?: (result: boolean) => void) => {
+        console.log(Dts.CommandID + 'Event', cmd.cmdId, cmd.from, cmd.to);
         cb && cb(true)
         this.dispatcher.onCommand(cmd, this);
 
@@ -112,15 +88,29 @@ export class SocketUser  {
 
         switch(cmd.to.type) {
             case 'room':
+                cmd.to.id = cmd.to.id || this.user.room.id;
                 this.socket.to(cmd.to.id).emit(Dts.CommandID, cmd);
                 break;
             case 'socket':
-                if (this.socket.id === cmd.to.id || !cmd.to.id) {
+                cmd.to.id = cmd.to.id || this.socket.id;
+                if (this.socket.id === cmd.to.id) {
                     this.socket.emit(Dts.CommandID, cmd);
                 } else {
                     this.socket.to(cmd.to.id).emit(Dts.CommandID, cmd);
                 }
                 break
+            case 'user':
+                cmd.to.id = cmd.to.id || this.user.id;
+                if (this.user.id === cmd.to.id) {
+                    this.socket.emit(Dts.CommandID, cmd);
+                } else {
+                    let toUser = this.users.getSocketUser(cmd.to.id);                    
+                    if (toUser) {
+                        this.socket.to(toUser.socket.id).emit(Dts.CommandID, cmd)
+                    }
+                }
+            case 'server':
+                break;                
             default:
                 this.socket.emit(Dts.CommandID, cmd);
                 break;
@@ -144,6 +134,31 @@ export class SocketUser  {
         let label = this.user && this.user.label || 0;
         return (label & Dts.EUserLabel.streamSender) === Dts.EUserLabel.streamSender;        
     } 
+    login(data: Dts.ICommandLoginReqData): Promise<any> {
+        if (!this.isLogin()) {
+            let user = Object.assign({}, data.props.user) as Dts.IUser;    
+            this.user = user;        
+            this.users.addSocketUser(this);                       
+            return this.users.joinAdhocRoom(this)        
+        } else {
+            return Promise.resolve(this.user.room.id)
+        }
+    }
+    logout(data?: Dts.ICommandLogoutReqData, disconnect?: boolean) {
+        if (this.isLogin()) {
+            data = data || {
+                props: {
+                    user: this.user
+                }
+            }
+            data.to = {type: 'room', id: this.user.room.id};
+            this.sendCommand(data);
+            this.users.delSocketUser(this.user.id);
+            this.users.leaveAdhocRoom(this);
+            delete this.user;
+        }    
+        disconnect && this.socket.connected && this.socket.disconnect();
+    }
 
     // createRoomId(): string {
     //     let roomid = Math.floor(Math.random() * 100000).toString();

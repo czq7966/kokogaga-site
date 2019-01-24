@@ -1,7 +1,7 @@
 import { SocketUser, IUserSocket } from "./user";
 import * as Dts from "./dts";
 import { Base } from "./base";
-import { KeyValue } from "./helper";
+import * as Cmds from "./cmds/index";
 
 export interface ISocketNamespace extends SocketIO.Namespace {
     users?: SocketUsers
@@ -9,14 +9,14 @@ export interface ISocketNamespace extends SocketIO.Namespace {
 
 export class SocketUsers extends Base {
     nsp: ISocketNamespace
-    users: KeyValue<SocketUser>;
-    sockets: KeyValue<SocketUser>;
+    users: Cmds.Helper.KeyValue<SocketUser>;
+    sockets: Cmds.Helper.KeyValue<SocketUser>;
     constructor(nsp: ISocketNamespace) {
         super();
         this.nsp = nsp;
         this.nsp.users = this;
-        this.users = new KeyValue();
-        this.sockets = new KeyValue();
+        this.users = new Cmds.Helper.KeyValue();
+        this.sockets = new Cmds.Helper.KeyValue();
         this.initEvents();
     }
     destroy() {
@@ -36,6 +36,10 @@ export class SocketUsers extends Base {
     onConnect = (socket: SocketIO.Socket) => {
         console.log('ServerEvent', 'connect', socket.id)
         let sckUser = new SocketUser(socket);
+        socket.once(Dts.EServerSocketEvents.disconnect, () => {
+            sckUser.destroy();
+            sckUser = null;
+        });
     }     
     
     // SocketUser逻辑业务
@@ -55,12 +59,12 @@ export class SocketUsers extends Base {
         this.users.add(sckUser.user.id, sckUser);
         this.sockets.add(sckUser.socket.id, sckUser);
     }
-    delSocketUser(userid: string) {
+    delSocketUser(userid: string): SocketUser {
         let sckUser = this.getSocketUser(userid);
         if (sckUser) {
             this.users.del(userid);
             this.sockets.del(sckUser.socket.id)
-            sckUser.destroy();
+            return sckUser;
         }
     }
     removeSocketUser(userid: string): SocketUser {
@@ -90,7 +94,7 @@ export class SocketUsers extends Base {
         return Dts.ERoomPrefix.adhoc  + user.socket.conn.remoteAddress;
     }
 
-    toAdhocRoom(user: SocketUser): Promise<any> {
+    joinAdhocRoom(user: SocketUser): Promise<any> {
         return new Promise((resolve, reject) => {
             let roomid = this.getAdhocRoomId(user);
             user.user.room = {id: roomid};
@@ -103,4 +107,17 @@ export class SocketUsers extends Base {
             });
         })        
     }
+    leaveAdhocRoom(user: SocketUser): Promise<any> {
+        return new Promise((resolve, reject) => {
+            let roomid = this.getAdhocRoomId(user);
+            user.user.room = {id: roomid};
+            user.socket.leave(roomid, err => {
+                if (err) {
+                    reject(err)    
+                } else {
+                    resolve(roomid)    
+                }
+            });
+        })        
+    }    
 }

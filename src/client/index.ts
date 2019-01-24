@@ -233,8 +233,13 @@ export class Preview {
 
         this.doGoLogin();
     }
-    doGoLogin = () => {
-        this.conn.login();        
+    doGoLogin = () => {     
+        this.conn.isLogin()  ?
+            this.conn.logout() :
+            this.conn.login();        
+    }
+    doLogout = () => {
+        this.conn.logout();
     }
 
     doJoinRoom = () => {        

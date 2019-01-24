@@ -1,21 +1,9 @@
 import * as Dts from './dts';
-import * as Common from './index'
+import * as Common from './common/index'
 import { SocketUser } from '../user';
 
 // Req
-export interface ICommandLoginReqConstructorParams extends Common.IBaseConstructorParams {
-    props?: Dts.ICommandLoginReqDataProps;
-}
-
-export class CommandLoginReq extends Common.Command  {
-    data: Dts.ICommandLoginReqData;
-
-    constructor(params: ICommandLoginReqConstructorParams ) {
-        super(params)
-    }
-    destroy() {
-        super.destroy();
-    }
+export class CommandLoginReq extends Common.Command<Dts.ICommandLoginReqData, Common.ICommandConstructorParams<Dts.ICommandLoginReqDataProps>>  {
 
     onDispatched(reqCmd: CommandLoginReq, sckUser: SocketUser) {
         this.onReq(sckUser, reqCmd.data)
@@ -23,19 +11,15 @@ export class CommandLoginReq extends Common.Command  {
 
     // logical business
     onReq(sckUser: SocketUser, reqData: Dts.ICommandLoginReqData) {
-        console.log('onReq')
         if (sckUser.isLogin()) {
             this.doLogin_failed(sckUser, reqData, 'already login!');
         } else {
-            let user = Object.assign({}, reqData.props.user) as Dts.IUser;    
-            sckUser.user = user;
             this.doLogin(sckUser, reqData);        
         }
     }    
 
     doLogin(sckUser: SocketUser, reqData: Dts.ICommandLoginReqData) {
-        sckUser.users.addSocketUser(sckUser);                       
-        sckUser.users.toAdhocRoom(sckUser)
+        sckUser.login(reqData)
         .then(roomid => {
             this.doLogin_success(sckUser, reqData, roomid)
         })
@@ -71,40 +55,33 @@ export class CommandLoginReq extends Common.Command  {
         sckUser.sendCommand(respData);
     
         //Broadcast  
-        let cmd: Dts.ICommandLoginReqData = {
-                from : {type:'server', id: ''},
-                to : {type:'room', id: roomid},
-                type : Dts.ECommandType.req,
-                cmdId: reqData.cmdId,
-                props: {
-                    user: sckUser.user
-                }
-            }
-        sckUser.sendCommand(cmd);
+        // let cmd: Dts.ICommandLoginReqData = {
+        //         from : {type:'server', id: ''},
+        //         to : {type:'room', id: roomid},
+        //         type : Dts.ECommandType.req,
+        //         cmdId: reqData.cmdId,
+        //         props: {
+        //             user: sckUser.user
+        //         }
+        //     }
+        // sckUser.sendCommand(cmd);
     }
 
 }
 
 
 // Resp
-export interface ICommandLoginRespConstructorParams extends Common.IBaseConstructorParams {
-    props?: Dts.ICommandLoginRespDataProps;
-}
 
-export class CommandLoginResp extends Common.Command  {
-    data: Dts.ICommandLoginRespData;
-    constructor(params: ICommandLoginRespConstructorParams ) {
-        super(params)
-    }
-    destroy() {
-        super.destroy();
-    }
-}
+// export class CommandLoginResp extends Common.Command<Dts.ICommandLoginRespData, Common.ICommandConstructorParams<Dts.ICommandLoginRespDataProps>>  {
+
+// }
 
 Common.CommandTypes.RegistCommandType({
     cmdId: Dts.ECommandId.adhoc_login,
     name: '登录',
     ReqClass: CommandLoginReq as any,
-    RespClass: CommandLoginResp as any
+    RespClass: null
 })
+
+new CommandLoginReq({instanceId: Dts.dispatcherInstanceName});
 

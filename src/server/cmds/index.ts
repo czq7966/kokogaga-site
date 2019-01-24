@@ -1,5 +1,5 @@
-// export * from './dispatcher'
-// import './login'
+export * from './common/index'
+import './common'
+import './login'
+import './logout'
 
-export * from "../../../../adhoc-cast-connection/src/main/cmds/common/index";
-export * from './login'
