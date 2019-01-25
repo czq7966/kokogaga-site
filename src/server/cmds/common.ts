@@ -1,10 +1,10 @@
 import * as Dts from './dts';
-import * as Common from './index'
-import { SocketUser } from '../user';
+import * as Common from './common/index'
+import * as Modules from '../modules'
 
 // Common
-export class CommandCommon extends Common.Command<Dts.ICommandData, Common.ICommandConstructorParams<any>>  {
-    onDispatched(cmd: Common.ICommand, sckUser: SocketUser) {
+export class CommandCommon extends Common.Command<Dts.ICommandData<any>, Common.ICommandConstructorParams<any>>  {
+    onDispatched(cmd: Common.ICommand, sckUser: Modules.SocketUser) {
         sckUser.sendCommand(cmd.data);
     }    
 }

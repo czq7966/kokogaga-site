@@ -1,22 +1,21 @@
 import { SocketUser, IUserSocket } from "./user";
-import * as Dts from "./dts";
-import { Base } from "./base";
-import * as Cmds from "./cmds/index";
+import * as Dts from "../dts";
+import * as Cmds from "../cmds/index";
 
 export interface ISocketNamespace extends SocketIO.Namespace {
     users?: SocketUsers
 }
 
-export class SocketUsers extends Base {
+export class SocketUsers extends Cmds.Common.Base {
     nsp: ISocketNamespace
-    users: Cmds.Helper.KeyValue<SocketUser>;
-    sockets: Cmds.Helper.KeyValue<SocketUser>;
+    users: Cmds.Common.Helper.KeyValue<SocketUser>;
+    sockets: Cmds.Common.Helper.KeyValue<SocketUser>;
     constructor(nsp: ISocketNamespace) {
         super();
         this.nsp = nsp;
         this.nsp.users = this;
-        this.users = new Cmds.Helper.KeyValue();
-        this.sockets = new Cmds.Helper.KeyValue();
+        this.users = new Cmds.Common.Helper.KeyValue();
+        this.sockets = new Cmds.Common.Helper.KeyValue();
         this.initEvents();
     }
     destroy() {

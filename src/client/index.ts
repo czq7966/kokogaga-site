@@ -3,6 +3,7 @@ Es6ObjectAssign.polyfill();
 import "url-search-params-polyfill";
 import "webrtc-adapter";
 import "./index.css"
+import './test'
 
 import * as ADHOCCAST from '../../../adhoc-cast-connection/src/main/dts'
 ADHOCCAST.Config.platform = ADHOCCAST.EPlatform.browser;
@@ -13,7 +14,7 @@ export interface IPreviewState {
     stream?: any;
     iceState?: string;
     offline?: boolean
-    user?: ADHOCCAST.IUser
+    user?: ADHOCCAST.Modules.IUser
 }
 
 
@@ -37,7 +38,7 @@ export class Preview {
         this.params = new URLSearchParams(location.search);
         let signalerUrl = window.location.origin;        
         // signalerUrl = 'http://192.168.252.87:13170'
-        this.conn = new ADHOCCAST.Connection(signalerUrl);
+        this.conn = new ADHOCCAST.Connection(signalerUrl, 'test');
 
         this.state = {
             roomid: this.params.get('roomid'),
@@ -81,6 +82,7 @@ export class Preview {
         window.addEventListener('offline', this.onOffline, false);
         window.addEventListener('online', this.onOnline, false);
         this.conn.eventEmitter.addListener(ADHOCCAST.Dts.EClientSocketEvents.disconnect, this.onDisconnect)
+        
     }
     unInitEvents() {
         this.conn.eventEmitter.removeListener(ADHOCCAST.Dts.EClientSocketEvents.disconnect, this.onDisconnect)
@@ -124,7 +126,7 @@ export class Preview {
         let href = window.location.origin + window.location.pathname + search;
         window.location.href =  href;
     }
-    onRecvStream = (stream: MediaStream, user: ADHOCCAST.IUser) => {                
+    onRecvStream = (stream: MediaStream, user: ADHOCCAST.Modules.IUser) => {                
         console.log('on recv stream');
         console.dir(stream)
         this.state.user = user;
@@ -134,7 +136,7 @@ export class Preview {
         this.doPlay();        
     }
 
-    onIceConnectionStateChange = (ev: Event, user: ADHOCCAST.IUser) => {
+    onIceConnectionStateChange = (ev: Event, user: ADHOCCAST.Modules.IUser) => {
         let peer = ev.target as RTCPeerConnection;
         this.state.iceState = peer.iceConnectionState;
         this.state.info = 'waiting p2p...' + peer.iceConnectionState;
@@ -245,7 +247,7 @@ export class Preview {
     doJoinRoom = () => {        
         if (this.state.roomid && this.state.roomid.length > 0) {
             this.state.info = 'checking connection: ' + this.state.roomid;
-            let query: ADHOCCAST.IUserQuery = {
+            let query = {
                 roomid: this.state.roomid,
                 password: '',
             }                    

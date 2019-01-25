@@ -1,16 +1,18 @@
-import * as Dts from './dts';
-import * as Common from './common/index'
-import { SocketUser } from '../user';
+import * as Dts from '../dts';
+import * as Common from '../common/index'
+import * as Modules from '../../modules'
 
 // Req
-export class CommandLoginReq extends Common.Command<Dts.ICommandLoginReqData, Common.ICommandConstructorParams<Dts.ICommandLoginReqDataProps>>  {
+export class CommandLoginReq extends Common.Command<
+            Dts.ICommandData<Dts.ICommandLoginReqDataProps>, 
+            Common.ICommandConstructorParams<Dts.ICommandLoginReqDataProps> >  {
 
-    onDispatched(reqCmd: CommandLoginReq, sckUser: SocketUser) {
+    onDispatched(reqCmd: CommandLoginReq, sckUser: Modules.SocketUser) {
         this.onReq(sckUser, reqCmd.data)
     }    
 
     // logical business
-    onReq(sckUser: SocketUser, reqData: Dts.ICommandLoginReqData) {
+    onReq(sckUser: Modules.SocketUser, reqData: Dts.ICommandData<Dts.ICommandLoginReqDataProps>) {
         if (sckUser.isLogin()) {
             this.doLogin_failed(sckUser, reqData, 'already login!');
         } else {
@@ -18,7 +20,7 @@ export class CommandLoginReq extends Common.Command<Dts.ICommandLoginReqData, Co
         }
     }    
 
-    doLogin(sckUser: SocketUser, reqData: Dts.ICommandLoginReqData) {
+    doLogin(sckUser: Modules.SocketUser, reqData: Dts.ICommandData<Dts.ICommandLoginReqDataProps>) {
         sckUser.login(reqData)
         .then(roomid => {
             this.doLogin_success(sckUser, reqData, roomid)
@@ -28,12 +30,12 @@ export class CommandLoginReq extends Common.Command<Dts.ICommandLoginReqData, Co
         })
     }
 
-    doLogin_failed(sckUser, reqData: Dts.ICommandLoginReqData, msg: string) {
+    doLogin_failed(sckUser, reqData: Dts.ICommandData<Dts.ICommandLoginReqDataProps>, msg: string) {
         let props: Dts.ICommandLoginRespDataProps = {
             result: false,
             msg: msg
         }
-        let respData = Object.assign({}, reqData) as  Dts.ICommandLoginRespData;
+        let respData = Object.assign({}, reqData) as  Dts.ICommandData<Dts.ICommandLoginRespDataProps>;
         respData.type = Dts.ECommandType.resp;
         respData.to = reqData.from;
         respData.from = {type:'server', id: ''}
@@ -41,13 +43,13 @@ export class CommandLoginReq extends Common.Command<Dts.ICommandLoginReqData, Co
         sckUser.sendCommand(respData);        
     }
 
-    doLogin_success(sckUser, reqData: Dts.ICommandLoginReqData, roomid: string) {
+    doLogin_success(sckUser, reqData: Dts.ICommandData<Dts.ICommandLoginReqDataProps>, roomid: string) {
         //Resp
         let props: Dts.ICommandLoginRespDataProps = {
             result: true,
             user: sckUser.user
         }
-        let respData = Object.assign({}, reqData) as  Dts.ICommandLoginRespData;
+        let respData = Object.assign({}, reqData) as Dts.ICommandData<Dts.ICommandLoginRespDataProps>;
         respData.type = Dts.ECommandType.resp;
         respData.to = reqData.from;
         respData.from = {type:'server', id: ''}

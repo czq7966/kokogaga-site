@@ -15,7 +15,7 @@ export interface IPreviewState {
     stream?: any;
     iceState?: string;
     offline?: boolean
-    user?: ADHOCCAST.IUser
+    user?: ADHOCCAST.Modules.IUser
 }
 export interface IPreviewProp {
 
@@ -34,7 +34,7 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
         this.params = new URLSearchParams(location.search);
         let signalerUrl = window.location.origin;        
         // signalerUrl = 'http://192.168.252.87:13170'
-        this.conn = new ADHOCCAST.Connection(signalerUrl);
+        this.conn = new ADHOCCAST.Connection(signalerUrl, '');
 
         this.state = {
             roomid: this.params.get('roomid'),
@@ -156,7 +156,7 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
         let href = window.location.origin + window.location.pathname + search;
         window.location.href =  href;
     }
-    onRecvStream = (stream: MediaStream, user: ADHOCCAST.IUser) => {                
+    onRecvStream = (stream: MediaStream, user: ADHOCCAST.Modules.IUser) => {                
         console.log('on recv stream');
         console.dir(stream)
         this.setState({
@@ -166,7 +166,7 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
         })
     }
 
-    onIceConnectionStateChange = (ev: Event, user: ADHOCCAST.IUser) => {
+    onIceConnectionStateChange = (ev: Event, user: ADHOCCAST.Modules.IUser) => {
         let peer = ev.target as RTCPeerConnection;
         this.setState({
             iceState: peer.iceConnectionState,
@@ -201,7 +201,7 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
                 info : 'checking connection: ' + this.state.roomid
             })
 
-            let query: ADHOCCAST.IUserQuery = {
+            let query = {
                 roomid: this.state.roomid,
                 password: '',
             }                    

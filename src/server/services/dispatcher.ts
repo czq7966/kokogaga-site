@@ -1,13 +1,14 @@
-import { Base, CmdDispatcher, IBaseConstructorParams, IDispatcher } from "./cmds/index"
-import * as Dts from './cmds/dts'
-import { SocketUser } from "./user";
+import * as Cmds from "../cmds/index"
+import * as Dts from '../cmds/dts'
+import * as Modules from '../modules'
+// import { SocketUser } from "../modules/user";
 
 
-export interface IDispatcherConstructorParams extends IBaseConstructorParams {
+export interface IDispatcherConstructorParams extends Cmds.Common.IBaseConstructorParams {
 
 }
 
-export class Dispatcher extends Base implements IDispatcher {
+export class Dispatcher extends Cmds.Common.Base implements Cmds.Common.IDispatcher {
     constructor(params: IDispatcherConstructorParams) {
         super(params);
         this.initEvents();
@@ -24,7 +25,7 @@ export class Dispatcher extends Base implements IDispatcher {
 
     }
 
-    onCommand = (cmd: Dts.ICommandData, sckUser: SocketUser) => {
+    onCommand = (cmd: Dts.ICommandData<any>, sckUser: Modules.SocketUser) => {
         cmd.type = cmd.type || Dts.ECommandType.req;
         cmd.from = cmd.from || {};
         cmd.from.id = cmd.from.id || sckUser.user ? sckUser.user.id : sckUser.socket.id
@@ -33,11 +34,11 @@ export class Dispatcher extends Base implements IDispatcher {
         cmd.to.type = cmd.to.type || 'server';
         cmd.to.id = cmd.to.id || '';
         
-        CmdDispatcher.onCommand(cmd, this, sckUser);
+        Cmds.Common.CmdDispatcher.onCommand(cmd, this, sckUser);
     }
-    sendCommand(cmd: Dts.ICommandData): Promise<any> {
+    sendCommand(cmd: Dts.ICommandData<any>): Promise<any> {
         return;
     }
 }
 
-CmdDispatcher.setDispatcher(Dispatcher as any)
+Cmds.Common.CmdDispatcher.setDispatcher(Dispatcher as any)

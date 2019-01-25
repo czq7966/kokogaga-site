@@ -2,7 +2,7 @@ import './cmds/index'
 import { EventEmitter } from "events";
 import * as http from 'http'
 import { App } from './app'
-import { SocketUsers } from "./users";
+import * as Modules from './modules'
 
 
 var app = new App();
@@ -31,7 +31,7 @@ export class Main {
     initEvents() {
         this.namespaces.forEach(name => {
             let nsp = io.of(name);
-            let users = new SocketUsers(nsp);
+            let users = new Modules.SocketUsers(nsp);
         })
     }
     run() {

@@ -1,6 +1,7 @@
 import { SocketUsers, ISocketNamespace } from "./users";
-import * as Dts from "./dts";
-import { Dispatcher } from "./dispatcher";
+import * as Dts from "../dts";
+import * as Services from '../services/index'
+
 
 export interface IUserQuery {
     roomid?: string,
@@ -22,9 +23,9 @@ export class SocketUser  {
     user: Dts.IUser;
     users: SocketUsers;
     socket: IUserSocket;
-    dispatcher: Dispatcher;
+    dispatcher: Services.Dispatcher;
     constructor(socket: IUserSocket) {
-        this.dispatcher = Dispatcher.getInstance(Dts.dispatcherInstanceName);
+        this.dispatcher = Services.Dispatcher.getInstance(Dts.dispatcherInstanceName);
         this.socket = socket;
         this.socket.user = this;  
         this.users = (socket.nsp as ISocketNamespace).users;
@@ -75,13 +76,13 @@ export class SocketUser  {
 
 
     // Command business
-    onCommand = (cmd: Dts.ICommandData, cb?: (result: boolean) => void) => {
+    onCommand = (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => {
         console.log(Dts.CommandID + 'Event', cmd.cmdId, cmd.from, cmd.to);
         cb && cb(true)
         this.dispatcher.onCommand(cmd, this);
 
     }
-    sendCommand = (cmd: Dts.ICommandData) => {
+    sendCommand = (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => {
         cmd.from = cmd.from || {};
         cmd.from.type = cmd.from.type || 'server';
         cmd.from.id = cmd.from.id || '';
@@ -90,6 +91,7 @@ export class SocketUser  {
             case 'room':
                 cmd.to.id = cmd.to.id || this.user.room.id;
                 this.socket.to(cmd.to.id).emit(Dts.CommandID, cmd);
+                includeSelf && this.socket.emit(Dts.CommandID, cmd);
                 break;
             case 'socket':
                 cmd.to.id = cmd.to.id || this.socket.id;
@@ -134,7 +136,7 @@ export class SocketUser  {
         let label = this.user && this.user.label || 0;
         return (label & Dts.EUserLabel.streamSender) === Dts.EUserLabel.streamSender;        
     } 
-    login(data: Dts.ICommandLoginReqData): Promise<any> {
+    login(data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
         if (!this.isLogin()) {
             let user = Object.assign({}, data.props.user) as Dts.IUser;    
             this.user = user;        
@@ -144,15 +146,16 @@ export class SocketUser  {
             return Promise.resolve(this.user.room.id)
         }
     }
-    logout(data?: Dts.ICommandLogoutReqData, disconnect?: boolean) {
+    logout(data?: Dts.ICommandData<Dts.ICommandLogoutReqDataProps>, includeSelf?: boolean, disconnect?: boolean) {
         if (this.isLogin()) {
             data = data || {
+                cmdId: Dts.ECommandId.adhoc_logout,
                 props: {
                     user: this.user
                 }
             }
             data.to = {type: 'room', id: this.user.room.id};
-            this.sendCommand(data);
+            this.sendCommand(data, includeSelf);
             this.users.delSocketUser(this.user.id);
             this.users.leaveAdhocRoom(this);
             delete this.user;
