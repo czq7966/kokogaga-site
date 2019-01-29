@@ -4,9 +4,7 @@ import * as Services from '../../services'
 import * as Modules from '../../modules'
 
 // Req
-export class CommandRoomJoinReq extends Common.Command<
-            Dts.ICommandData<Dts.ICommandRoomJoinReqDataProps>, 
-            Common.ICommandConstructorParams<Dts.ICommandRoomJoinReqDataProps> >  {
+export class CommandRoomJoinReq extends Common.Command<Dts.ICommandRoomJoinReqDataProps>  {
     onDispatched(reqCmd: CommandRoomJoinReq, sckUser: Modules.SocketUser) {
         Services.ServiceRoomJoin.onDispatched.req(reqCmd, sckUser);
     }      

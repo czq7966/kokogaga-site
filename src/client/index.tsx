@@ -34,7 +34,7 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
         this.params = new URLSearchParams(location.search);
         let signalerUrl = window.location.origin;        
         // signalerUrl = 'http://192.168.252.87:13170'
-        this.conn = new ADHOCCAST.Connection(signalerUrl, '');
+        // this.conn = new ADHOCCAST.Connection(signalerUrl, '');
 
         this.state = {
             roomid: this.params.get('roomid'),

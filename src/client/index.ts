@@ -38,8 +38,14 @@ export class Preview {
         this.params = new URLSearchParams(location.search);
         let signalerUrl = window.location.origin;        
         // signalerUrl = 'http://192.168.252.87:13170'
-        this.conn = new ADHOCCAST.Connection(signalerUrl, 'test');
+        // this.conn = new ADHOCCAST.Connection(signalerUrl, 'test');
 
+        let connParams: ADHOCCAST.IConnectionConstructorParams = {
+            instanceId: ADHOCCAST.Cmds.Common.Helper.uuid(),
+            url: signalerUrl
+        }
+        this.conn = ADHOCCAST.Connection.getInstance(connParams);
+                
         this.state = {
             roomid: this.params.get('roomid'),
             info:'loading...'

@@ -8,46 +8,37 @@ export class ServiceRoomOpen extends Cmds.Common.Base {
     static onDispatched = {
         req(cmd: Cmds.CommandRoomOpenReq, sckUser: Modules.SocketUser) {
             let data = cmd.data;
-            let room = data.props.room
+            let room = data.props.user.room
             if (ServiceRoom.exist(room.id, sckUser)) {
-                let resp: Dts.ICommandData<Dts.ICommandRoomOpenRespDataProps> = {
+                let resp: Dts.ICommandData<Dts.ICommandRoomOpenRespDataProps> = Object.assign({}, data, {
                     type: Dts.ECommandType.resp,
                     from: {type: 'server', id: ''},
-                    to: data.from,
-                    props: {
-                        result: false,
-                        msg: 'Room already exist!'
-                    }                    
-                }
+                    to: data.from      
+                } as any);
+                resp.props.result = false;
+                resp.props.msg = 'Room already exist!'
                 sckUser.sendCommand(resp);
             } else {
                 ServiceRoom.open(room.id, sckUser)
                 .then(roomid => {
-                    let resp: Dts.ICommandData<Dts.ICommandRoomOpenRespDataProps> = {
+                    let resp: Dts.ICommandData<Dts.ICommandRoomOpenRespDataProps> = Object.assign({}, data, {
                         type: Dts.ECommandType.resp,
                         from: {type: 'server', id: ''},
-                        to: data.from,
-                        props: {
-                            result: true,
-                            room: room
-                        }                    
-                    }
+                        to: data.from  
+                    }) as any;                    
+                    resp.props.result = true;
                     sckUser.sendCommand(resp);
                 })
                 .catch(err => {
-                    let resp: Dts.ICommandData<Dts.ICommandRoomOpenRespDataProps> = {
+                    let resp: Dts.ICommandData<Dts.ICommandRoomOpenRespDataProps> = Object.assign({}, data, {
                         type: Dts.ECommandType.resp,
                         from: {type: 'server', id: ''},
-                        to: data.from,
-                        props: {
-                            result: false,
-                            msg: err
-                        }                    
-                    }
+                        to: data.from,         
+                    }) as any;  
+                    resp.props.result = false;
+                    resp.props.msg = err
                     sckUser.sendCommand(resp);
                 })
-
-
             }
         }
     }

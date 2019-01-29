@@ -1,20 +1,20 @@
 import * as Dts from '../dts';
 import * as Common from '../common/index'
 import * as Modules from '../../modules'
+import * as Services from '../../services'
 
 // Req
-export class CommandLogoutReq extends Common.Command<
-            Dts.ICommandData<Dts.ICommandLogoutReqDataProps>, 
-            Common.ICommandConstructorParams<Dts.ICommandLogoutReqDataProps> >  {
+export class CommandLogoutReq extends Common.Command<Dts.ICommandLogoutReqDataProps>{
 
     onDispatched(reqCmd: CommandLogoutReq, sckUser: Modules.SocketUser) {
-        this.onReq(sckUser, reqCmd.data)
+        // this.onReq(sckUser, reqCmd.data)
+        Services.ServiceLogout.onDispatched.req(reqCmd, sckUser);
     }    
 
     // logical business
-    onReq(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLogoutReqDataProps>) {     
-        sckUser.logout(data, true, false);
-    }    
+    // onReq(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLogoutReqDataProps>) {     
+    //     sckUser.logout(data, true, false);
+    // }    
 }
 
 
