@@ -108,21 +108,21 @@ export class SocketUser  extends Cmds.Common.Base {
     }
 
     // User business
-    isLogin(): boolean {
-        return !!(this.user && this.users.users.exist(this.user.id))
-    }
-    isAgency(): Boolean {
-        let label = this.user && this.user.label || 0;
-        return (label & Dts.EUserLabel.agency) === Dts.EUserLabel.agency;
-    }
-    isStreamReceiver(): Boolean {
-        let label = this.user && this.user.label || 0;
-        return (label & Dts.EUserLabel.streamReceiver) === Dts.EUserLabel.streamReceiver;
-    }   
-    isStreamSender(): boolean {
-        let label = this.user && this.user.label || 0;
-        return (label & Dts.EUserLabel.streamSender) === Dts.EUserLabel.streamSender;        
-    } 
+    // isLogin(): boolean {
+    //     return !!(this.user && this.users.users.exist(this.user.id))
+    // }
+    // isAgency(): Boolean {
+    //     let label = this.user && this.user.state || 0;
+    //     return (label & Dts.EUserLabel.agency) === Dts.EUserLabel.agency;
+    // }
+    // isStreamReceiver(): Boolean {
+    //     let label = this.user && this.user.label || 0;
+    //     return (label & Dts.EUserLabel.streamReceiver) === Dts.EUserLabel.streamReceiver;
+    // }   
+    // isStreamSender(): boolean {
+    //     let label = this.user && this.user.label || 0;
+    //     return (label & Dts.EUserLabel.streamSender) === Dts.EUserLabel.streamSender;        
+    // } 
     // login(data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
     //     if (!this.isLogin()) {
     //         let user = Object.assign({}, data.props.user) as Dts.IUser;    

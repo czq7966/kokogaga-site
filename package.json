@@ -58,6 +58,6 @@
   },
   "port": 13670,
   "namespaces": [
-    "prometheam"
+    "prometheus"
   ]
 }

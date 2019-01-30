@@ -4,8 +4,12 @@ import * as http from 'http'
 import { App } from './app'
 import * as Modules from './modules'
 
+var PKG = require('./package.json')
+var NSPS: Array<string> = PKG.namespaces || [];
+NSPS.indexOf("") < 0 && NSPS.push("");
 
-var app = new App();
+
+var app = new App(NSPS);
 var server = http.createServer(app.express);
 var io = require('socket.io')(server, {
         // upgradeTimeout: 30000
@@ -20,9 +24,9 @@ export class Main {
     port: number
     namespaces: Array<string>
     eventEmitter: EventEmitter;
-    constructor(port: number, namespaces: Array<string>) {
-        this.port = port;
-        this.namespaces = namespaces
+    constructor(port?: number, namespaces?: Array<string>) {
+        this.port = port || PKG.port || 13670;
+        this.namespaces = namespaces || NSPS
         this.eventEmitter = new EventEmitter();
         this.initEvents();       
         this.run(); 

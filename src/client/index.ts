@@ -45,7 +45,7 @@ export class Preview {
             url: signalerUrl
         }
         this.conn = ADHOCCAST.Connection.getInstance(connParams);
-                
+
         this.state = {
             roomid: this.params.get('roomid'),
             info:'loading...'
@@ -55,7 +55,7 @@ export class Preview {
         this.initEvents();
 
         this.render();
-        this.doJoinRoom();
+        // this.doJoinRoom();
     }
     destroy() {
         this.unInitEvents();

@@ -1,12 +1,16 @@
 import * as express from 'express'
 
 export class App {
+    nsps: Array<string>
     express: express.Application;
-    constructor() {
+    constructor(nsps: Array<string>) {
+        this.nsps = nsps || [];
         this.express = express();
         this.routes();
     }
     routes() {
-        this.express.use('/', express.static(__dirname + '/../client'));
+        this.nsps.forEach(key => {
+            this.express.use('/' + key, express.static(__dirname + '/../client'));
+        })        
     }
 }

@@ -25,3 +25,10 @@ Common.CommandTypes.RegistCommandType({
     ReqClass: CommandCommon as any,
     RespClass: CommandCommon as any
 })
+
+Common.CommandTypes.RegistCommandType({
+    cmdId: Dts.ECommandId.stream_room_hello,
+    name: '握手',
+    ReqClass: CommandCommon as any,
+    RespClass: CommandCommon as any
+})
