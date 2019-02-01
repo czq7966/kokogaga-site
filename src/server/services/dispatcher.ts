@@ -35,11 +35,11 @@ export class Dispatcher extends Cmds.Common.Base implements Cmds.Common.IDispatc
         cmd.to.id = cmd.to.id || '';
 
         console.log(Dts.CommandID + 'Event', cmd.cmdId, cmd.from, cmd.to);
-        Cmds.Common.CmdDispatcher.onCommand(cmd, this, sckUser);
+        Cmds.Common.Dispatcher.onCommand(cmd, this, sckUser);
     }
     sendCommand(cmd: Dts.ICommandData<any>): Promise<any> {
         return;
     }
 }
 
-Cmds.Common.CmdDispatcher.setDispatcher(Dispatcher as any)
+Cmds.Common.Dispatcher.setDispatcher(Dispatcher as any, true)
