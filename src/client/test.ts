@@ -153,13 +153,13 @@ export class Test {
             let mRoom = ADHOCCAST.Services.Modules.Rooms.getRoom(this.instanceId, room.id);
             let me =  ADHOCCAST.Services.Modules.Room.me(mRoom).item;
 
-            ADHOCCAST.Services.Cmds.StreamRoomHello.hello(this.conn.instanceId, me)
-            .then(() => {
-                console.log('stream-room-leave success')
-            })
-            .catch(err => {
-                console.error('stream-room-leave error', err)
-            })
+            // ADHOCCAST.Services.Cmds.StreamRoomHello.hello(this.conn.instanceId, me)
+            // .then(() => {
+            //     console.log('stream-room-leave success')
+            // })
+            // .catch(err => {
+            //     console.error('stream-room-leave error', err)
+            // })
         }         
     }
 }
