@@ -22,6 +22,7 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
     instanceId: string
     params: URLSearchParams;
     conn: ADHOCCAST.Connection;
+    eventRooter: ADHOCCAST.Cmds.Common.IEventRooter;
     constructor(props) {
         super(props)
 
@@ -36,9 +37,9 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
         }
         this.conn = ADHOCCAST.Connection.getInstance(connParams);
 
+        this.eventRooter = new ADHOCCAST.Cmds.Common.EventRooter();
 
-        this.state = {
-        };
+        this.state = {};
 
         this.initEvents();
 
@@ -66,20 +67,31 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
     }
 
     initEvents() {
-        this.conn.dispatcher.eventEmitter.addListener(ADHOCCAST.Cmds.ECommandDispatchEvents.onDispatched, this.onDispatched_Command)
-        this.conn.dispatcher.eventEmitter.addListener(ADHOCCAST.Cmds.ECommandDispatchEvents.onBeforeDispatched, this.onBeforeDispatched_Command)
-        this.conn.dispatcher.eventEmitter.addListener(ADHOCCAST.Cmds.ECommandEvents.onCommand, this.onCommand_Command)
+        this.eventRooter.setParent(this.conn.dispatcher.eventRooter);        
+        this.eventRooter.onBeforeRoot.add(this.onBeforeRoot)
+        this.eventRooter.onAfterRoot.add(this.onAfterRoot)
     }
     unInitEvents() {
-        this.conn.dispatcher.eventEmitter.removeListener(ADHOCCAST.Cmds.ECommandDispatchEvents.onDispatched, this.onDispatched_Command);
-        this.conn.dispatcher.eventEmitter.removeListener(ADHOCCAST.Cmds.ECommandDispatchEvents.onBeforeDispatched, this.onBeforeDispatched_Command)
-        this.conn.dispatcher.eventEmitter.removeListener(ADHOCCAST.Cmds.ECommandEvents.onCommand, this.onCommand_Command)
+        this.eventRooter.onBeforeRoot.remove(this.onBeforeRoot)
+        this.eventRooter.onAfterRoot.remove(this.onAfterRoot)
+        this.eventRooter.setParent();        
     }
 
-    onDispatched_Command = (cmd: ADHOCCAST.Cmds.Common.ICommand) => {
+    onBeforeRoot = (cmd: ADHOCCAST.Cmds.Common.ICommand): any => {
         cmd.preventDefault = false;
         let cmdId = cmd.data.cmdId;
         let type = cmd.data.type;
+        switch(cmdId) {
+            default:
+                break;
+        }
+    }
+
+    onAfterRoot = (cmd: ADHOCCAST.Cmds.Common.ICommand): any => {
+        let user: ADHOCCAST.Cmds.IUser;
+        let cmdId = cmd.data.cmdId;
+        let type = cmd.data.type;
+        
         switch(cmdId) {
             case ADHOCCAST.Cmds.ECommandId.adhoc_login:
             case ADHOCCAST.Cmds.ECommandId.adhoc_logout:
@@ -90,33 +102,22 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
                 this.setState({})
                 break;
             case ADHOCCAST.Cmds.ECommandId.stream_webrtc_onrecvstream:     
-                let user = cmd.data.props.user as ADHOCCAST.Cmds.IUser;
+                user = cmd.data.props.user as ADHOCCAST.Cmds.IUser;
                 this.setState({
                     stream: user.extra
                 })
                 break;
+            case ADHOCCAST.Cmds.ECommandId.stream_webrtc_onrecvstreaminactive:
+            case ADHOCCAST.Cmds.ECommandId.room_close:
+                user = cmd.data.props.user as ADHOCCAST.Cmds.IUser;
+                this.setState({
+                    stream: null
+                })
+                break;                
             default:
                 break;
         }
-    }
-
-    onBeforeDispatched_Command = (cmd: ADHOCCAST.Cmds.Common.ICommand) => {
-    
-    }   
-    onCommand_Command = (data: ADHOCCAST.Cmds.ICommandData<ADHOCCAST.Cmds.ICommandReqDataProps> )  => {
-        let cmdId = data.cmdId;
-        switch(cmdId) {
-            case ADHOCCAST.Cmds.ECommandId.stream_webrtc_onrecvstream:
-                // console.log('111111111111111')
-                // this.setState({
-                //     stream: data.props.user.extra
-                // })
-                break;
-            default:
-                break;
-        }        
-    }
-
+    }    
 
     render() {     
         let onSendingClick = (ev) => {
@@ -141,6 +142,17 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
                 }
             })   
         }
+        let onOpenedClick = (ev) => {
+            users.keys().forEach(key => {
+                let mUser = users.get(key);
+                if (mUser.states.isset(ADHOCCAST.Dts.EUserState.stream_room_sending)) {
+                    let mRoom = ADHOCCAST.Services.Modules.User.getStreamRoom(mUser);
+                    mRoom.me().peer.getRtc(false).close();
+                }
+            })             
+        }
+
+
         let items = [];
         let room = ADHOCCAST.Services.Modules.Rooms.getLoginRoom(this.instanceId);
         let users = room ? room.users : null
@@ -152,7 +164,8 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
                 let opened = mUser.states.isset(ADHOCCAST.Dts.EUserState.stream_room_opened) ? 'true' : 'false';
                 let sending = mUser.states.isset(ADHOCCAST.Dts.EUserState.stream_room_sending) ? 'true' : 'false';
                 items.push(<div key={key}>
-                                <p>{display}, {opened}</p>
+                                <p>{display}, </p>
+                                <button onClick = {onOpenedClick}  >{opened}</button>
                                 <button onClick = {onSendingClick}  >{sending}</button>
                             </div>)
             })

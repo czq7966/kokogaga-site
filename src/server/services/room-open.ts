@@ -9,7 +9,15 @@ export class ServiceRoomOpen extends Cmds.Common.Base {
         req(cmd: Cmds.CommandRoomOpenReq, sckUser: Modules.SocketUser) {
             let data = cmd.data;
             let room = data.props.user.room
-            if (ServiceRoom.exist(room.id, sckUser)) {
+            if (sckUser.openRooms.exist(room.id) && ServiceRoom.exist(room.id, sckUser)) {
+                let resp: Dts.ICommandData<Dts.ICommandRoomOpenRespDataProps> = Object.assign({}, data, {
+                    type: Dts.ECommandType.resp,
+                    from: {type: 'server', id: ''},
+                    to: data.from  
+                }) as any;                    
+                resp.props.result = true;
+                sckUser.sendCommand(resp);
+            } else if (ServiceRoom.exist(room.id, sckUser)) {                
                 let resp: Dts.ICommandData<Dts.ICommandRoomOpenRespDataProps> = Object.assign({}, data, {
                     type: Dts.ECommandType.resp,
                     from: {type: 'server', id: ''},
