@@ -4,9 +4,11 @@ import "url-search-params-polyfill";
 import "webrtc-adapter";
 import "./index.css"
 
-import * as ADHOCCAST from '../../../adhoc-cast-connection/src/main/dts'
 import React = require('react');
 import ReactDOM = require('react-dom');
+
+import { ADHOCCAST } from './libex'
+import { CompLayout } from './comps';
 ADHOCCAST.Config.platform = ADHOCCAST.EPlatform.browser;
 
 export interface IPreviewState {
@@ -88,10 +90,9 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
     }
 
     onAfterRoot = (cmd: ADHOCCAST.Cmds.Common.ICommand): any => {
-        let user: ADHOCCAST.Cmds.IUser;
         let cmdId = cmd.data.cmdId;
         let type = cmd.data.type;
-        
+        let user: ADHOCCAST.Cmds.IUser = cmd.data.props.user;        
         switch(cmdId) {
             case ADHOCCAST.Cmds.ECommandId.adhoc_login:
             case ADHOCCAST.Cmds.ECommandId.adhoc_logout:
@@ -99,25 +100,73 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
             case ADHOCCAST.Cmds.ECommandId.room_hello:
             case ADHOCCAST.Cmds.ECommandId.stream_room_hello:
             case ADHOCCAST.Cmds.ECommandId.network_disconnect:
+            case ADHOCCAST.Cmds.ECommandId.room_close:
+
+            case ADHOCCAST.Cmds.ECommandId.stream_webrtc_onrecvstream:     
+            case ADHOCCAST.Cmds.ECommandId.stream_webrtc_onrecvstreaminactive:
+            // case ADHOCCAST.Cmds.ECommandId.stream_webrtc_onsignalingstatechange:
                 this.setState({})
                 break;
-            case ADHOCCAST.Cmds.ECommandId.stream_webrtc_onrecvstream:     
-                user = cmd.data.props.user as ADHOCCAST.Cmds.IUser;
-                this.setState({
-                    stream: user.extra
-                })
+            case ADHOCCAST.Cmds.ECommandId.user_state_onchange:   
+                this.onUserStateChange(cmd);
+                this.setState({})             
                 break;
-            case ADHOCCAST.Cmds.ECommandId.stream_webrtc_onrecvstreaminactive:
-            case ADHOCCAST.Cmds.ECommandId.room_close:
-                user = cmd.data.props.user as ADHOCCAST.Cmds.IUser;
-                this.setState({
-                    stream: null
-                })
-                break;                
+
+            // case ADHOCCAST.Cmds.ECommandId.stream_webrtc_onrecvstream:     
+            //     user = cmd.data.props.user as ADHOCCAST.Cmds.IUser;
+            //     this.setState({
+            //         stream: user.extra
+            //     })
+            //     break;
+            // case ADHOCCAST.Cmds.ECommandId.stream_webrtc_onrecvstreaminactive:
+            // case ADHOCCAST.Cmds.ECommandId.room_close:
+            //     user = cmd.data.props.user as ADHOCCAST.Cmds.IUser;
+            //     this.setState({
+            //         stream: null
+            //     })
+            //     break;                
             default:
                 break;
         }
     }    
+
+    onUserStateChange(cmd: ADHOCCAST.Cmds.Common.ICommand){
+        let user = cmd.data.props.user as ADHOCCAST.Cmds.IUser;
+        let values = user.extra as ADHOCCAST.Cmds.Common.Helper.IStateChangeValues
+        if (ADHOCCAST.Cmds.Common.Helper.StateMachine.isset(values.chgStates, ADHOCCAST.Dts.EUserState.stream_room_sending) && 
+            ADHOCCAST.Cmds.Common.Helper.StateMachine.isset(values.newStates, ADHOCCAST.Dts.EUserState.stream_room_sending)) {
+            this.recvUserStream(cmd.instanceId, user);
+        }
+    }
+    recvUserStream(instanceId: string, user: ADHOCCAST.Cmds.IUser): Promise<any> {
+        return new Promise((resolve, reject) => {
+            if (ADHOCCAST.Cmds.Common.Helper.StateMachine.isset(user.states, ADHOCCAST.Dts.EUserState.stream_room_sending)) {
+                let toUser = {
+                    id: user.id,
+                    room: {
+                        id: ADHOCCAST.Services.Cmds.User.getStreamRoomId(user)
+                    }                        
+                }
+                ADHOCCAST.Services.Cmds.StreamRoomJoin.joinAndHello(instanceId, toUser)
+                .then(data => {                        
+                    ADHOCCAST.Services.Cmds.StreamWebrtcReady.ready(instanceId, toUser)
+                    .then(() => {
+                        resolve()
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
+                })
+                .catch(err => {
+                    reject(err)    
+                })
+            }  else {
+                reject('user has not sending stream')
+            }
+            
+        })
+   
+    }
 
     render() {     
         let onSendingClick = (ev) => {
@@ -171,7 +220,12 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
             })
 
         }
-        
+        return (
+            <div>
+                <CompLayout conn={this.conn}/>
+            </div>
+
+        )
 
         return (
             <div >
