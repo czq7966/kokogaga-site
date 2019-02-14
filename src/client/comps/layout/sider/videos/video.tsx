@@ -11,6 +11,7 @@ export interface ICompVideoState {
 }
 export interface ICompVideoProp {
     streams?: ADHOCCAST.Modules.Webrtc.Streams;
+    onSelectVideo?: (streams: ADHOCCAST.Modules.Webrtc.IStreams, stream: MediaStream ) => void
 }
 
 
@@ -23,6 +24,7 @@ export class CompVideo extends React.Component<ICompVideoProp, ICompVideoState> 
             videos.push(
                 <div key={stream.id}>
                     <video
+                        onClick = {() => { this.props.onSelectVideo && this.props.onSelectVideo(this.props.streams, stream) }}
                         className='comps-layout-sider-video-item-container'
                         autoPlay
                         playsInline
@@ -34,11 +36,11 @@ export class CompVideo extends React.Component<ICompVideoProp, ICompVideoState> 
         let user = this.props.streams.peer.user;
         return (
             <List.Item>
-                <Card title={user.item.id + ',' + user.item.room.id}>
+                <Card title={user.room.owner().item.sid}>
                     {videos}                
                 </Card>
-
             </List.Item>
         )
     }
+
 }

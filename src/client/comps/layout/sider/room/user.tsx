@@ -17,7 +17,7 @@ export class CompUser extends React.Component<ICompUserProp, ICompUserState> {
         return (
             <List.Item actions={[<a>edit</a>]}>
                 <List.Item.Meta
-                    title={this.props.user.id}
+                    title={this.props.user.sid}
                 />
             </List.Item>
         )

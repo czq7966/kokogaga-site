@@ -12,12 +12,13 @@ export interface IVideosState {
 }
 export interface IVideosProp {
     conn: ADHOCCAST.Connection
+    onSelectVideo?: (streams: ADHOCCAST.Modules.Webrtc.IStreams, stream: MediaStream ) => void
 }
 
 export class Videos extends React.Component<IVideosProp, IVideosState> {
     render() {   
         let content = (
-            <CompVideos conn={this.props.conn} />
+            <CompVideos conn={this.props.conn}  onSelectVideo={this.props.onSelectVideo}  />
         )          
         
         return (

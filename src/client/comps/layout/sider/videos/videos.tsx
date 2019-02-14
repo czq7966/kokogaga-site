@@ -11,6 +11,7 @@ export interface ICompVideosState {
 }
 export interface ICompVideosProp {
     conn?: ADHOCCAST.Connection
+    onSelectVideo?: (streams: ADHOCCAST.Modules.Webrtc.IStreams, stream: MediaStream ) => void
 }
 
 
@@ -34,7 +35,7 @@ export class CompVideos extends React.Component<ICompVideosProp, ICompVideosStat
                         grid={{column: 1}}
                         dataSource={streams}
                         renderItem = {item => (
-                                <CompVideo streams={item} />
+                                <CompVideo streams={item}  onSelectVideo={this.props.onSelectVideo}  />
                             )
                         }
                     />
