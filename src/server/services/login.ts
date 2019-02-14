@@ -4,6 +4,7 @@ import * as Modules from '../modules'
 import * as Helper from '../helper'
 import { ServiceRoom } from './room';
 import { ServiceUser } from './user';
+import { ServiceUsers } from './users';
 
 var Tag = 'ServiceLogin'
 export class ServiceLogin extends Cmds.Common.Base {
@@ -14,6 +15,7 @@ export class ServiceLogin extends Cmds.Common.Base {
             room.id = room.id || Helper.getAdhocRoomId(sckUser.socket)
             data.props.user = data.props.user || sckUser.user;
             data.props.user.room = data.props.user.room || room;
+            data.props.user.sid = data.props.user.sid || ServiceUsers.newShortID(sckUser.users);
             ServiceLogin.onReq(sckUser, data)
         }
     }
