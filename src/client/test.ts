@@ -1,6 +1,6 @@
 import * as ADHOCCAST from '../../../adhoc-cast-connection/src/main/dts'
 import { IConnectionConstructorParams } from '../../../adhoc-cast-connection/src/main/dts';
-ADHOCCAST.Config.platform = ADHOCCAST.EPlatform.browser;
+// ADHOCCAST.Config.platform = ADHOCCAST.EPlatform.browser;
 var debug = ADHOCCAST.Cmds.Common.Helper.Debug;
 debug.enabled = true;
 

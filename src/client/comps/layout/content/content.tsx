@@ -12,16 +12,17 @@ export interface ICompContentState {
 
 }
 export interface ICompContentProp {
-    streams?: ADHOCCAST.Modules.Webrtc.IStreams;
-    stream?: MediaStream
+    user: ADHOCCAST.Modules.IUser;
 }
 
 
 export class CompContent extends React.Component<ICompContentProp, ICompContentState> {
     render() {    
         let videos = [];
-        if (this.props.streams && this.props.streams.recvs) {
-            let recvs = this.props.streams.recvs;
+        let user = this.props.user;
+        let streams = user && user.peer && user.peer.streams;
+        if (streams && streams.recvs) {
+            let recvs = streams.recvs;
             recvs.keys().forEach(key => {
                 let stream = recvs.get(key);
                 videos.push(
@@ -36,13 +37,9 @@ export class CompContent extends React.Component<ICompContentProp, ICompContentS
                 )
             })
         }
-        // style={{ position: 'absolute', top: 10, left: 100}}
         return (
             <div>
                 {videos}                  
-
-
-    
             </div>          
         )
     }

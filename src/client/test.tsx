@@ -9,7 +9,7 @@ import ReactDOM = require('react-dom');
 
 import { ADHOCCAST } from './libex'
 import { CompLayout } from './comps';
-ADHOCCAST.Config.platform = ADHOCCAST.EPlatform.browser;
+ADHOCCAST.Modules.Webrtc.Config.platform = ADHOCCAST.Modules.Webrtc.EPlatform.browser;
 
 export interface IPreviewState {
     stream?: MediaStream;
@@ -97,10 +97,11 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
             case ADHOCCAST.Cmds.ECommandId.adhoc_login:
             case ADHOCCAST.Cmds.ECommandId.adhoc_logout:
             case ADHOCCAST.Cmds.ECommandId.adhoc_hello:            
+            case ADHOCCAST.Cmds.ECommandId.room_close:
+            case ADHOCCAST.Cmds.ECommandId.room_leave:            
             case ADHOCCAST.Cmds.ECommandId.room_hello:
             case ADHOCCAST.Cmds.ECommandId.stream_room_hello:
             case ADHOCCAST.Cmds.ECommandId.network_disconnect:
-            case ADHOCCAST.Cmds.ECommandId.room_close:
 
             case ADHOCCAST.Cmds.ECommandId.stream_webrtc_onrecvstream:     
             case ADHOCCAST.Cmds.ECommandId.stream_webrtc_onrecvstreaminactive:
@@ -147,15 +148,9 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
                         id: ADHOCCAST.Services.Cmds.User.getStreamRoomId(user)
                     }                        
                 }
-                ADHOCCAST.Services.Cmds.StreamRoomJoin.joinAndHello(instanceId, toUser)
+                ADHOCCAST.Services.Cmds.StreamRoomJoin.joinAndHelloAndReady(instanceId, toUser)
                 .then(data => {                        
-                    ADHOCCAST.Services.Cmds.StreamWebrtcReady.ready(instanceId, toUser)
-                    .then(() => {
-                        resolve()
-                    })
-                    .catch(err => {
-                        reject(err)
-                    })
+                    resolve(data)
                 })
                 .catch(err => {
                     reject(err)    
@@ -169,88 +164,12 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
     }
 
     render() {     
-        let onSendingClick = (ev) => {
-            users.keys().forEach(key => {
-                let mUser = users.get(key);
-                if (mUser.states.isset(ADHOCCAST.Dts.EUserState.stream_room_sending)) {
-                    let toUser = {
-                        id: mUser.item.id,
-                        room: {
-                            id: ADHOCCAST.Services.Cmds.User.getStreamRoomId(mUser.item)
-                        }                        
-                    }
-                    ADHOCCAST.Services.Cmds.StreamRoomJoin.joinAndHello(mUser.instanceId, toUser)
-                    .then(data => {                        
-                        ADHOCCAST.Services.Cmds.StreamWebrtcReady.ready(mUser.instanceId, toUser);
-                    })
-                    .catch(err => {
-
-                    })
-
-                    
-                }
-            })   
-        }
-        let onOpenedClick = (ev) => {
-            users.keys().forEach(key => {
-                let mUser = users.get(key);
-                if (mUser.states.isset(ADHOCCAST.Dts.EUserState.stream_room_sending)) {
-                    let mRoom = ADHOCCAST.Services.Modules.User.getStreamRoom(mUser);
-                    mRoom.me().peer.getRtc(false).close();
-                }
-            })             
-        }
-
-
-        let items = [];
-        let room = ADHOCCAST.Services.Modules.Rooms.getLoginRoom(this.instanceId);
-        let users = room ? room.users : null
-        if (users) {
-            users.keys().forEach(key => {
-                let mUser = users.get(key);
-                let user = mUser.item;
-                let display = user.nick || user.id;
-                let opened = mUser.states.isset(ADHOCCAST.Dts.EUserState.stream_room_opened) ? 'true' : 'false';
-                let sending = mUser.states.isset(ADHOCCAST.Dts.EUserState.stream_room_sending) ? 'true' : 'false';
-                items.push(<div key={key}>
-                                <p>{display}, </p>
-                                <button onClick = {onOpenedClick}  >{opened}</button>
-                                <button onClick = {onSendingClick}  >{sending}</button>
-                            </div>)
-            })
-
-        }
         return (
             <div>
                 <CompLayout conn={this.conn}/>
             </div>
 
         )
-
-        return (
-            <div >
-                <div>Users</div>
-                <br></br>
-                {items}
-                {
-                    this.state.stream 
-                    ?
-                        <div>
-                            <video
-                                id="preview-video"
-                                autoPlay
-                                playsInline
-                                width="100%"
-                                src = {URL.createObjectURL(this.state.stream)}
-                            >
-                            </video>                
-                        </div> 
-                    :   null
-                }
-
-            </div>            
-        )
-
         // let isSharing = this.state.stream && (this.state.iceState == "connected" || this.state.iceState == "completed");
         // this.elemInfo.innerText = this.state.info;
         // this.elemHeader.style.display = isSharing ? "none" : "visible"

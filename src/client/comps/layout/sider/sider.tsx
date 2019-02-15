@@ -16,8 +16,8 @@ export class CompSider extends React.Component<ICompSiderProp, ICompSiderState> 
     render() {     
         return (
             <div>
-                <Users conn={this.props.conn}></Users>
-                <Videos conn={this.props.conn} onSelectVideo={this.props.onSelectVideo}  ></Videos>
+                {/* <Users conn={this.props.conn}></Users>
+                <Videos conn={this.props.conn} onSelectVideo={this.props.onSelectVideo}  ></Videos> */}
             </div>
         )
     }
