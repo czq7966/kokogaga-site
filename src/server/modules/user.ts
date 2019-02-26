@@ -45,8 +45,6 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
     }
 
     initEvents() {
-        // this.socket.on(Dts.EServerSocketEvents.error, this.onError);
-        // this.socket.on(Dts.EServerSocketEvents.disconnecting, this.onDisconnecting);
         this.socket.on(Dts.CommandID, this.onCommand);
 
         [Dts.EServerSocketEvents].forEach(events => {
@@ -64,8 +62,12 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
 
     // Command business
     onCommand = (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => {        
-        cb && cb(true)
-        this.dispatcher.onCommand(cmd, this);
+        if (!this.user && cmd && cmd.cmdId !== Dts.ECommandId.adhoc_login) {
+            cb && cb(false)
+        } else {
+            cb && cb(true)
+            this.dispatcher.onCommand(cmd, this);
+        }
     }
     sendCommand = (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => {
         cmd.from = cmd.from || {};
@@ -75,7 +77,9 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
         switch(cmd.to.type) {
             case 'room':
                 cmd.to.id = cmd.to.id || this.user.room.id;
-                this.socket.to(cmd.to.id).emit(Dts.CommandID, cmd);
+                let uroom = this.users.rooms.get(cmd.to.id)
+                let sim = uroom && uroom.sim || cmd.to.id;
+                this.socket.to(sim).emit(Dts.CommandID, cmd);
                 includeSelf && this.socket.emit(Dts.CommandID, cmd);
                 break;
             case 'socket':
@@ -88,7 +92,7 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
                 break
             case 'user':
                 cmd.to.id = cmd.to.id || this.user.id;
-                if (this.user.id === cmd.to.id) {
+                if (this.user && (this.user.id === cmd.to.id)) {
                     this.socket.emit(Dts.CommandID, cmd);
                 } else {
                     let toUser = this.users.users.get(cmd.to.id);
@@ -96,6 +100,7 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
                         this.socket.to(toUser.socket.id).emit(Dts.CommandID, cmd)
                     }
                 }
+                break;
             case 'server':
                 break;                
             default:

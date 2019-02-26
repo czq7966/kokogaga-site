@@ -7,6 +7,7 @@ export * from './room/open'
 export * from './room/join'
 export * from './room/close'
 export * from './room/leave'
+export * from './room/changeid'
 
 
 import './common'
@@ -17,5 +18,6 @@ import './room/open'
 import './room/join'
 import './room/close'
 import './room/leave'
+import './room/changeid'
 
 

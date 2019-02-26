@@ -15,6 +15,7 @@ export class ServiceLogin extends Cmds.Common.Base {
             room.id = room.id || Helper.getAdhocRoomId(sckUser.socket)
             data.props.user = data.props.user || sckUser.user;
             data.props.user.room = data.props.user.room || room;
+            data.props.user.id = data.props.user.id || Cmds.Common.Helper.uuid();
             data.props.user.sid = data.props.user.sid || ServiceUsers.newShortID(sckUser.users);
             ServiceLogin.onReq(sckUser, data)
         }

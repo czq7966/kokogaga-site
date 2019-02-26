@@ -11,6 +11,7 @@ export interface ISocketUsers extends Cmds.Common.IBase {
     users: Cmds.Common.Helper.KeyValue<ISocketUser>;
     sockets: Cmds.Common.Helper.KeyValue<ISocketUser>;
     shortUsers: Cmds.Common.Helper.KeyValue<ISocketUser>;
+    rooms:  Cmds.Common.Helper.KeyValue<Dts.IRoom>;
 }
 
 export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
@@ -18,13 +19,15 @@ export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
     users: Cmds.Common.Helper.KeyValue<ISocketUser>;
     sockets: Cmds.Common.Helper.KeyValue<ISocketUser>;
     shortUsers: Cmds.Common.Helper.KeyValue<ISocketUser>;
+    rooms:  Cmds.Common.Helper.KeyValue<Dts.IRoom>;
     constructor(nsp: ISocketNamespace) {
         super();
         this.nsp = nsp;
         this.nsp.users = this;
         this.users = new Cmds.Common.Helper.KeyValue();
         this.shortUsers = new Cmds.Common.Helper.KeyValue();
-        this.sockets = new Cmds.Common.Helper.KeyValue();        
+        this.sockets = new Cmds.Common.Helper.KeyValue();   
+        this.rooms = new Cmds.Common.Helper.KeyValue();     
 
         this.initEvents();
     }
@@ -33,9 +36,11 @@ export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
         this.users.destroy();
         this.shortUsers.destroy();
         this.sockets.destroy();
+        this.rooms.destroy();
         delete this.users;
         delete this.shortUsers;
         delete this.sockets;
+        delete this.rooms;
         delete this.nsp.users;
         delete this.nsp;
         super.destroy();
