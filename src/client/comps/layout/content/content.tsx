@@ -17,6 +17,11 @@ export interface ICompContentProp {
 
 
 export class CompContent extends React.Component<ICompContentProp, ICompContentState> {
+    videoElem: HTMLVideoElement;
+    componentWillUnmount() {
+        this.videoElem &&
+        this.props.user.peer.input.inputElement.deattachHTMLElement(this.videoElem)
+    }    
     render() {    
         let videos = [];
         let user = this.props.user;
@@ -28,6 +33,7 @@ export class CompContent extends React.Component<ICompContentProp, ICompContentS
                 videos.push(
                     <div key={stream.id}>
                         <video
+                            ref={ref => this.onVideoRef(ref)}                        
                             className='comps-layout-content-video-container'
                             autoPlay
                             playsInline
@@ -43,4 +49,15 @@ export class CompContent extends React.Component<ICompContentProp, ICompContentS
             </div>          
         )
     }
+    onVideoRef(video: HTMLVideoElement) {
+        // console.error(video)
+        // if (this.videoElem && this.props.user.notDestroyed) {
+        //     this.props.user.peer.input.inputSource.deattachHTMLElement(this.videoElem)
+        // } else {
+            if (video) {
+                this.videoElem = video
+                this.props.user.peer.input.inputElement.attachHTMLElement(video)
+            }            
+        // }       
+    }    
 }

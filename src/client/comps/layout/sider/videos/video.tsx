@@ -34,6 +34,7 @@ export class CompVideo extends React.Component<ICompVideoProp, ICompVideoState> 
                         <video
                             onClick = {() => { this.props.onShowUserStreams && this.props.onShowUserStreams(user) }}
                             className='comps-layout-sider-video-item-container'
+                            muted={true}
                             autoPlay
                             playsInline
                             src = {URL.createObjectURL(stream)}
