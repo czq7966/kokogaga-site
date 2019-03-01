@@ -13,6 +13,13 @@ export class CommandCommon extends Common.Command<any>  {
 new CommandCommon({instanceId: Dts.dispatcherInstanceName});
 
 Common.CommandTypes.RegistCommandType({
+    cmdId: Dts.ECommandId.custom,
+    name: '自定义',
+    ReqClass: CommandCommon,
+    RespClass: CommandCommon
+})
+
+Common.CommandTypes.RegistCommandType({
     cmdId: Dts.ECommandId.adhoc_hello,
     name: '握手',
     ReqClass: CommandCommon,
