@@ -24,8 +24,8 @@ module.exports = env => {
     plugins.push(
         new CopyWebpackPlugin([
             {
-                from: path.resolve(srcDir, 'keys'),
-                to: 'keys',
+                from: path.resolve(srcDir, 'cert'),
+                to: 'cert',
             }                     
         ]),        
     )

@@ -5,13 +5,16 @@
         "test",
         "test1"
     ],
-    "http": {
-        "port": 13670
-    },
-    "https": {
-        "port": 13671,
-        "key": "keys/server.key",
-        "cert": "keys/server.crt"
-    }
-
+    "http": [
+        {
+            "port": 13670
+        }
+    ],
+    "https": [
+        {
+            "port": 13671,
+            "key": "cert/server.key",
+            "cert": "cert/server.crt"
+        }
+    ]
 }
