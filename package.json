@@ -14,8 +14,8 @@
     "dev": "npm run client:watch",
     "server:build": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs --env.production",
     "server:compile": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs",
-    "server:clean": "rimraf ./dist/server",
-    "server:start": "node ./dist/server/index.js",
+    "server:clean": "rimraf dist/server",
+    "server:start": "node dist/server/index.js",
     "server": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs && npm run server:start",
     "android:server:clean": "rimraf ./dist/android/server",
     "android:server:start": "node ./dist/android/server/index.js",
@@ -58,11 +58,15 @@
   },
   "port": 13670,
   "namespaces": [
-    "prometheus"
+    "prometheus",
+    "nd",
+    "test",
+    "test1"
   ],
   "dependencies": {
     "@types/antd": "^1.0.0",
     "antd": "^3.13.2",
+    "fs": "0.0.1-security",
     "react-draggable": "^3.1.1",
     "react-infinite-scroller": "^1.2.4"
   }

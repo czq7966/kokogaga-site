@@ -15,19 +15,20 @@ module.exports = env => {
     const libraryTarget = env.amd ? 'amd' : env.umd ? 'umd' :  env.cjs ? 'commonjs' : env.old ? 'umd' : 'commonjs';
     // const libraryTargetPath =  env.amd ? 'amd' : env.umd ? 'umd' : env.cjs ? 'cjs' : env.old ? '' : 'cjs';
     // const distDir = path.resolve(__dirname, 'dist', libraryTargetPath);
-    const distDir = path.resolve(__dirname, 'dist');
-    entry['server/index'] = "./src/server/index.ts";
+    const distDir = path.resolve(__dirname, 'dist/server');
+    const srcDir =  path.resolve(__dirname, 'src/server');
+    entry['index'] = path.resolve(srcDir, "index.ts");
     
     optimization['minimizer'] = minimizer;  
 
-    // plugins.push(
-    //     new CopyWebpackPlugin([
-    //         {
-    //             from: path.resolve(__dirname, 'src', 'client/index.html'),
-    //             to: 'server/index.html',
-    //         }            
-    //     ])
-    // )
+    plugins.push(
+        new CopyWebpackPlugin([
+            {
+                from: path.resolve(srcDir, 'keys'),
+                to: 'keys',
+            }                     
+        ]),        
+    )
 
     if (env.production) { //生产模式
         minimizer.push(
@@ -73,7 +74,12 @@ module.exports = env => {
         externals: [
             nodeExternals({ modulesFromFile: true }),
             {
-                './package.json': '../../package.json'
+                './package.json': '../../package.json',
+                './config.json': '../../config.json',
+                'fs': 'fs',
+                'path': 'path',
+                'http': 'http',
+                'https': 'https' 
             }
 
         ],
