@@ -1,13 +1,11 @@
 import { SocketUser, ISocketUser } from "./user";
 import * as Dts from "../dts";
 import * as Cmds from "../cmds/index";
+import { ISocketNamespace } from "./namespace";
 
-export interface ISocketNamespace extends SocketIO.Namespace {
-    users?: SocketUsers
-}
 
 export interface ISocketUsers extends Cmds.Common.IBase {
-    nsp: ISocketNamespace
+    snsp: ISocketNamespace
     users: Cmds.Common.Helper.KeyValue<ISocketUser>;
     sockets: Cmds.Common.Helper.KeyValue<ISocketUser>;
     shortUsers: Cmds.Common.Helper.KeyValue<ISocketUser>;
@@ -15,15 +13,15 @@ export interface ISocketUsers extends Cmds.Common.IBase {
 }
 
 export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
-    nsp: ISocketNamespace
+    snsp: ISocketNamespace
     users: Cmds.Common.Helper.KeyValue<ISocketUser>;
     sockets: Cmds.Common.Helper.KeyValue<ISocketUser>;
     shortUsers: Cmds.Common.Helper.KeyValue<ISocketUser>;
     rooms:  Cmds.Common.Helper.KeyValue<Dts.IRoom>;
-    constructor(nsp: ISocketNamespace) {
+    constructor(snsp: ISocketNamespace) {
         super();
-        this.nsp = nsp;
-        this.nsp.users = this;
+        this.snsp = snsp;
+        this.snsp.users = this;
         this.users = new Cmds.Common.Helper.KeyValue();
         this.shortUsers = new Cmds.Common.Helper.KeyValue();
         this.sockets = new Cmds.Common.Helper.KeyValue();   
@@ -41,13 +39,13 @@ export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
         delete this.shortUsers;
         delete this.sockets;
         delete this.rooms;
-        delete this.nsp.users;
-        delete this.nsp;
+        delete this.snsp.users;
+        delete this.snsp;
         super.destroy();
     }
 
     initEvents() {
-        this.nsp.on('connect', this.onConnect)
+        this.snsp.nsp.on('connect', this.onConnect)
     }
     onConnect = (socket: SocketIO.Socket) => {
         console.log('ServerEvent', 'connect', socket.id)

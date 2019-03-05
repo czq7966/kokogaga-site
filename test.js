@@ -101,30 +101,80 @@ U8EX64cPvdaTYE+/ZbOSa1e5elvxh5t1WHNzUOMvEQ==
 
 
 
-var https = require('https');
-var fs = require('fs');
+// var https = require('https');
+// var fs = require('fs');
 
-var options = {
-  hostname: "192.168.252.87",
-  port: 13671,
-  path: '/',
-  methed: 'GET',
-  key: fs.readFileSync('src/server/cert/client.key'),
-  cert: fs.readFileSync('src/server/cert/client.crt'),
-  ca: [fs.readFileSync('src/server/cert/ca.crt')],
-//   rejectUnauthorized: false
-};
+// var options = {
+//   hostname: "192.168.252.87",
+//   port: 13671,
+//   path: '/',
+//   methed: 'GET',
+//   key: fs.readFileSync('src/server/cert/server.key'),
+//   cert: fs.readFileSync('src/server/cert/server.crt'),
+//   ca: [fs.readFileSync('src/server/cert/ca.crt')],
+// //   rejectUnauthorized: false
+// };
 
-options.agent = new https.Agent(options);
+// options.agent = new https.Agent(options);
 
-var req = https.request(options, function(res) {
-  res.setEncoding('utf-8');
-  res.on('data', function(d) {
-    console.log(d);
-  });
-});
-req.end();
+// var req = https.request(options, function(res) {
+//   res.setEncoding('utf-8');
+//   res.on('data', function(d) {
+//     console.log(d);
+//   });
+// });
+// req.end();
 
-req.on('error', function(e) {
-  console.log(e);
-});
+// req.on('error', function(e) {
+//   console.log(e);
+// });
+
+
+
+async function requirejs(url, callback) {
+  return new Promise((resolve, reject) => {
+      require('http').get(url, function(req, res) {
+          console.log('aaaaaaa')
+          let js = ''
+          req.on('data',(data)=>{js+=data;});
+          req.on('end',()=>{eval(js); console.log('exports',exports); callback(exports.Common)});
+          req.on('error',(e)=>{reject(e.message);});
+      })
+  })
+}
+
+let url="http://192.168.252.87:8080/dist/server/amd/common/index.js"
+
+requirejs(url, function(m) {
+  console.log('1', m)
+  console.log(m.msg)
+  console.log('2')
+  m.msg = '11111'
+  console.log(m.msg)
+  setTimeout(() => {
+    console.log('4')
+    console.log(m.msg)    
+  }, 5000);
+})
+
+setTimeout(() => {
+  requirejs(url, function(m) {
+    console.log('5', m)
+    console.log(m.msg)
+    console.log('6')
+    m.msg = '22222'
+    console.log(m.msg)  
+    console.log('7')
+    console.log(m.msg)  
+  })
+ 
+}, 1000)
+
+// async function main(msg) {
+//   console.log('1')
+//   var dd =await requirejs(url)
+//   console.log('2')
+//   console.log(dd)
+// }
+// main('aaaaaaaaa');
+// main('bbbbbbbbbbbbbb');

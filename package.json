@@ -7,22 +7,35 @@
     "build:cjs": "webpack --env.cjs --env.nodevtool && webpack --env.production --env.cjs ",
     "build:umd": "webpack --env.umd --env.nodevtool && webpack --env.production --env.umd ",
     "watch": "npm run client:clean && webpack --watch --progress --env.cjs",
-    "client:clean": "rimraf ./dist/client",
-    "client:watch": "npm run client:clean && webpack --watch --progress --env.umd",
-    "client:build": "npm run client:clean && webpack --progress --env.umd --env.production",
-    "client:compile": "npm run client:clean && webpack --progress --env.umd",
+
     "dev": "npm run client:watch",
-    "server:build": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs --env.production",
-    "server:compile": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs",
-    "server:clean": "rimraf dist/server",
-    "server:start": "node dist/server/index.js",
-    "server": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs && npm run server:start",
+
     "android:server:clean": "rimraf ./dist/android/server",
     "android:server:start": "node ./dist/android/server/index.js",
     "android:server": "npm run android:server:clean && cross-env NODE_MODULE=android-server webpack --env.cjs && npm run android:server:start",
     "build": "npm run server:build && npm run client:build",
     "compile": "npm run server:compile && npm run client:compile",
-    "start": "npm run server:start "
+    "start": "npm run server:start ",
+
+    "client:dev":     "npm run client:watch",
+    "client:clean":   "rimraf ./dist/client",
+    "client:watch":   "npm run client:clean && cross-env NODE_MODULE=client webpack --progress --env.umd --watch",
+    "client:build":   "npm run client:clean && cross-env NODE_MODULE=client webpack --progress --env.umd --env.production",
+    "client:compile": "npm run client:clean && cross-env NODE_MODULE=client webpack --progress --env.umd",
+
+    "amd:common:clean":   "rimraf ./dist/amd/common",
+    "amd:common:dev":     "npm run amd:common:clean && cross-env NODE_MODULE=amd-common webpack --progress --env.cjs --watch ",
+    "amd:common:compile": "npm run amd:common:clean && cross-env NODE_MODULE=amd-common webpack --progress --env.cjs",
+    "amd:common:build":   "npm run amd:common:clean && cross-env NODE_MODULE=amd-common webpack --progress --env.cjs --env.production",
+
+    "amd:compile":  "npm run amd:common:compile",
+    "amd:build":    "npm run amd:common:build ",
+
+    "server:clean":   "rimraf dist/server",    
+    "server:start":   "node ./dist/server/index.js",    
+    "server:build":   "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs --env.production",
+    "server:compile": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs",
+    "server":         "npm run server:clean && npm run amd:compile && cross-env NODE_MODULE=server webpack --env.cjs && npm run server:start"
   },
   "author": "",
   "license": "ISC",
@@ -68,6 +81,7 @@
     "antd": "^3.13.2",
     "fs": "0.0.1-security",
     "react-draggable": "^3.1.1",
-    "react-infinite-scroller": "^1.2.4"
+    "react-infinite-scroller": "^1.2.4",
+    "requirejs": "^2.3.6"
   }
 }

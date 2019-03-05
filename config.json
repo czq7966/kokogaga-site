@@ -1,10 +1,13 @@
 {
-    "namespaces": [
-        "prometheus",
-        "nd",
-        "test",
-        "test1"
-    ],
+    "version": "2.0",
+    "updateUrl": "http://192.168.252.87:8080",
+
+    "namespaces": {
+        "admin": null,
+        "nd": null,
+        "prometheus": null,
+        "test": null
+    },
     "http": [
         {
             "port": 13670

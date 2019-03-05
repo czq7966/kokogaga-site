@@ -1,7 +1,8 @@
-import { SocketUsers, ISocketNamespace } from "./users";
+import { SocketUsers, ISocketUsers } from "./users";
 import * as Dts from "../dts";
 import * as Cmds from "../cmds/index";
 import * as Services from '../services/index'
+import { ISocketIONamespace } from "./namespace";
 
 
 export interface IUserSocket extends SocketIO.Socket {
@@ -10,7 +11,7 @@ export interface IUserSocket extends SocketIO.Socket {
 
 export interface ISocketUser extends Cmds.Common.IBase {
     user: Dts.IUser;
-    users: SocketUsers;
+    users: ISocketUsers;
     socket: IUserSocket;
     dispatcher: Services.Dispatcher;
     openRooms: Cmds.Common.Helper.KeyValue<boolean>;    
@@ -20,7 +21,7 @@ export interface ISocketUser extends Cmds.Common.IBase {
 
 export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
     user: Dts.IUser;
-    users: SocketUsers;
+    users: ISocketUsers;
     socket: IUserSocket;
     dispatcher: Services.Dispatcher;
     openRooms: Cmds.Common.Helper.KeyValue<boolean>;
@@ -29,7 +30,7 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
         this.dispatcher = Services.Dispatcher.getInstance(Dts.dispatcherInstanceName);
         this.socket = socket;
         this.socket.user = this;  
-        this.users = (socket.nsp as ISocketNamespace).users;
+        this.users = (socket.nsp as ISocketIONamespace).snsp.users;
         this.openRooms = new Cmds.Common.Helper.KeyValue<any>();
         this.initEvents();          
     }
