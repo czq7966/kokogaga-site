@@ -2,12 +2,12 @@
 node_modules
 src
 test
+webpack
 npm-debug.log
 .vscode
 package-lock.json
 webpack.config.js
-webpack.config.client.js
-webpack.config.server.js
+test.js
 tsconfig.json
 .npmignore
 .gitignore

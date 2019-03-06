@@ -1,5 +1,5 @@
 import * as http from 'http'
-function requirejs(url: string, modules: Array<string>, success?: (...args: any[]) => void, failed?:(error: string) => void) {
+function requirejs(url: string, modules: Array<string>, success?: (...args: any[]) => void, failed?:(error: string) => void, notEval?: boolean) {
     return new Promise((resolve, reject) => {
         try {
             let req = http.get(url, (function(res) {
@@ -14,18 +14,24 @@ function requirejs(url: string, modules: Array<string>, success?: (...args: any[
                 });
                 res.on('end',()=>{
                     if (res.statusCode >=200 && res.statusCode < 300) {
-                        eval(js); 
-                        let _exports = {};
-                        let _exportsArr = [];
-                        
-                        modules = modules || [];
-                        modules = modules.length > 0 ? modules : Object.keys(exports);
-                        modules.forEach(name => {
-                            _exports[name] = exports[name];
-                            _exportsArr.push(exports[name])
-                        })
-                        success && success(..._exportsArr)
-                        resolve(_exports)
+                        if (notEval && res.statusCode === 200) {
+                            success && success(js)
+                            resolve(js)                            
+                            return;
+                        } else {
+                            eval(js); 
+                            let _exports = {};
+                            let _exportsArr = [];
+                            
+                            modules = modules || [];
+                            modules = modules.length > 0 ? modules : Object.keys(exports);
+                            modules.forEach(name => {
+                                _exports[name] = exports[name];
+                                _exportsArr.push(exports[name])
+                            })
+                            success && success(..._exportsArr)
+                            resolve(_exports)
+                        }
                     } else {
                         let error = res.statusCode + ' ' + res.statusMessage;
                         reject(error)                    

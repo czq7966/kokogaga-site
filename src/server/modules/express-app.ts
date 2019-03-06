@@ -1,6 +1,6 @@
 import * as express from 'express'
 
-export class App {
+export class ExpressApp {
     nsps: Array<string>
     express: express.Application;
     constructor(nsps: Array<string>) {

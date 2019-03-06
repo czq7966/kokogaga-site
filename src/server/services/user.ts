@@ -12,6 +12,12 @@ export class ServiceUser extends Cmds.Common.Base {
     }
 
     static login(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
+        if (sckUser.users.snsp.nsp.name.toLowerCase() === '/admin') 
+            return this.adminLogin(sckUser, data)
+        else 
+            return this.userLogin(sckUser, data)
+    }
+    static userLogin(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
         let room = data.props.user.room;
         if (!ServiceUser.isLogin(sckUser)) {
             let user = Object.assign({}, data.props.user) as Dts.IUser;  
@@ -22,6 +28,12 @@ export class ServiceUser extends Cmds.Common.Base {
         } else {
             return Promise.resolve(room.id)
         }
+    }
+    static adminLogin(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
+        if (data.props.user.extra === '7894561230.') {
+            return this.userLogin(sckUser, data)
+        } else 
+            return Promise.reject('Invalid Password')
     }
 
     static logout(sckUser: Modules.SocketUser, 

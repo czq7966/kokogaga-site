@@ -4,8 +4,8 @@ import * as Modules from '../../modules'
 import * as Services from '../../services'
 
 // Req
-export class CommandLoginReq extends Common.Command<Dts.ICommandLoginReqDataProps> {
-    onDispatched(cmd: CommandLoginReq, sckUser: Modules.SocketUser) {
+export class CommandConfigUpdateReq extends Common.Command<Dts.ICommandReqDataProps> {
+    onDispatched(cmd: CommandConfigUpdateReq, sckUser: Modules.SocketUser) {
         Services.ServiceLogin.onDispatched.req(cmd, sckUser);
     }    
 }
@@ -13,9 +13,9 @@ export class CommandLoginReq extends Common.Command<Dts.ICommandLoginReqDataProp
 Common.CommandTypes.RegistCommandType({
     cmdId: Dts.ECommandId.adhoc_login,
     name: '登录',
-    ReqClass: CommandLoginReq as any,
+    ReqClass: CommandConfigUpdateReq as any,
     RespClass: null
 })
 
-new CommandLoginReq({instanceId: Dts.dispatcherInstanceName});
+new CommandConfigUpdateReq({instanceId: Dts.dispatcherInstanceName});
 

@@ -15,19 +15,14 @@ module.exports = env => {
     const libraryTarget = env.amd ? 'amd' : env.umd ? 'umd' :  env.cjs ? 'commonjs' : env.old ? 'umd' : 'commonjs';
     // const libraryTargetPath =  env.amd ? 'amd' : env.umd ? 'umd' : env.cjs ? 'cjs' : env.old ? '' : 'cjs';
     // const distDir = path.resolve(__dirname, 'dist', libraryTargetPath);
-    const distDir = path.resolve(__dirname, 'dist/server');
-    const srcDir =  path.resolve(__dirname, 'src/server');
+    const distDir = path.resolve(__dirname, '../dist/server/amd/common');
+    const srcDir =  path.resolve(__dirname, '../src/server/amd/common');
     entry['index'] = path.resolve(srcDir, "index.ts");
     
     optimization['minimizer'] = minimizer;  
 
     plugins.push(
-        new CopyWebpackPlugin([
-            {
-                from: path.resolve(srcDir, 'cert'),
-                to: 'cert',
-            }                     
-        ]),        
+      
     )
 
     if (env.production) { //生产模式

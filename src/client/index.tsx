@@ -51,7 +51,7 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
     }
     destroy() {
         this.unInitEvents();
-        this.conn.close();
+        this.conn.disconnect();
         delete this.params;
         delete this.conn;        
     }   

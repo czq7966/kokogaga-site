@@ -71,6 +71,8 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
         }
     }
     sendCommand = (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => {
+        this.dispatcher.sendCommand(cmd, this, includeSelf);
+        return;
         cmd.from = cmd.from || {};
         cmd.from.type = cmd.from.type || 'server';
         cmd.from.id = cmd.from.id || '';

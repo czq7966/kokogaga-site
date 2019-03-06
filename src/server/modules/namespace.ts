@@ -1,6 +1,6 @@
 import * as Cmds from "../cmds/index";
 import { ISocketUsers, SocketUsers } from "./users";
-import { IServers } from "./servers";
+import { IServer } from "./server";
 
 export interface ISocketIONamespace extends SocketIO.Namespace {
     snsp?: ISocketNamespace
@@ -9,19 +9,19 @@ export interface ISocketIONamespace extends SocketIO.Namespace {
 export interface ISocketNamespace  {
     nsp: SocketIO.Namespace
     users?: ISocketUsers
-    servers?: IServers
+    server?: IServer
 }
 
 export class SocketNamespace  extends Cmds.Common.Base implements ISocketNamespace {
     nsp: ISocketIONamespace
     users?: ISocketUsers
-    servers?: IServers
+    server?: IServer
 
-    constructor(nsp: ISocketIONamespace, servers?: IServers) {
+    constructor(nsp: ISocketIONamespace, server?: IServer) {
         super()
         this.nsp = nsp;
         this.nsp.snsp = this;
-        this.servers = servers
+        this.server = server
         this.users = new SocketUsers(this);
         this.initEvents();          
     }
@@ -32,7 +32,7 @@ export class SocketNamespace  extends Cmds.Common.Base implements ISocketNamespa
         delete this.users;
         delete this.nsp.snsp
         delete this.nsp
-        delete this.servers
+        delete this.server
         super.destroy();
     }
 

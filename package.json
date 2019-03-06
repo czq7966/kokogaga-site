@@ -10,11 +10,7 @@
 
     "dev": "npm run client:watch",
 
-    "android:server:clean": "rimraf ./dist/android/server",
-    "android:server:start": "node ./dist/android/server/index.js",
-    "android:server": "npm run android:server:clean && cross-env NODE_MODULE=android-server webpack --env.cjs && npm run android:server:start",
-    "build": "npm run server:build && npm run client:build",
-    "compile": "npm run server:compile && npm run client:compile",
+
     "start": "npm run server:start ",
 
     "client:dev":     "npm run client:watch",
@@ -35,7 +31,11 @@
     "server:start":   "node ./dist/server/index.js",    
     "server:build":   "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs --env.production",
     "server:compile": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs",
-    "server":         "npm run server:clean && npm run amd:compile && cross-env NODE_MODULE=server webpack --env.cjs && npm run server:start"
+    "server":         "npm run server:compile && npm run amd:compile && npm run server:start",
+
+    "clean":    "rimraf dist",
+    "compile":  "npm run server:compile && npm run amd:compile  && npm run client:compile",
+    "build":    "npm run server:build   && npm run amd:build    && npm run client:build"    
   },
   "author": "",
   "license": "ISC",
@@ -69,13 +69,6 @@
     "webpack-node-externals": "^1.7.2",
     "webrtc-adapter": "^6.4.6"
   },
-  "port": 13670,
-  "namespaces": [
-    "prometheus",
-    "nd",
-    "test",
-    "test1"
-  ],
   "dependencies": {
     "@types/antd": "^1.0.0",
     "antd": "^3.13.2",

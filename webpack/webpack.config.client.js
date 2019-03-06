@@ -1,7 +1,6 @@
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
-const nodeExternals = require('webpack-node-externals');
 
 module.exports = env => {
     env = env ? env : {}; //环境变量
@@ -11,33 +10,32 @@ module.exports = env => {
     const plugins = [];
     const optimization = {};  //优化选项
     const minimizer = []; //优化选项：瘦身器
-    const externals = [nodeExternals({ modulesFromFile: true })];
+    const externals = {};
     const libraryTarget = env.amd ? 'amd' : env.umd ? 'umd' :  env.cjs ? 'commonjs' : env.old ? 'umd' : 'commonjs';
     // const libraryTargetPath =  env.amd ? 'amd' : env.umd ? 'umd' : env.cjs ? 'cjs' : env.old ? '' : 'cjs';
     // const distDir = path.resolve(__dirname, 'dist', libraryTargetPath);
-    const distDir = path.resolve(__dirname, 'dist');
-    entry['android/server/index'] = "./src/server/index.ts";
-    
+    const distDir = path.resolve(__dirname, '../dist/client');
+    const srcDir =  path.resolve(__dirname, '../src/client');
+    entry['index'] = path.resolve(srcDir, "index.ts");
     optimization['minimizer'] = minimizer;  
 
-    // plugins.push(
-    //     new CopyWebpackPlugin([
-    //         {
-    //             from: path.resolve(__dirname, 'src', 'client/index.html'),
-    //             to: 'server/index.html',
-    //         }            
-    //     ])
-    // )
+    plugins.push(
+        new CopyWebpackPlugin([
+            {
+                from: path.resolve(srcDir, 'index.html'),
+                to: 'index.html',
+            },
+            {
+                from: path.resolve(srcDir, 'libs'),
+                to: 'libs',
+            }                     
+        ])
+    )
 
     if (env.production) { //生产模式
         minimizer.push(
             new UglifyJsPlugin()
         )
-    }
-
-    const node = {
-        __dirname: false,
-        __filename: false
     }
 
 
@@ -63,54 +61,15 @@ module.exports = env => {
                 {
                     test: /\.css$/,
                     loader: "style-loader!css-loader",
-                    exclude: /node_modules/
+                    // exclude: /node_modules/,
+                    // include: path.join(__dirname, '/node_modules/antd')
                 },
             ]
         },
         plugins: plugins,
         optimization: optimization,
         plugins: plugins,
-        node: node,
-        externals: [
-            'assert',
-            'async_hooks',
-            'buffer',
-            'child_process',
-            'cluster',
-            'console',
-            'constants',
-            'crypto',
-            'dgram',
-            'dns',
-            'domain',
-            'events',
-            'fs',
-            'http',
-            'https',
-            'module',
-            'net',
-            'os',
-            'path',
-            'perf_hooks',
-            'process',
-            'punycode',
-            'querystring',
-            'readline',
-            'repl',
-            'stream',
-            'string_decoder',
-            'sys',
-            'timers',
-            'tls',
-            'tty',
-            'url',
-            'util',
-            'v8',
-            'vm',
-            'zlib',
-            'uws'    
-        ]
-
+        externals: externals
     }
 }
 

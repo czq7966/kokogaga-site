@@ -1,11 +1,12 @@
 {
     "version": "2.0",
-    "updateUrl": "http://192.168.252.87:8080",
+    "configUrl": "config.json",
+    "updateUrl": "http://betacs.101.com/v0.1/static/preproduction_content_adhoccast/signaler_server",
 
     "namespaces": {
         "admin": null,
-        "nd": null,
-        "prometheus": null,
+        "nd": "dist/server/amd/common/index.js",
+        "prometheus": "dist/server/amd/common/index.js",
         "test": null
     },
     "http": [
