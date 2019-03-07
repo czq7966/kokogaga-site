@@ -35,7 +35,7 @@ export class Dispatcher extends Cmds.Common.Base implements Cmds.Common.IDispatc
         cmd.to.id = cmd.to.id || '';
 
         console.log(sckUser.users.snsp.nsp.name, Dts.CommandID + 'Event', cmd.cmdId, cmd.from, cmd.to);
-        Cmds.Common.Dispatcher.onCommand(cmd, this, sckUser);
+        Cmds.Common.EDCoder.onCommand(cmd, this, sckUser);
     }
     // sendCommand(cmd: Dts.ICommandData<any>): Promise<any> {
     //     return;
@@ -84,4 +84,4 @@ export class Dispatcher extends Cmds.Common.Base implements Cmds.Common.IDispatc
     }    
 }
 
-Cmds.Common.Dispatcher.setDispatcher(Dispatcher as any, true)
+Cmds.Common.EDCoder.setDispatcher(Dispatcher as any, true)
