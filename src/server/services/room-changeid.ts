@@ -15,8 +15,8 @@ export class ServiceRoomChangeId {
                     from: {type: 'server', id: ''},
                     to: data.from      
                 } as any);
-                resp.props.result = result;
-                resp.props.msg = msg;
+                resp.respResult = result;
+                resp.respMsg = msg;
                 sckUser.sendCommand(resp);    
             }
             if (sckUser.openRooms.exist(room.id)) {

@@ -49,11 +49,10 @@ export class Config implements IConfig {
             return addrUrl.toString()        
         }
     }
-    static update(): Promise<any> {
+    static update(url?: string): Promise<any> {
         return new Promise((resolve, reject) => {
             let jsonConfig = this.getJsonConfig();
-
-            let addr = jsonConfig.configUrl;
+            let addr = url || jsonConfig.configUrl;
             let addrUrl: URL;
             try {
                 addrUrl = new URL(addr)            

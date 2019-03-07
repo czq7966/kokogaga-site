@@ -1,6 +1,7 @@
 import * as Dts from "../dts";
 import * as Cmds from '../cmds/index'
-import * as Modules from '../modules'
+import * as Modules from '../modules/index'
+import * as Admin from './admin/index'
 import { ServiceRoom } from "./room";
 import { ServiceRoomClose } from "./room-close";
 import { ServiceUsers } from "./users";
@@ -12,8 +13,8 @@ export class ServiceUser extends Cmds.Common.Base {
     }
 
     static login(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
-        if (sckUser.users.snsp.nsp.name.toLowerCase() === '/admin') 
-            return this.adminLogin(sckUser, data)
+        if (sckUser.users.snsp.nsp.name === Dts.AdminNamespacename) 
+            return Admin.Admin.login(sckUser, data)
         else 
             return this.userLogin(sckUser, data)
     }
@@ -28,12 +29,6 @@ export class ServiceUser extends Cmds.Common.Base {
         } else {
             return Promise.resolve(room.id)
         }
-    }
-    static adminLogin(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
-        if (data.props.user.extra === '7894561230.') {
-            return this.userLogin(sckUser, data)
-        } else 
-            return Promise.reject('Invalid Password')
     }
 
     static logout(sckUser: Modules.SocketUser, 

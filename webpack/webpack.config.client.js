@@ -16,7 +16,8 @@ module.exports = env => {
     // const distDir = path.resolve(__dirname, 'dist', libraryTargetPath);
     const distDir = path.resolve(__dirname, '../dist/client');
     const srcDir =  path.resolve(__dirname, '../src/client');
-    entry['index'] = path.resolve(srcDir, "index.ts");
+    entry['index'] = path.resolve(srcDir, "index.tsx");
+    // entry['index'] = path.resolve(srcDir, "test.ts");
     optimization['minimizer'] = minimizer;  
 
     plugins.push(

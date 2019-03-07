@@ -80,7 +80,7 @@ export class Server implements IServer {
         return Promise.all(promises)
     }
     resetNamespaces(): Promise<any> {
-        return ServiceServer.resetNamespaces(this)        
+        return ServiceServer.resetNamespaces(this, this.snsps.keys())        
     }
 
     openNamespace(name: string): Promise<any> {

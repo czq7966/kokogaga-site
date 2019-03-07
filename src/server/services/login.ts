@@ -45,8 +45,6 @@ export class ServiceLogin extends Cmds.Common.Base {
 
     static doLogin_failed(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>, msg: string) {
         let props: Dts.ICommandLoginRespDataProps = {
-            result: false,
-            msg: msg,
             user: data.props.user
         }
         let resp = Object.assign({}, data) as  Dts.ICommandData<Dts.ICommandLoginRespDataProps>;
@@ -54,13 +52,14 @@ export class ServiceLogin extends Cmds.Common.Base {
         resp.to = data.from;
         resp.from = {type:'server', id: ''}
         resp.props = props;
+        resp.respResult = false;
+        resp.respMsg = msg;
         sckUser.sendCommand(resp);        
     }
 
     static doLogin_success(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>) {
         //Resp
         let props: Dts.ICommandLoginRespDataProps = {
-            result: true,
             user: sckUser.user
         }
         let resp = Object.assign({}, data) as Dts.ICommandData<Dts.ICommandLoginRespDataProps>;
@@ -68,6 +67,7 @@ export class ServiceLogin extends Cmds.Common.Base {
         resp.to = data.from;
         resp.from = {type:'server', id: ''}
         resp.props = props;        
+        resp.respResult = true;
         sckUser.sendCommand(resp);
     }
 

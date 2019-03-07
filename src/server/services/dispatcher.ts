@@ -44,6 +44,7 @@ export class Dispatcher extends Cmds.Common.Base implements Cmds.Common.IDispatc
         cmd.from = cmd.from || {};
         cmd.from.type = cmd.from.type || 'server';
         cmd.from.id = cmd.from.id || '';
+        if (cmd.props === undefined) cmd.props = {};
 
         switch(cmd.to.type) {
             case 'room':
@@ -78,8 +79,8 @@ export class Dispatcher extends Cmds.Common.Base implements Cmds.Common.IDispatc
                 sckUser.socket.emit(Dts.CommandID, cmd);
                 break;
         }
-        console.log('SendCommand', cmd.cmdId, cmd.to)
-        return Promise.resolve();
+        console.log(sckUser.users.snsp.nsp.name, 'SendCommand', cmd.cmdId, cmd.to)
+        return ;
     }    
 }
 

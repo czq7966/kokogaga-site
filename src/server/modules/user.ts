@@ -62,7 +62,7 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
     }
 
     // Command business
-    onCommand = (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => {        
+    onCommand = (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => {     
         if (!this.user && cmd && cmd.cmdId !== Dts.ECommandId.adhoc_login) {
             cb && cb(false)
         } else {

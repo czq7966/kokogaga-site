@@ -48,6 +48,14 @@ export class ServiceServer  {
             }
         })
     }
+    static openNamespaces(server: Modules.IServer, names: string[]): Promise<any> {
+        let promises = []
+        names = names || [];
+        names.forEach(name => {
+            promises.push(this.openNamespace(server, name))
+        })
+        return Promise.all(promises)
+    }    
     static closeNamespace(server: Modules.IServer, name: string): Promise<any> {
         return new Promise((resolve, reject)=>{
             let nsp = server.socketioServer.nsps['/' + name];
@@ -69,7 +77,7 @@ export class ServiceServer  {
                             resolve()
                         } else {
                             console.log('Close namespace timeout: ' , name, nsp.sockets.length)
-                            reject(nsp.sockets)
+                            reject('Namespace include sockets yet: ' + nsp.sockets.length)
                         }                        
                     }, 2000);                    
                 }                
@@ -80,6 +88,14 @@ export class ServiceServer  {
         })
 
     }
+    static closeNamespaces(server: Modules.IServer, names: string[]): Promise<any> {
+        let promises = []
+        names = names || [];
+        names.forEach(name => {
+            promises.push(this.closeNamespace(server, name))
+        })
+        return Promise.all(promises)
+    }     
     static resetNamespace(server: Modules.IServer, name: string): Promise<any> {
         return new Promise((resolve, reject)=>{
             this.closeNamespace(server, name)
@@ -97,22 +113,19 @@ export class ServiceServer  {
             })
         })
     }    
-    static resetNamespaces(server: Modules.IServer): Promise<any> {
-        return new Promise((resolve, reject) => {
-            server.unInitNamespaces()
-            .then(() => {
-                server.initNamespaces()
-                .then((data) => {
-                    resolve(data)
-                })
-                .catch(err => {
-                    reject(err)
-                })
-            })
-            .catch(err => {
-                reject(err)
-            })        
+    static resetNamespaces(server: Modules.IServer, names: string[]): Promise<any> {
+        names = names || server.snsps.keys();
+        let promises = []
+        names.forEach(name => {
+            promises.push(this.resetNamespace(server, name))
         })
-    }    
-
+        return Promise.all(promises)
+    }  
+    static getNamespaceStatus(server: Modules.IServer, names: string[]): Object {
+        let result = {}
+        names.forEach(name => {
+            result[name] = server.snsps.exist(name)
+        })        
+        return result;
+    }  
 }

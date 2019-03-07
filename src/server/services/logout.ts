@@ -25,50 +25,12 @@ export class ServiceLogout extends Cmds.Common.Base {
                 from: {type: 'server', id: ''},
                 to: {type: 'socket', id: sckUser.socket.id},
                 props: {
-                    result: true,
                     user: data.props.user            
-                }      
+                },
             }); 
+            resp.respResult = true;
             sckUser.sendCommand(resp);
             sckUser.socket.connected && sckUser.socket.disconnect();
-
-
-            // // Send to members
-            // req = Object.assign({}, data);     
-            // req.to = {type: 'room', id: room.id}
-            // sckUser.sendCommand(req);
-
-            // // Leave adhoc room
-            // ServiceRoom.leave(data.props.room.id, sckUser)
-            // .then(() => {
-            //     resp = Object.assign({}, data, {
-            //         type: Dts.ECommandType.resp,
-            //         from: {type: 'server', id: ''},
-            //         to: data.from,
-            //         props: {
-            //             result: true,
-            //             user: data.props.user,
-            //             room: data.props.room                
-            //         }      
-            //     }); 
-            //     sckUser.sendCommand(resp);
-            //     sckUser.users.users.del(data.props.user.id);
-            //     delete sckUser.user;
-            // })
-            // .catch(err => {
-            //     resp = Object.assign({}, data, {
-            //         type: Dts.ECommandType.resp,
-            //         from: {type: 'server', id: ''},
-            //         to: data.from,
-            //         props: {
-            //             result: false,
-            //             msg: err,
-            //             user: data.props.user,
-            //             room: data.props.room
-            //         }      
-            //     }); 
-            //     sckUser.sendCommand(resp);
-            // })
         }
     }
 }

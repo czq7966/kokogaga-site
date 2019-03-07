@@ -15,7 +15,7 @@ export class ServiceRoomOpen extends Cmds.Common.Base {
                     from: {type: 'server', id: ''},
                     to: data.from  
                 }) as any;                    
-                resp.props.result = true;
+                resp.respResult = true;
                 sckUser.sendCommand(resp);
             } else if (ServiceRoom.exist(room.id, sckUser)) {                
                 let resp: Dts.ICommandData<Dts.ICommandRoomOpenRespDataProps> = Object.assign({}, data, {
@@ -23,8 +23,8 @@ export class ServiceRoomOpen extends Cmds.Common.Base {
                     from: {type: 'server', id: ''},
                     to: data.from      
                 } as any);
-                resp.props.result = false;
-                resp.props.msg = 'Room already exist!'
+                resp.respResult = false;
+                resp.respMsg = 'Room already exist!'
                 sckUser.sendCommand(resp);
             } else {
                 ServiceRoom.open(room.id, sckUser)
@@ -34,7 +34,7 @@ export class ServiceRoomOpen extends Cmds.Common.Base {
                         from: {type: 'server', id: ''},
                         to: data.from  
                     }) as any;                    
-                    resp.props.result = true;
+                    resp.respResult = true;
                     sckUser.sendCommand(resp);
                 })
                 .catch(err => {
@@ -43,8 +43,8 @@ export class ServiceRoomOpen extends Cmds.Common.Base {
                         from: {type: 'server', id: ''},
                         to: data.from,         
                     }) as any;  
-                    resp.props.result = false;
-                    resp.props.msg = err
+                    resp.respResult = false;
+                    resp.respMsg = err
                     sckUser.sendCommand(resp);
                 })
             }

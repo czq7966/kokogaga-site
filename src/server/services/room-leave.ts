@@ -25,7 +25,7 @@ export class ServiceRoomLeave extends Cmds.Common.Base {
                     from: {type: 'server', id: ''},
                     to: data.from
                 }) as any; 
-                resp.props.result = true;
+                resp.respResult = true;
                 sckUser.sendCommand(resp);
             })
             .catch(err => {
@@ -34,8 +34,8 @@ export class ServiceRoomLeave extends Cmds.Common.Base {
                     from: {type: 'server', id: ''},
                     to: data.from
                 }) as any; 
-                resp.props.result = false;
-                resp.props.msg = err;
+                resp.respResult = false;
+                resp.respMsg = err;
                 sckUser.sendCommand(resp);
             })
         }
