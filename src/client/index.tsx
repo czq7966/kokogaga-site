@@ -30,15 +30,16 @@ export class Preview extends React.Component<IPreviewProp, IPreviewState> {
 
         this.instanceId = ADHOCCAST.Cmds.Common.Helper.uuid();
         this.params = new URLSearchParams(location.search);
-        let organization = this.params.get('organization');
+        let organization = this.params.get('organization') || window.location.pathname;
 
-        let signalerUrl = window.location.origin + window.location.pathname;  
-        signalerUrl = signalerUrl[signalerUrl.length - 1] === '/' ? signalerUrl.substr(0, signalerUrl.length - 1) : signalerUrl;
-        signalerUrl = signalerUrl + (organization ? '/' + organization : '');
+        let signalerBase = window.location.origin + window.location.pathname;  
+        signalerBase = signalerBase[signalerBase.length - 1] === '/' ? signalerBase.substr(0, signalerBase.length - 1) : signalerBase;
+        // signalerUrl = signalerUrl + (organization ? '/' + organization : '');
         
         let connParams: ADHOCCAST.IConnectionConstructorParams = {
             instanceId: this.instanceId,
-            url: signalerUrl
+            signalerBase: signalerBase,
+            namespace: organization
         }
         this.conn = ADHOCCAST.Connection.getInstance(connParams);
 

@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as Amd from '../amd/index'
+import * as Url from 'url'
 
 var ConfigFile = './config.json'
 
@@ -39,12 +40,13 @@ export class Config implements IConfig {
     getNamespaceModuleUrl(nsp: string): string {
         let addr = this.namespaces[nsp];
         if (addr) {
+
             let url = this.version + '/' + addr;
             let addrUrl: URL;
             try {
-                addrUrl = new URL(addr)            
+                addrUrl = new Url.URL(addr)            
             } catch (error) {
-                addrUrl = new URL(url, this.updateUrl)                        
+                addrUrl = new Url.URL(url, this.updateUrl)                        
             }
             return addrUrl.toString()        
         }
@@ -55,9 +57,9 @@ export class Config implements IConfig {
             let addr = url || jsonConfig.configUrl;
             let addrUrl: URL;
             try {
-                addrUrl = new URL(addr)            
+                addrUrl = new Url.URL(addr)            
             } catch (error) {
-                addrUrl = new URL(addr, jsonConfig.updateUrl)                        
+                addrUrl = new Url.URL(addr, jsonConfig.updateUrl)                        
             }
     
             Amd.requirejs(addrUrl.toString(), [], null, null, true)

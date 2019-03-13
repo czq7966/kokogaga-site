@@ -33,15 +33,15 @@ export class Test {
     constructor() {
         this.instanceId = ADHOCCAST.Cmds.Common.Helper.uuid();
         this.params = new URLSearchParams(location.search);
-        let signalerUrl = window.location.origin + window.location.pathname;  
-        signalerUrl = signalerUrl[signalerUrl.length - 1] === '/' ? signalerUrl.substr(0, signalerUrl.length - 1) : signalerUrl;
+        let signalerBase = window.location.origin;  
+        signalerBase = signalerBase[signalerBase.length - 1] === '/' ? signalerBase.substr(0, signalerBase.length - 1) : signalerBase;
         
-        // console.log(signalerUrl, window.location, this.params)      
-        signalerUrl = 'http://192.168.252.87:13670/admin'
+        signalerBase = 'http://192.168.252.87:13670'
 
         let connParams: ADHOCCAST.IConnectionConstructorParams = {
             instanceId: this.instanceId,
-            url: signalerUrl
+            signalerBase: signalerBase,
+            namespace: 'admin'
         }
         this.conn = ADHOCCAST.Connection.getInstance(connParams);
 
@@ -251,6 +251,27 @@ export class Test {
                 console.error('admin-namespace-reset', err)
             })
         }                                 
+        (document.getElementById("test-extension-capture-are-you-ready") as HTMLButtonElement).onclick = () => {
+            let names = ['nd']
+            ADHOCCAST.Services.Cmds.ExtensionCapture.areYouReady(this.conn.instanceId)
+            .then((data) => {
+                console.log('test-extension-capture-are-you-ready', data)
+            })
+            .catch(err => {
+                console.error('test-extension-capture-are-you-ready', err)
+            })
+        }                                         
+        (document.getElementById("test-extension-capture-get-custom-sourceid") as HTMLButtonElement).onclick = () => {
+            let options = ['screen', 'audio', 'window', 'tab']
+            ADHOCCAST.Services.Cmds.ExtensionCapture.getCustomSourceStream(this.conn.instanceId)
+            .then((data) => {
+                console.log('test-extension-capture-get-custom-sourceid', data)
+            })
+            .catch(err => {
+                console.error('test-extension-capture-get-custom-sourceid', err)
+            })
+        }            
+        
     }
 }
 

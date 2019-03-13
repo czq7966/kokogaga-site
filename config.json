@@ -9,16 +9,12 @@
         "prometheus": "dist/server/amd/common/index.js",
         "test": null
     },
-    "http": [
-        {
-            "port": 13670
-        }
-    ],
+    "http": [],
     "https": [
         {
-            "port": 13671,
-            "key": "cert/server.key",
-            "cert": "cert/server.crt"
+            "port": 13670,
+            "key": "/etc/letsencrypt/live/mdm.hk.101.com/privkey.pem",
+            "cert": "/etc/letsencrypt/live/mdm.hk.101.com/fullchain.pem"
         }
     ]
 }

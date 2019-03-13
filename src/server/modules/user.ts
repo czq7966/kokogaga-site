@@ -30,6 +30,7 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
         this.dispatcher = Services.Dispatcher.getInstance(Dts.dispatcherInstanceName);
         this.socket = socket;
         this.socket.user = this;  
+        this.socket.compress(true);
         this.users = (socket.nsp as ISocketIONamespace).snsp.users;
         this.openRooms = new Cmds.Common.Helper.KeyValue<any>();
         this.initEvents();          

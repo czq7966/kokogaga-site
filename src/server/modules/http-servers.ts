@@ -65,7 +65,7 @@ export class HttpServers {
             let httpsServer = https.createServer(httpsOptions, expressApp.express);
             let server: IHttpServerOption = {
                 port: option.port,
-                listenlog: 'listen on http port ' + option.port,
+                listenlog: 'listen on https port ' + option.port,
                 httpServer: httpsServer,
             }
             this.servers.push(server)
