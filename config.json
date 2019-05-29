@@ -7,6 +7,7 @@
         "admin": null,
         "nd": "dist/server/amd/common/index.js",
         "prometheus": "dist/server/amd/common/index.js",
+        "promethean": null,
         "test": null
     },
     "http": [],
