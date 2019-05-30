@@ -1,6 +1,6 @@
 {
   "name": "adhoc-cast-signaler-server",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -25,6 +25,13 @@
     "server:build": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs --env.production",
     "server:compile": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs",
     "server": "npm run server:compile && npm run amd:compile && npm run server:start",
+
+    "sfu:clean": "rimraf dist/sfu",
+    "sfu:start": "node ./dist/sfu/index.js",
+    "sfu:build": "npm run sfu:clean && cross-env NODE_MODULE=sfu webpack --env.cjs --env.production",
+    "sfu:compile": "npm run sfu:clean && cross-env NODE_MODULE=sfu webpack --env.cjs",
+    "sfu": "npm run sfu:compile && npm run sfu:start",
+
     "clean": "rimraf dist",
     "compile": "npm run server:compile && npm run amd:compile  && npm run client:compile",
     "build": "npm run server:build   && npm run amd:build    && npm run client:build"
@@ -68,6 +75,7 @@
     "fs": "0.0.1-security",
     "socket.io": "2.1.1",
     "socket.io-client": "2.1.1",
-    "url": "^0.11.0"
+    "url": "^0.11.0",
+    "wrtc": "^0.3.7"
   }
 }

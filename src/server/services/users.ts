@@ -12,12 +12,16 @@ export class ServiceUsers  {
             return sid
         }
     }
+    static getUser(sckUsers: Modules.ISocketUsers, user: Dts.IUser): Modules.ISocketUser {
+        let sckUser;
+        if (user.id)
+            sckUser = sckUsers.users.get(user.id);
+        if (!sckUser && user.sid)
+            sckUser = sckUsers.shortUsers.get(user.sid)
+        return sckUser;
+    }    
     static existUser(sckUsers: Modules.ISocketUsers, user: Dts.IUser): Boolean {
-        let exist = false;
-        exist = sckUsers.users.exist(user.id);
-        if (!exist && user.sid)
-            exist = sckUsers.shortUsers.exist(user.sid)
-        return exist;
+        return !!ServiceUsers.getUser(sckUsers, user);
     }
     static addUser(sckUsers: Modules.ISocketUsers, sckUser: Modules.ISocketUser): boolean {
         if (!this.existUser(sckUsers, sckUser.user)) {

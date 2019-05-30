@@ -11,5 +11,7 @@ export * from './room-changeid'
 export * from './network-disconnect'
 export * from './network-disconnecting'
 export * from './server'
+export * from './user-get'
+export * from './user-set'
 import * as Admin from './admin'
 export { Admin }

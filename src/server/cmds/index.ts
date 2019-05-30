@@ -10,6 +10,8 @@ export * from './room/close'
 export * from './room/leave'
 export * from './room/changeid'
 export * from './admin/admin'
+export * from './user/get'
+export * from './user/set'
 
 import './common'
 // import './network'
