@@ -1,14 +1,14 @@
 {
-    "version": "2.0",
+    "version": "2.1",
     "configUrl": "config.json",
     "updateUrl": "http://betacs.101.com/v0.1/static/preproduction_content_adhoccast/signaler_server",
 
     "namespaces": {
-        "admin": null,
+        "admin": "dist/server/amd/common/index.js",
         "nd": "dist/server/amd/common/index.js",
         "prometheus": "dist/server/amd/common/index.js",
-        "promethean": null,
-        "test": null
+        "promethean": "dist/server/amd/common/index.js",
+        "test": "dist/server/amd/common/index.js"
     },
     "http": [],
     "https": [
