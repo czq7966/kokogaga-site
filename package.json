@@ -1,6 +1,6 @@
 {
   "name": "adhoc-cast-signaler-server",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "",
   "main": "index.js",
   "scripts": {
