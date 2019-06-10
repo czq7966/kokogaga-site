@@ -5,7 +5,7 @@ import * as Modules from '../modules'
 
 export class ServiceUsers  {
     static newShortID(sckUsers: Modules.ISocketUsers): string {
-        let sid = Cmds.Common.Helper.uuid(4, 10)
+        let sid = Cmds.Common.Helper.uuid(6, 10)
         if (sckUsers.shortUsers.exist(sid)) {
             return this.newShortID(sckUsers)
         } else {
