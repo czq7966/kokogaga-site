@@ -24,7 +24,19 @@ export class ServiceLogin extends Cmds.Common.Base {
     // logical business
     static onReq(sckUser: Modules.SocketUser, reqData: Dts.ICommandData<Dts.ICommandLoginReqDataProps>) {
         if (ServiceUser.isLogin(sckUser)) {
-            this.doLogin_failed(sckUser, reqData, 'already login!');
+            let sckLoginUser = ServiceUsers.getUser(sckUser.users, sckUser.user);
+            if (sckLoginUser.socket.id != sckUser.socket.id) {
+                ServiceUser.logout(sckLoginUser as Modules.SocketUser)
+                .then(() => {
+                    this.doLogin(sckUser, reqData);
+                })
+                .catch(e => {
+                    this.doLogin(sckUser, reqData);
+                })
+            } else {
+                this.doLogin_success(sckUser, reqData);
+            }
+            // this.doLogin_failed(sckUser, reqData, 'already login!');
         } else {
             this.doLogin(sckUser, reqData);        
         }
