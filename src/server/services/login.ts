@@ -23,23 +23,37 @@ export class ServiceLogin extends Cmds.Common.Base {
 
     // logical business
     static onReq(sckUser: Modules.SocketUser, reqData: Dts.ICommandData<Dts.ICommandLoginReqDataProps>) {
-        if (ServiceUser.isLogin(sckUser)) {
-            let sckLoginUser = ServiceUsers.getUser(sckUser.users, sckUser.user);
-            if (sckLoginUser.socket.id != sckUser.socket.id) {
-                ServiceUser.logout(sckLoginUser as Modules.SocketUser)
-                .then(() => {
-                    this.doLogin(sckUser, reqData);
-                })
-                .catch(e => {
-                    this.doLogin(sckUser, reqData);
-                })
-            } else {
-                this.doLogin_success(sckUser, reqData);
-            }
-            // this.doLogin_failed(sckUser, reqData, 'already login!');
-        } else {
-            this.doLogin(sckUser, reqData);        
+        let _kickoff = (user: Dts.IUser): Promise<any> => {
+            return new Promise((resolve, reject) => {
+                if (user) {
+                    let sckLoginUser = ServiceUsers.getUser(sckUser.users, user);
+                    if (sckLoginUser && sckLoginUser.socket.id != sckUser.socket.id) 
+                        ServiceUser.logout(sckLoginUser as Modules.SocketUser, null, true, true)
+                        .then(v => resolve())
+                        .catch(e => resolve());
+                    else 
+                        resolve(sckLoginUser);
+                } else 
+                    resolve();
+            })
         }
+
+        let _doLogin = () => {
+            if (ServiceUser.isLogin(sckUser)) {
+                let sckLoginUser = ServiceUsers.getUser(sckUser.users, sckUser.user);
+                reqData.extra = sckLoginUser.user;
+                this.doLogin_failed(sckUser, reqData, 'already login!');
+            } else 
+                this.doLogin(sckUser, reqData);
+        }
+
+        _kickoff(reqData.props.user)
+        .then(v => {
+            _kickoff(sckUser.user)
+            .then(v => {
+                _doLogin();
+            })
+        })
     }    
 
 
