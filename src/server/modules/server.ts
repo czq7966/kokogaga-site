@@ -18,12 +18,14 @@ export interface IServer {
 }
 
 export class Server implements IServer {
+    static instance: IServer;
     snsps: Cmds.Common.Helper.KeyValue<ISocketNamespace>
     httpServers: IHttpServers
     socketioServer: SocketIO.Server;
     globalExpcetion: IGlobalExpcetion
 
     constructor() {
+        Server.instance = this;
         this.httpServers = new HttpServers(new Config());
         this.snsps = new Cmds.Common.Helper.KeyValue();
         this.initSocketIOServer();

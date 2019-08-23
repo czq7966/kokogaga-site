@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as http from 'http'
 import * as https from 'https'
-import { Config} from './config';
+import { Config, IConfig} from './config';
 import { ExpressApp } from './express-app';
 
 export interface IHttpServerOption {
@@ -12,14 +12,15 @@ export interface IHttpServerOption {
 }
 
 export interface IHttpServers {
+    config: IConfig 
     servers: IHttpServerOption[]
     destroy()
 }
 
 export class HttpServers {
     servers: IHttpServerOption[]
-    config: Config       
-    constructor(config: Config) {               
+    config: IConfig       
+    constructor(config: IConfig) {               
         this.config = config;
         this.servers = [];
         this.createServers();

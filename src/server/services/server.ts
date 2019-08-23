@@ -25,7 +25,7 @@ export class ServiceServer  {
                         .then((modules: any) => {
                             let SNSP = modules.SocketNamespace;
                             if (SNSP){
-                                snsp = new SNSP(nsp, this)
+                                snsp = new SNSP(nsp, server)
                                 console.log('Open Namespace Success(' + name +'): ', url);
                                 _openNamespace(snsp)
                             }
