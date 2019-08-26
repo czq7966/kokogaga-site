@@ -1,6 +1,6 @@
 {
   "name": "adhoc-cast-signaler-server",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -14,24 +14,24 @@
     "client:watch": "npm run client:clean && cross-env NODE_MODULE=client webpack --progress --env.umd --watch",
     "client:build": "npm run client:clean && cross-env NODE_MODULE=client webpack --progress --env.umd --env.production",
     "client:compile": "npm run client:clean && cross-env NODE_MODULE=client webpack --progress --env.umd",
+    "amd:clean": "rimraf ./dist/amd",
+    "amd:dev": "npm run amd:clean && cross-env NODE_MODULE=amd webpack --progress --env.cjs --watch ",
+    "amd:compile": "npm run amd:clean && cross-env NODE_MODULE=amd webpack --progress --env.cjs",
+    "amd:build": "npm run amd:clean && cross-env NODE_MODULE=amd webpack --progress --env.cjs --env.production",
     "amd:common:clean": "rimraf ./dist/amd/common",
     "amd:common:dev": "npm run amd:common:clean && cross-env NODE_MODULE=amd-common webpack --progress --env.cjs --watch ",
     "amd:common:compile": "npm run amd:common:clean && cross-env NODE_MODULE=amd-common webpack --progress --env.cjs",
     "amd:common:build": "npm run amd:common:clean && cross-env NODE_MODULE=amd-common webpack --progress --env.cjs --env.production",
-    "amd:compile": "npm run amd:common:compile",
-    "amd:build": "npm run amd:common:build ",
     "server:clean": "rimraf dist/server",
     "server:start": "node ./dist/server/index.js",
     "server:build": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs --env.production",
     "server:compile": "npm run server:clean && cross-env NODE_MODULE=server webpack --env.cjs",
     "server": "npm run server:compile && npm run amd:compile && npm run server:start",
-
     "sfu:clean": "rimraf dist/sfu",
     "sfu:start": "node ./dist/sfu/index.js",
     "sfu:build": "npm run sfu:clean && cross-env NODE_MODULE=sfu webpack --env.cjs --env.production",
     "sfu:compile": "npm run sfu:clean && cross-env NODE_MODULE=sfu webpack --env.cjs",
     "sfu": "npm run sfu:compile && npm run sfu:start",
-
     "clean": "rimraf dist",
     "compile": "npm run server:compile && npm run amd:compile  && npm run client:compile",
     "build": "npm run server:build   && npm run amd:build    && npm run client:build"
@@ -48,6 +48,7 @@
     "@types/socket.io": "^2.1.0",
     "@types/socket.io-client": "^1.4.32",
     "antd": "^3.13.2",
+    "check-cert-expiration": "^2.1.0",
     "copy-webpack-plugin": "^4.6.0",
     "cross-env": "^5.2.0",
     "css-loader": "^1.0.1",
@@ -70,12 +71,13 @@
     "webrtc-adapter": "^6.4.6"
   },
   "dependencies": {
+    "adhoc-cast-connection": "^2.2.3",
     "es6-object-assign": "^1.1.0",
     "express": "^4.16.4",
     "fs": "0.0.1-security",
     "socket.io": "2.1.1",
     "socket.io-client": "2.1.1",
     "url": "^0.11.0",
-    "wrtc": "^0.3.7"
+    "wrtc": "^0.4.0"
   }
 }

@@ -16,7 +16,8 @@ export class CommandAdminReq extends Common.Command<Dts.ICommandReqDataProps> {
     Dts.ECommandId.admin_namespace_close,
     Dts.ECommandId.admin_namespace_open,
     Dts.ECommandId.admin_namespace_reset,
-    Dts.ECommandId.admin_namespace_status
+    Dts.ECommandId.admin_namespace_status,
+    Dts.ECommandId.admin_users_get,
 ].forEach(commanid => {
     Common.CommandTypes.RegistCommandType({
         cmdId: commanid,

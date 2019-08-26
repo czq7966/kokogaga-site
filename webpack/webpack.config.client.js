@@ -15,9 +15,8 @@ module.exports = env => {
     // const libraryTargetPath =  env.amd ? 'amd' : env.umd ? 'umd' : env.cjs ? 'cjs' : env.old ? '' : 'cjs';
     // const distDir = path.resolve(__dirname, 'dist', libraryTargetPath);
     const distDir = path.resolve(__dirname, '../dist/client');
-    const srcDir =  path.resolve(__dirname, '../src/client');
+    const srcDir =  path.resolve(__dirname, '../src/client/2.0');
     entry['index'] = path.resolve(srcDir, "index.tsx");
-    // entry['index'] = path.resolve(srcDir, "test.ts");
     optimization['minimizer'] = minimizer;  
 
     plugins.push(

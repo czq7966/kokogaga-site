@@ -22,12 +22,12 @@ module.exports = env => {
     optimization['minimizer'] = minimizer;  
 
     plugins.push(
-        new CopyWebpackPlugin([
-            {
-                from: path.resolve(srcDir, 'cert'),
-                to: 'cert',
-            }                     
-        ]),        
+        // new CopyWebpackPlugin([
+        //     {
+        //         from: path.resolve(srcDir, 'cert'),
+        //         to: 'cert',
+        //     }                     
+        // ]),        
     )
 
     if (env.production) { //生产模式

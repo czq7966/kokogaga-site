@@ -8,6 +8,7 @@ import { NamespaceOpen } from './namespace-open';
 import { NamespaceReset } from './namespace-reset';
 import { NamespaceStatus } from './namespace-status';
 import { ServiceUser } from '../user';
+import { UsersGet } from './users-get'
 
 export class Admin {
     static onDispatched = {
@@ -32,7 +33,10 @@ export class Admin {
                         break;
                     case Dts.ECommandId.admin_namespace_status:
                         NamespaceStatus.onDispatched.req(cmd, sckUser);
-                        break;                    
+                        break;           
+                    case Dts.ECommandId.admin_users_get:
+                            UsersGet.onDispatched.req(cmd, sckUser);
+                            break;                                            
                 }
             }
         }
