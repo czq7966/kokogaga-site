@@ -24,16 +24,19 @@ export class GlobalExpcetion {
     }
     uncaughtException = (error: Error) => {
         console.log('uncaughtException:', error)
-        this.server.resetNamespaces()
-        .catch(err => {
-            console.log('ResetNamespaces Error:', err)
-        })
+        this.resetNamespaces();
     }
     unhandledRejection =(reason: any, promise: Promise<any>) => {
-        console.log('unhandledRejection:', reason)
-        this.server.resetNamespaces()
-        .catch(err => {
-            console.log('ResetNamespaces Error:', err)
-        })
+        console.log('unhandledRejection:', reason);
+        // this.resetNamespaces();
+    }
+    resetNamespaces(delay?: number) {
+        delay = delay || 3 * 1000;
+        setTimeout(() => {
+            this.server.resetNamespaces()
+            .catch(err => {
+                console.log('ResetNamespaces Error:', err)
+            })        
+        }, delay);
     }
 }

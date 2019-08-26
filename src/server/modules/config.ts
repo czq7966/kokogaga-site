@@ -87,4 +87,22 @@ export class Config implements IConfig {
         jsonConfig.updateUrl = jsonConfig.updateUrl[jsonConfig.updateUrl.length - 1] !== '/' ? jsonConfig.updateUrl + '/'  : jsonConfig.updateUrl;
         return jsonConfig;
     }
+
+    namespacesExist(names: Array<string>): Array<string> {
+        let result = [];
+        names.forEach(name => {
+            if (this.namespaces[name] !== undefined) 
+                result.push(name)
+        })
+        return result;       
+    }
+
+    namespacesNotExist(names: Array<string>): Array<string> {
+        let result = [];
+        names.forEach(name => {
+            if (this.namespaces[name] === undefined) 
+                result.push(name)
+        })
+        return result;       
+    }    
 }

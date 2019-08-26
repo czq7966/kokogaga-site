@@ -10,6 +10,15 @@ export class NamespaceOpen {
             let names = data.extra;
             typeof(names) === 'string' && (names = [names])                        
             if (names instanceof Array) {
+                // namespace must config first;
+                let config = new Modules.Config();                
+                let namesOfNotConfig = config.namespacesNotExist(names);
+                if (namesOfNotConfig.length > 0) {
+                    ServiceCommon.respCommand(data, sckUser, false, namesOfNotConfig.toString() + " must config first")
+                    return;
+                } 
+
+                //open namespaces
                 ServiceServer.openNamespaces(sckUser.users.snsp.server, data.extra)
                 .then(() => {
                     ServiceCommon.respCommand(data, sckUser, true)
@@ -17,6 +26,7 @@ export class NamespaceOpen {
                 .catch(err => {
                     ServiceCommon.respCommand(data, sckUser, false, err)
                 })
+                
             } else {
                 ServiceCommon.respCommand(data, sckUser, false, 'Names must string or string array')
             }

@@ -72,45 +72,6 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
         }
     }
     sendCommand = (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => {
-        this.dispatcher.sendCommand(cmd, this, includeSelf);
-        return;
-        cmd.from = cmd.from || {};
-        cmd.from.type = cmd.from.type || 'server';
-        cmd.from.id = cmd.from.id || '';
-
-        switch(cmd.to.type) {
-            case 'room':
-                cmd.to.id = cmd.to.id || this.user.room.id;
-                let uroom = this.users.rooms.get(cmd.to.id)
-                let sim = uroom && uroom.sim || cmd.to.id;
-                this.socket.to(sim).emit(Dts.CommandID, cmd);
-                includeSelf && this.socket.emit(Dts.CommandID, cmd);
-                break;
-            case 'socket':
-                cmd.to.id = cmd.to.id || this.socket.id;
-                if (this.socket.id === cmd.to.id) {
-                    this.socket.emit(Dts.CommandID, cmd);
-                } else {
-                    this.socket.to(cmd.to.id).emit(Dts.CommandID, cmd);
-                }
-                break
-            case 'user':
-                cmd.to.id = cmd.to.id || this.user.id;
-                if (this.user && (this.user.id === cmd.to.id)) {
-                    this.socket.emit(Dts.CommandID, cmd);
-                } else {
-                    let toUser = this.users.users.get(cmd.to.id);
-                    if (toUser) {
-                        this.socket.to(toUser.socket.id).emit(Dts.CommandID, cmd)
-                    }
-                }
-                break;
-            case 'server':
-                break;                
-            default:
-                this.socket.emit(Dts.CommandID, cmd);
-                break;
-        }
-        console.log('SendCommand', cmd.cmdId, cmd.to)
+        this.dispatcher && this.dispatcher.sendCommand(cmd, this, includeSelf);
     }
 }

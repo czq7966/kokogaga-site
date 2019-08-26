@@ -58,6 +58,11 @@ export class ServiceServer  {
     }    
     static closeNamespace(server: Modules.IServer, name: string): Promise<any> {
         return new Promise((resolve, reject)=>{
+            if (name == "") {
+                reject("Invalid namespace: " + name);
+                return;
+            }
+
             let nsp = server.socketioServer.nsps['/' + name];
             if (nsp) {
                 Object.keys(nsp.sockets).forEach(key => {
