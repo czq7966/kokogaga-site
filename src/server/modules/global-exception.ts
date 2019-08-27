@@ -24,7 +24,7 @@ export class GlobalExpcetion {
     }
     uncaughtException = (error: Error) => {
         console.log('uncaughtException:', error)
-        this.resetNamespaces();
+        // this.resetNamespaces();
     }
     unhandledRejection =(reason: any, promise: Promise<any>) => {
         console.log('unhandledRejection:', reason);
