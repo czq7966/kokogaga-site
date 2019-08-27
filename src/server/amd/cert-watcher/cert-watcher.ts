@@ -9,7 +9,7 @@ export interface ICertWatcher extends Modules.ISocketNamespace  {
 }
 
 export class SocketNamespace  extends Modules.SocketNamespace implements ICertWatcher {
-    reloadTimerHandler: NodeJS.Timer;
+    reloadTimerHandler: any;
 
     constructor(nsp: Modules.ISocketIONamespace, server?: Modules.IServer) {
         super(nsp, server);

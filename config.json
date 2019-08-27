@@ -1,5 +1,5 @@
 {
-    "version": "2.5",
+    "version": "2.6",
     "configUrl": "config.json",
     "updateUrl": "http://betacs.101.com/v0.1/static/preproduction_content_adhoccast/signaler_server",
 
