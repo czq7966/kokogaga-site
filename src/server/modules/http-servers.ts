@@ -57,7 +57,8 @@ export class HttpServers {
         let options = this.config.https || [];
         let nsps: Array<string> = Object.keys(this.config.namespaces || []);
         nsps.indexOf("") < 0 && nsps.push("");
-        options.forEach(option => {
+        options.forEach(option2 => {
+            let option = this.config.httpsOption2To1(option2);
             let expressApp = new ExpressApp(nsps);
             let httpsOptions = {
                 key: fs.readFileSync(path.resolve(__dirname, option.key)),

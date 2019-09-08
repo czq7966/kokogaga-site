@@ -1,5 +1,5 @@
 {
-    "version": "2.6",
+    "version": "2.8",
     "configUrl": "config.json",
     "updateUrl": "http://betacs.101.com/v0.1/static/preproduction_content_adhoccast/signaler_server",
 
@@ -12,12 +12,21 @@
         "promethean": "dist/server/amd/common/index.js",
         "test": "dist/server/amd/common/index.js"
     },
-    "http": [],
+    "http": [
+        {
+            "port": 2770
+        }
+    ],
     "https": [
         {
+            "port": 2771,
+            "key": ["/etc/letsencrypt/live/adhoc-turn.ca.101.com/privkey.pem","/etc/letsencrypt/live/mdm.hk.101.com/privkey.pem"],
+            "cert":["/etc/letsencrypt/live/adhoc-turn.ca.101.com/fullchain.pem","/etc/letsencrypt/live/mdm.hk.101.com/fullchain.pem"]
+        },
+        {
             "port": 13670,
-            "key": "/etc/letsencrypt/live/mdm.hk.101.com/privkey.pem",
-            "cert": "/etc/letsencrypt/live/mdm.hk.101.com/fullchain.pem"
+            "key": ["/etc/letsencrypt/live/adhoc-turn.ca.101.com/privkey.pem","/etc/letsencrypt/live/mdm.hk.101.com/privkey.pem"],
+            "cert":["/etc/letsencrypt/live/adhoc-turn.ca.101.com/fullchain.pem","/etc/letsencrypt/live/mdm.hk.101.com/fullchain.pem"]
         }
     ]
 }
