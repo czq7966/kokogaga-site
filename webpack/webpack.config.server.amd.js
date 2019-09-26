@@ -19,6 +19,7 @@ module.exports = env => {
     const srcDir =  path.resolve(__dirname, '../src/server/amd');
     entry['common/index'] = path.resolve(srcDir, "common/index.ts");
     entry['cert-watcher/index'] = path.resolve(srcDir, "cert-watcher/index.ts");
+    entry['admin/index'] = path.resolve(srcDir, "admin/index.ts");
 
     
     optimization['minimizer'] = minimizer;  
