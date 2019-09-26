@@ -34,7 +34,16 @@
     "sfu": "npm run sfu:compile && npm run sfu:start",
     "clean": "rimraf dist",
     "compile": "npm run server:compile && npm run amd:compile  && npm run client:compile",
-    "build": "npm run server:build   && npm run amd:build    && npm run client:build"
+    "build": "npm run server:build   && npm run amd:build    && npm run client:build",
+    "desktop:sender:app:clean": "rimraf ./dist/desktop/sender/app",
+    "desktop:sender:app:compile": "npm run desktop:sender:app:clean && cross-env NODE_MODULE=desktop-sender-app webpack --env.cjs",
+    "desktop:sender:app:dev": "npm run desktop:sender:app:clean && cross-env NODE_MODULE=desktop-sender-app webpack --env.cjs --env.nodevtool --progress --watch",
+    "desktop:sender:app:build": "npm run desktop:sender:app:clean && cross-env NODE_MODULE=desktop-sender-app webpack --env.cjs --env.production --progress",
+    "desktop:sender:app:run": "electron ./dist/desktop/sender/app",
+    "desktop:sender:web:clean": "rimraf ./dist/desktop/sender/web",
+    "desktop:sender:web:compile": "npm run desktop:sender:web:clean && cross-env NODE_MODULE=desktop-sender-web webpack --env.cjs",
+    "desktop:sender:web:dev": "npm run desktop:sender:web:clean && cross-env NODE_MODULE=desktop-sender-web webpack --env.cjs --env.nodevtool --progress --watch",
+    "desktop:sender:web:build": "npm run desktop:sender:web:clean && cross-env NODE_MODULE=desktop-sender-web webpack --env.cjs --env.production --progress"
   },
   "author": "",
   "license": "ISC",
@@ -52,6 +61,7 @@
     "copy-webpack-plugin": "4.6.0",
     "cross-env": "5.2.0",
     "css-loader": "1.0.1",
+    "electron": "^6.0.10",
     "http": "0.0.0",
     "react": "16.6.3",
     "react-dom": "16.6.3",
@@ -68,7 +78,8 @@
     "webpack": "4.25.1",
     "webpack-cli": "3.1.2",
     "webpack-node-externals": "1.7.2",
-    "webrtc-adapter": "6.4.6"
+    "webrtc-adapter": "6.4.6",
+    "wrtc": "^0.4.2"
   },
   "dependencies": {
     "adhoc-cast-connection": "2.2.3",
