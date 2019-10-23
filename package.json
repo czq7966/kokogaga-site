@@ -41,9 +41,9 @@
     "desktop:sender:app:build": "npm run desktop:sender:app:clean && cross-env NODE_MODULE=desktop-sender-app webpack --env.cjs --env.production --progress",
     "desktop:sender:app:run": "electron ./dist/desktop/sender/app",
     "desktop:sender:web:clean": "rimraf ./dist/desktop/sender/web",
-    "desktop:sender:web:compile": "npm run desktop:sender:web:clean && cross-env NODE_MODULE=desktop-sender-web webpack --env.cjs",
-    "desktop:sender:web:dev": "npm run desktop:sender:web:clean && cross-env NODE_MODULE=desktop-sender-web webpack --env.cjs --env.nodevtool --progress --watch",
-    "desktop:sender:web:build": "npm run desktop:sender:web:clean && cross-env NODE_MODULE=desktop-sender-web webpack --env.cjs --env.production --progress"
+    "desktop:sender:web:compile": "npm run desktop:sender:web:clean && cross-env NODE_MODULE=desktop-sender-web webpack --env.umd",
+    "desktop:sender:web:dev": "npm run desktop:sender:web:clean && cross-env NODE_MODULE=desktop-sender-web webpack --env.umd --env.nodevtool --progress --watch",
+    "desktop:sender:web:build": "npm run desktop:sender:web:clean && cross-env NODE_MODULE=desktop-sender-web webpack --env.umd --env.production --progress"
   },
   "author": "",
   "license": "ISC",
@@ -61,7 +61,7 @@
     "copy-webpack-plugin": "4.6.0",
     "cross-env": "5.2.0",
     "css-loader": "1.0.1",
-    "electron": "^6.0.10",
+    "electron": "4.2.11",
     "http": "0.0.0",
     "react": "16.6.3",
     "react-dom": "16.6.3",

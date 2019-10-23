@@ -43,7 +43,7 @@ export class HttpServers {
         let nsps: Array<string> = Object.keys(this.config.namespaces || []);
         nsps.indexOf("") < 0 && nsps.push("");
         options.forEach(option => {
-            let expressApp = new ExpressApp(nsps);
+            let expressApp = new ExpressApp(nsps, this.config.websites);
             let httpServer = http.createServer(expressApp.express);
             let server: IHttpServerOption = {
                 port: option.port,
@@ -59,7 +59,7 @@ export class HttpServers {
         nsps.indexOf("") < 0 && nsps.push("");
         options.forEach(option2 => {
             let option = this.config.httpsOption2To1(option2);
-            let expressApp = new ExpressApp(nsps);
+            let expressApp = new ExpressApp(nsps, this.config.websites);
             let httpsOptions = {
                 key: fs.readFileSync(path.resolve(__dirname, option.key)),
                 cert: fs.readFileSync(path.resolve(__dirname, option.cert)),

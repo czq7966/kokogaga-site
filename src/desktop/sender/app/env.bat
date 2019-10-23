@@ -1,0 +1,1 @@
+set PATH=E:\data\nodejs\node-v12.4.0-win-x64;%PATH%

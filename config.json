@@ -10,14 +10,15 @@
         "nd": "dist/server/amd/common/index.js",
         "prometheus": "dist/server/amd/common/index.js",
         "promethean": "dist/server/amd/common/index.js",
+        "mdm": "dist/server/amd/common/index.js",
         "test": "dist/server/amd/common/index.js"
+    },
+    "websites": {
+        "desktop" : "/../desktop"
     },
     "http": [
         {
             "port": 2770
-        },
-        {
-            "port": 8080
         }
     ],
     "https": [

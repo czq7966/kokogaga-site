@@ -33,19 +33,23 @@ export class Main {
     }
 
     createMainWindow(url?: string) {     
-        url = url || "http://127.0.0.1:8080/dist/?organization=test&roomid=123";
+        url = url || "http://192.168.252.87:8080/desktop/sender/web/index.html";
         this.mainWindow = new electron.BrowserWindow({
-            width: 800,
-            height: 600,
+            width: 424,
+            height: 393,
             // transparent: true,
 
-            // frame: false,
+            frame: false,
             titleBarStyle: "customButtonsOnHover",
             darkTheme: true,
             autoHideMenuBar: true,
             resizable: true,
+            // fullscreen: true,
+            // useContentSize: true,
+
             
             webPreferences: {
+                sandbox: false,
                 nodeIntegration: false,
                 webSecurity: false,
                 allowRunningInsecureContent: true,
@@ -64,6 +68,14 @@ export class Main {
           // in an array if your app supports multi windows, this is the time
           // when you should delete the corresponding element.
           this.mainWindow = null
-        })        
+        })     
+        this.mainWindow.webContents.on('will-redirect', (event: Event,
+            url: string,
+            isInPlace: boolean,
+            isMainFrame: boolean,
+            frameProcessId: number,
+            frameRoutingId: number) => {
+
+            });
     }
 }

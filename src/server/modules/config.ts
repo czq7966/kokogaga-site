@@ -26,6 +26,7 @@ export interface IConfig {
     updateUrl: string
     configUrl: string
     namespaces: {[name:string]: string}
+    websites: {[name:string]: string}
     http: Array<IHttpOption>
     https: Array<IHttpsOption2>
     httpsOption2To1(option2: IHttpsOption2): IHttpsOption
@@ -36,6 +37,7 @@ export class Config implements IConfig {
     configUrl: string
     updateUrl: string
     namespaces: {[name:string]: string}
+    websites: {[name:string]: string}
     http: Array<IHttpOption>
     https: Array<IHttpsOption2>
     constructor() {

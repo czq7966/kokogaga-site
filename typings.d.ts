@@ -1,3 +1,4 @@
+
 declare var adhoc_cast_connection_console : {
     log(...args: any[])
     warn(...args: any[])
@@ -8,3 +9,17 @@ declare var adhoc_cast_connection_console : {
 
 declare var global: any;
 declare var IsNode: boolean;
+
+
+
+interface Window {
+    mynode: typeof mynode;
+}
+
+declare namespace mynode {
+    var electron: Electron.MainInterface;
+    var process: NodeJS.Process;
+    var fs: any;
+    var path: any;
+    var robotjs: any;
+}
