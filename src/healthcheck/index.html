@@ -40,6 +40,7 @@
                 alert("I'm OK!")
             })
             .catch(err => {
+                console.error(err);
                 connection.disconnect();
                 alert(err);
             })        
