@@ -1,17 +1,17 @@
 {
-    "version": "2.9",
+    "version": "2.11",
     "configUrl": "config.json",
-    "updateUrl": "http://betacs.101.com/v0.1/static/preproduction_content_adhoccast/signaler_server",
+    "updateUrl": "",
+    "autoUpdateConfig": false,
 
     "namespaces": {
-        "admin": "dist/server/amd/admin/index.js",
-        "__cert-watcher": "dist/server/amd/cert-watcher/index.js",
-        "__cs-logger": "dist/server/amd/cs-logger/index.js",
-        "nd": "dist/server/amd/common/index.js",
-        "prometheus": "dist/server/amd/common/index.js",
-        "promethean": "dist/server/amd/common/index.js",
-        "mdm": "dist/server/amd/common/index.js",
-        "test": "dist/server/amd/common/index.js"
+        "admin": "amd/admin/index.js",
+        "__cert-watcher": "amd/cert-watcher/index.js",
+        "__cs-logger": null,
+        "nd": "amd/common/index.js",
+        "promethean": "amd/common/index.js",
+        "mdm": "amd/common/index.js",
+        "test": "amd/common/index.js"
     },
     "websites": {
         "desktop" : "/../desktop"
@@ -32,5 +32,26 @@
             "key": ["/etc/letsencrypt/live/adhoc-turn.ca.101.com/privkey.pem","/etc/letsencrypt/live/mdm.hk.101.com/privkey.pem"],
             "cert":["/etc/letsencrypt/live/adhoc-turn.ca.101.com/fullchain.pem","/etc/letsencrypt/live/mdm.hk.101.com/fullchain.pem"]
         }
-    ]
+    ],
+    "clientConfig": {
+        "rtcConfig": {
+            "codec": "vp8",
+            "iceTransportPolicy": "all",
+            "iceServers": [
+                {
+                    "urls": [
+                        "stun:adhoc-turn.101.com:3478",
+                        "stun:adhoc-turn.101.com:3478?transport=udp"
+                    ]
+                },
+                {
+                    "urls": [
+                        "turn:adhoc-turn.101.com:3478"
+                    ],
+                    "username": "u1",
+                    "credential": "p1" 
+                } 
+            ]
+        }        
+    }
 }

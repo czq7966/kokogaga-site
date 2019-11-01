@@ -18,7 +18,6 @@ export class ExpressApp {
 
         Object.keys(this.websites).forEach(key => {
             let dir = __dirname + this.websites[key];
-            console.log(dir)
             this.express.use('/' + key, express.static(dir));
         })              
     }

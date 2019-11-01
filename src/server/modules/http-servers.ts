@@ -57,20 +57,26 @@ export class HttpServers {
         let options = this.config.https || [];
         let nsps: Array<string> = Object.keys(this.config.namespaces || []);
         nsps.indexOf("") < 0 && nsps.push("");
-        options.forEach(option2 => {
+        options.forEach(option2 => {            
             let option = this.config.httpsOption2To1(option2);
-            let expressApp = new ExpressApp(nsps, this.config.websites);
-            let httpsOptions = {
-                key: fs.readFileSync(path.resolve(__dirname, option.key)),
-                cert: fs.readFileSync(path.resolve(__dirname, option.cert)),
-            };  
-            let httpsServer = https.createServer(httpsOptions, expressApp.express);
-            let server: IHttpServerOption = {
-                port: option.port,
-                listenlog: 'listen on https port ' + option.port,
-                httpServer: httpsServer,
+            let keyFile = option.key && option.key.length > 0 ? path.resolve(__dirname, option.key) : null;
+            let certFile = option.cert && option.cert.length > 0 ? path.resolve(__dirname, option.cert) : null;
+            if (keyFile && certFile && fs.existsSync(keyFile) && fs.existsSync(certFile)) {
+                let expressApp = new ExpressApp(nsps, this.config.websites);
+                let httpsOptions = {
+                    key: fs.readFileSync(keyFile),
+                    cert: fs.readFileSync(certFile),
+                };  
+                let httpsServer = https.createServer(httpsOptions, expressApp.express);
+                let server: IHttpServerOption = {
+                    port: option.port,
+                    listenlog: 'listen on https port ' + option.port,
+                    httpServer: httpsServer,
+                }
+                this.servers.push(server)
+            } else {
+                console.error('Error start https(port ' + option.port +')' + ', ssl file(s) not exist:  ' + keyFile + "," + certFile );
             }
-            this.servers.push(server)
         })   
     }
 }

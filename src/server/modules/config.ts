@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path'
 import * as Amd from '../amd/index'
 import * as Url from 'url'
+import * as Cmds from "../cmds/index";
 
 var ConfigFile = './config.json'
 
@@ -21,26 +22,40 @@ export interface IHttpsOption2 {
     ca: string | Array<string>
 }
 
+export interface IRtcConfig {
+    codec: string
+    iceTransportPolicy: string
+    iceServers: []
+}
+export interface IClientConfig {
+    rtcConfig: IRtcConfig
+}
+
 export interface IConfig {
     version: string
     updateUrl: string
     configUrl: string
+    autoUpdateConfig: boolean
     namespaces: {[name:string]: string}
     websites: {[name:string]: string}
+    clientConfig: IClientConfig
     http: Array<IHttpOption>
     https: Array<IHttpsOption2>
     httpsOption2To1(option2: IHttpsOption2): IHttpsOption
 }
 
-export class Config implements IConfig {
+export class Config extends Cmds.Common.Base implements IConfig {
     version: string
     configUrl: string
     updateUrl: string
+    autoUpdateConfig: boolean
     namespaces: {[name:string]: string}
     websites: {[name:string]: string}
+    clientConfig: IClientConfig
     http: Array<IHttpOption>
     https: Array<IHttpsOption2>
     constructor() {
+        super();
         let jsonConfig = Config.getJsonConfig();
         Object.assign(this, jsonConfig)        
     }
@@ -50,15 +65,18 @@ export class Config implements IConfig {
     getNamespaceModuleUrl(nsp: string): string {
         let addr = this.namespaces[nsp];
         if (addr) {
-
-            let url = this.version + '/' + addr;
-            let addrUrl: URL;
-            try {
-                addrUrl = new Url.URL(addr)            
-            } catch (error) {
-                addrUrl = new Url.URL(url, this.updateUrl)                        
+            if (this.updateUrl && (this.updateUrl.indexOf("http://") >=0 || this.updateUrl.indexOf("https://") >= 0)) {
+                let url = this.version + '/' + addr;
+                let addrUrl: URL;
+                try {
+                    addrUrl = new Url.URL(addr)            
+                } catch (error) {
+                    addrUrl = new Url.URL(url, this.updateUrl)                        
+                }
+                return addrUrl.toString()        
+            } else {
+                return addr;
             }
-            return addrUrl.toString()        
         }
     }
     static update(url?: string): Promise<any> {
@@ -75,7 +93,9 @@ export class Config implements IConfig {
             Amd.requirejs(addrUrl.toString(), [], null, null, true)
             .then(data => {
                 let file = ConfigFile;
-                fs.writeFileSync(file, data);                
+                fs.writeFileSync(file, data);            
+                Config.getInstance<Config>().destroy();
+                Config.getInstance<Config>();
                 console.log('Update config success ')
                 resolve()
             })
@@ -119,6 +139,9 @@ export class Config implements IConfig {
                     keyFile = _keyFile;
                     certFile = _certFile;
                     break;
+                } else {
+                    keyFile = _keyFile;
+                    certFile = _certFile;
                 }
             }
         }

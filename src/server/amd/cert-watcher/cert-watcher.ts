@@ -75,7 +75,7 @@ export class SocketNamespace  extends Modules.SocketNamespace implements ICertWa
         options.forEach(option2 => {
             let option = this.server.httpServers.config.httpsOption2To1(option2);
             let serverOption = _getServerByPort(option.port);
-            let server = serverOption.httpServer as any;
+            let server = serverOption && serverOption.httpServer as any;
             if (server && server._sharedCreds) {       
                 let keyFile = path.resolve(__dirname, option.key);
                 let certFile = path.resolve(__dirname, option.cert);                         

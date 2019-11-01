@@ -11,3 +11,5 @@ test.js
 tsconfig.json
 .npmignore
 .gitignore
+/dist/mdm
+/dist/desktop

@@ -93,6 +93,7 @@ export class ServiceLogin extends Cmds.Common.Base {
         resp.to = data.from;
         resp.from = {type:'server', id: ''}
         resp.props = props;        
+        resp.extra = Modules.Config.getInstance<Modules.Config>().clientConfig;
         resp.respResult = true;
         sckUser.sendCommand(resp);
     }
