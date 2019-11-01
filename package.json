@@ -1,6 +1,6 @@
 {
   "name": "adhoc-cast-signaler-server",
-  "version": "2.10.0",
+  "version": "2.11.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -47,7 +47,7 @@
     "mdm:receiver:clean": "rimraf ./dist/mdm/receiver",
     "mdm:receiver:compile": "npm run mdm:receiver:clean && cross-env NODE_MODULE=mdm-receiver webpack --env.umd",
     "mdm:receiver:dev": "npm run mdm:receiver:clean && cross-env NODE_MODULE=mdm-receiver webpack --env.umd --env.nodevtool --progress --watch",
-    "mdm:receiver:build": "npm run mdm:receiver:clean && cross-env NODE_MODULE=mdm-receiver webpack --env.umd --env.production --progress"    
+    "mdm:receiver:build": "npm run mdm:receiver:clean && cross-env NODE_MODULE=mdm-receiver webpack --env.umd --env.production --progress"
   },
   "author": "",
   "license": "ISC",
@@ -86,7 +86,7 @@
     "wrtc": "^0.4.2"
   },
   "dependencies": {
-    "adhoc-cast-connection": "^2.2.7",
+    "adhoc-cast-connection": "^2.2.8",
     "es6-object-assign": "1.1.0",
     "express": "4.16.4",
     "fs": "0.0.1-security",
