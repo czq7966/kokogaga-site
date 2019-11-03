@@ -15,7 +15,7 @@ module.exports = env => {
     const libraryTarget = env.amd ? 'amd' : env.umd ? 'umd' :  env.cjs ? 'commonjs' : env.old ? 'umd' : 'commonjs';
     // const libraryTargetPath =  env.amd ? 'amd' : env.umd ? 'umd' : env.cjs ? 'cjs' : env.old ? '' : 'cjs';
     // const distDir = path.resolve(__dirname, 'dist', libraryTargetPath);
-    const distDir = path.resolve(__dirname, '../dist/server/amd');
+    const distDir = path.resolve(__dirname, env.distDir ? env.distDir : '../dist/server/amd');
     const srcDir =  path.resolve(__dirname, '../src/server/amd');
     entry['common/index'] = path.resolve(srcDir, "common/index.ts");
     entry['cert-watcher/index'] = path.resolve(srcDir, "cert-watcher/index.ts");

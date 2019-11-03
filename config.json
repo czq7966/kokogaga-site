@@ -1,45 +1,44 @@
 {
-    "version": "2.12",
-    "configUrl": "config.json",
-    "updateUrl": "",
-    "autoUpdateConfig": false,
-
-    "namespaces": {
-        "admin": "amd/admin/index.js",
-        "__cert-watcher": "amd/cert-watcher/index.js",
-        "__cs-logger": null,
-        "nd": "amd/common/index.js",
-        "promethean": "amd/common/index.js",
-        "mdm": "amd/common/index.js",
-        "test": "amd/common/index.js"
-    },
-    "websites": {
-        "desktop" : "/../desktop"
-    },
-    "http": [
-        {
-            "port": 2770
-        }
-    ],
-    "https": [ ],
-    "clientConfig": {
-        "rtcConfig": {
-            "iceTransportPolicy": "all",
-            "iceServers": [
-                {
-                    "urls": [
-                        "stun:servicediscovery.mypromethean.com:3478",
-                        "stun:servicediscovery.mypromethean.com:3478?transport=udp"
-                    ]
-                },
-                {
-                    "urls": [
-                        "turn:servicediscovery.mypromethean.com:3478"
-                    ],
-                    "username": "u1",
-                    "credential": "p1" 
-                } 
-            ]
-        }        
-    }
+	"version": "2.12",
+	"configUrl": "config.json",
+	"updateUrl": "",
+	"autoUpdateConfig": false,
+	"namespaces": {
+		"admin": "amd/admin/index.js",
+		"__cert-watcher": "amd/cert-watcher/index.js",
+		"__cs-logger": null,
+		"nd": "amd/common/index.js",
+		"promethean": "amd/common/index.js",
+		"mdm": "amd/common/index.js",
+		"test": "amd/common/index.js"
+	},
+	"websites": {
+		"desktop": "/../desktop"
+	},
+	"http": [
+		{
+			"port": 2770
+		}
+	],
+	"https": [],
+	"clientConfig": {
+		"rtcConfig": {
+			"iceTransportPolicy": "all",
+			"iceServers": [
+				{
+					"urls": [
+						"stun:servicediscovery.mypromethean.com:3478",
+						"stun:servicediscovery.mypromethean.com:3478?transport=udp"
+					]
+				},
+				{
+					"urls": [
+						"turn:servicediscovery.mypromethean.com:3478"
+					],
+					"username": "u1",
+					"credential": "p1"
+				}
+			]
+		}
+	}
 }
