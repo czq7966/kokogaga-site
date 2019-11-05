@@ -1,6 +1,6 @@
 {
 	"name": "adhoc-cast-signaler-server",
-	"version": "2.13.0",
+	"version": "2.15.0",
 	"description": "",
 	"main": "index.js",
 	"scripts": {
@@ -70,7 +70,6 @@
 		"copy-webpack-plugin": "4.6.0",
 		"cross-env": "5.2.0",
 		"css-loader": "1.0.1",
-		"electron": "4.2.11",
 		"http": "0.0.0",
 		"react": "16.6.3",
 		"react-dom": "16.6.3",
@@ -87,8 +86,7 @@
 		"webpack": "4.25.1",
 		"webpack-cli": "3.1.2",
 		"webpack-node-externals": "1.7.2",
-		"webrtc-adapter": "6.4.6",
-		"wrtc": "^0.4.2"
+		"webrtc-adapter": "6.4.6"
 	},
 	"dependencies": {
 		"adhoc-cast-connection": "^2.2.8",
