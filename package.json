@@ -1,5 +1,5 @@
 {
-	"name": "adhoc-cast-signaler-server",
+	"name": "adhoc-cast-signaler-server-mdm",
 	"version": "2.15.0",
 	"description": "",
 	"main": "index.js",

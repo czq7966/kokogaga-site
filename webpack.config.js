@@ -12,6 +12,8 @@ else if (process.env.NODE_MODULE === 'desktop-sender-app')
     module.exports = require('./webpack/webpack.config.desktop.sender.app.js');    
 else if (process.env.NODE_MODULE === 'desktop-sender-web') 
     module.exports = require('./webpack/webpack.config.desktop.sender.web.js');
-
-
+else if (process.env.NODE_MODULE === 'mdm-receiver') 
+    module.exports = require('./webpack/webpack.config.mdm.receiver.js');
+else if (process.env.NODE_MODULE === 'mdm-server') 
+    module.exports = require('./webpack/webpack.config.mdm.server.js');
   

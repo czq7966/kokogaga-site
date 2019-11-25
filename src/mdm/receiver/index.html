@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="cache-control" content="no-cache,no-store">
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" id="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+  <meta name="apple-touch-fullscreen" content="yes">
+  <meta name="renderer" content="webkit">
+  <title>MDM Receiver Demo</title>
+  <style>
+    .full, #root {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+  <script src="index.js"></script>  
+</head>
+
+<body class="full">
+  <div id="root">
+      <div>
+        <span>Signal Server:</span>
+        <input  id="server-url" style="width: 350px" value="https://adhoc-cast-signaler-product.k8s.101.com" ></input>
+        <span>Enter Device ID:</span>
+        <input  id="device-id" style="width: 300px" value="123456" ></input>
+        <button id="btnConnect" onclick="startConnect()" >start connect</button>
+      </div>      
+    <video autoPlay playsInline ></video>
+    <video autoPlay playsInline ></video>
+  </div>
+
+  <script>
+      MDM.ADHOCCAST.Cmds.Common.Helper.Debug.enabled = true;
+      var device = new MDM.Device({
+        signalerBase: "https://mdm.hk.101.com:13670",
+        namespace: "mdm",
+        roomPrefix: "mdm_"
+      })   
+
+      function startConnect() {          
+          device.setDeviceID(null);
+          var serverUrl = document.getElementById("server-url").value.trim();
+          if (!!serverUrl && serverUrl.length > 0) {
+            device.connection.signalerBase = serverUrl;
+          }
+          var deviceID = document.getElementById("device-id").value.trim();
+          device.setDeviceID(deviceID);
+          var videos = document.getElementsByTagName("video");    
+          for (let idx = 0; idx < videos.length; idx++) {
+            const video = videos[idx];
+            device.addPlayer(video);      
+          }
+      }    
+
+
+  </script>
+    
+</body>
+</html>

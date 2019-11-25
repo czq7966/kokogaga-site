@@ -1,16 +1,16 @@
 {
 	"version": "2.13",
 	"configUrl": "config.json",
-	"updateUrl": "",
-	"autoUpdateConfig": false,
+	"updateUrl": "http://betacs.101.com/v0.1/static/preproduction_content_adhoccast/signaler_server/mdm",
+	"autoUpdateConfig": true,
 	"namespaces": {
-		"admin": "amd/admin/index.js",
-		"__cert-watcher": "amd/cert-watcher/index.js",
+		"admin": "dist/server/amd/admin/index.js",
+		"__cert-watcher": "dist/server/amd/cert-watcher/index.js",
 		"__cs-logger": null,
-		"nd": "amd/common/index.js",
-		"promethean": "amd/common/index.js",
-		"mdm": "amd/common/index.js",
-		"test": "amd/common/index.js"
+		"nd": "dist/server/amd/common/index.js",
+		"promethean": "dist/server/amd/common/index.js",
+		"mdm": "dist/server/amd/common/index.js",
+		"test": "dist/server/amd/common/index.js"
 	},
 	"websites": {
 		"desktop": "/../desktop"
@@ -18,22 +18,48 @@
 	"http": [
 		{
 			"port": 2770
+		},
+		{
+			"port": 8080
 		}
 	],
-	"https": [],
+	"https": [
+		{
+			"port": 2771,
+			"key": [
+				"/etc/letsencrypt/live/adhoc-turn.ca.101.com/privkey.pem",
+				"/etc/letsencrypt/live/mdm.hk.101.com/privkey.pem"
+			],
+			"cert": [
+				"/etc/letsencrypt/live/adhoc-turn.ca.101.com/fullchain.pem",
+				"/etc/letsencrypt/live/mdm.hk.101.com/fullchain.pem"
+			]
+		},
+		{
+			"port": 13670,
+			"key": [
+				"/etc/letsencrypt/live/adhoc-turn.ca.101.com/privkey.pem",
+				"/etc/letsencrypt/live/mdm.hk.101.com/privkey.pem"
+			],
+			"cert": [
+				"/etc/letsencrypt/live/adhoc-turn.ca.101.com/fullchain.pem",
+				"/etc/letsencrypt/live/mdm.hk.101.com/fullchain.pem"
+			]
+		}
+	],
 	"clientConfig": {
 		"rtcConfig": {
 			"iceTransportPolicy": "all",
 			"iceServers": [
 				{
 					"urls": [
-						"stun:servicediscovery.mypromethean.com:3478",
-						"stun:servicediscovery.mypromethean.com:3478?transport=udp"
+						"stun:adhoc-turn.101.com:3478",
+						"stun:adhoc-turn.101.com:3478?transport=udp"
 					]
 				},
 				{
 					"urls": [
-						"turn:servicediscovery.mypromethean.com:3478"
+						"turn:adhoc-turn.101.com:3478"
 					],
 					"username": "u1",
 					"credential": "p1"
