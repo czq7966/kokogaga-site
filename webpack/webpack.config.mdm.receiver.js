@@ -15,8 +15,8 @@ module.exports = env => {
     const minimizer = []; //优化选项：瘦身器
     const externals = [nodeExternals({ modulesFromFile: true })];
     const libraryTarget = env.amd ? 'amd' : env.umd ? 'umd' :  env.cjs ? 'commonjs' : env.old ? 'umd' : 'commonjs';
-    const distDir = path.resolve(__dirname, '../dist/mdm/receiver');
-    const srcDir =  path.resolve(__dirname, '../src/mdm/receiver');
+    const distDir = path.resolve(__dirname, '../dist/web/mdm/receiver');
+    const srcDir =  path.resolve(__dirname, '../src/web/mdm/receiver');
     entry['index'] = path.resolve(srcDir, "index.ts");
     
     optimization['minimizer'] = minimizer;  
