@@ -1,6 +1,6 @@
 {
 	"name": "adhoc-cast-signaler-server-mdm",
-	"version": "2.15.0",
+	"version": "2.15.1",
 	"description": "",
 	"main": "index.js",
 	"scripts": {
@@ -34,8 +34,8 @@
 		"sfu:compile": "npm run sfu:clean && cross-env NODE_MODULE=sfu webpack --env.cjs",
 		"sfu": "npm run sfu:compile && npm run sfu:start",
 		"clean": "rimraf dist",
-		"compile": "npm run server:compile && npm run amd:compile  && npm run client:compile",
-		"build": "npm run server:build   && npm run amd:build    && npm run client:build",
+		"compile": "npm run server:compile && npm run amd:compile  && npm run client:compile && npm run sdp-probe:compile",
+		"build": "npm run server:build && npm run amd:build && npm run client:build && npm run sdp-probe:build",
 		"desktop:sender:app:clean": "rimraf ./dist/desktop/sender/app",
 		"desktop:sender:app:compile": "npm run desktop:sender:app:clean && cross-env NODE_MODULE=desktop-sender-app webpack --env.cjs",
 		"desktop:sender:app:dev": "npm run desktop:sender:app:clean && cross-env NODE_MODULE=desktop-sender-app webpack --env.cjs --env.nodevtool --progress --watch",
@@ -52,7 +52,11 @@
 		"mdm:server:rename": "node ./webpack/package.rename.js --package-name='adhoc-cast-signaler-server-mdm' --config-file='./config/mdm.json'",
 		"mdm:server:build": "npm run mdm:server:rename && npm run build",
 		"promethean:server:rename": "node ./webpack/package.rename.js --package-name='adhoc-cast-signaler-server' --config-file='./config/promethean.json'",
-		"promethean:server:build": "npm run promethean:server:rename && npm run build"
+		"promethean:server:build": "npm run promethean:server:rename && npm run build",
+		"sdp-probe:clean": "rimraf ./dist/web/sdp-probe",
+		"sdp-probe:compile": "npm run sdp-probe:clean && cross-env NODE_MODULE=sdp-probe webpack --env.umd",
+		"sdp-probe:dev": "npm run sdp-probe:clean && cross-env NODE_MODULE=sdp-probe webpack --env.umd --env.nodevtool --progress --watch",
+		"sdp-probe:build": "npm run sdp-probe:clean && cross-env NODE_MODULE=sdp-probe webpack --env.umd --env.production --progress"
 	},
 	"author": "",
 	"license": "ISC",

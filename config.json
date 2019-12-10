@@ -13,7 +13,8 @@
 		"test": "dist/server/amd/common/index.js"
 	},
 	"websites": {
-		"desktop": "/../desktop"
+		"desktop": "/../desktop",
+		"sdp-probe": "/../web/sdp-probe"
 	},
 	"http": [
 		{
