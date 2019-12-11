@@ -20,6 +20,8 @@ module.exports = env => {
     entry['common/index'] = path.resolve(srcDir, "common/index.ts");
     entry['cert-watcher/index'] = path.resolve(srcDir, "cert-watcher/index.ts");
     entry['admin/index'] = path.resolve(srcDir, "admin/index.ts");
+    entry['signal-center/index'] = path.resolve(srcDir, "signal-center/index.ts");
+    entry['signal-client/index'] = path.resolve(srcDir, "signal-client/index.ts");
 
     
     optimization['minimizer'] = minimizer;  

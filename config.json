@@ -1,16 +1,18 @@
 {
 	"version": "2.13",
 	"configUrl": "config.json",
-	"updateUrl": "http://betacs.101.com/v0.1/static/preproduction_content_adhoccast/signaler_server/mdm",
-	"autoUpdateConfig": true,
+	"updateUrl": "",
+	"autoUpdateConfig": false,
 	"namespaces": {
-		"admin": "dist/server/amd/admin/index.js",
-		"__cert-watcher": "dist/server/amd/cert-watcher/index.js",
-		"__cs-logger": null,
-		"nd": "dist/server/amd/common/index.js",
+		"nd": "amd/common/index.js",
 		"promethean": "dist/server/amd/common/index.js",
 		"mdm": "dist/server/amd/common/index.js",
-		"test": "dist/server/amd/common/index.js"
+		"test": "dist/server/amd/common/index.js",
+		
+		"admin": "dist/server/amd/admin/index.js",
+		"__cert-watcher": "dist/server/amd/cert-watcher/index.js",
+		"__cs-logger": null,		
+		"signal-center": "amd/signal-center/index.js"
 	},
 	"websites": {
 		"desktop": "/../desktop",
@@ -67,5 +69,10 @@
 				}
 			]
 		}
+	},
+	"signalCenter": {
+		"enabled": true,
+		"signalerBase": "http://127.0.0.1:2770",
+		"namespace": "signal-center"
 	}
 }

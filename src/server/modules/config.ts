@@ -30,6 +30,11 @@ export interface IRtcConfig {
 export interface IClientConfig {
     rtcConfig: IRtcConfig
 }
+export interface ISignalCenter {
+    enabled: boolean
+    signalerBase: string,
+    namespace: string
+}
 
 export interface IConfig {
     version: string
@@ -41,6 +46,7 @@ export interface IConfig {
     clientConfig: IClientConfig
     http: Array<IHttpOption>
     https: Array<IHttpsOption2>
+    signalCenter: ISignalCenter    
     httpsOption2To1(option2: IHttpsOption2): IHttpsOption
 }
 
@@ -54,13 +60,14 @@ export class Config extends Cmds.Common.Base implements IConfig {
     clientConfig: IClientConfig
     http: Array<IHttpOption>
     https: Array<IHttpsOption2>
+    signalCenter: ISignalCenter    
     constructor() {
         super();
         let jsonConfig = Config.getJsonConfig();
         Object.assign(this, jsonConfig)        
     }
     destroy() {
-
+        super.destroy();
     }
     getNamespaceModuleUrl(nsp: string): string {
         let addr = this.namespaces[nsp];

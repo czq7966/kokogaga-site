@@ -31,6 +31,7 @@ export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
     }
     destroy() {
         // this.clearSocketUsers();
+        this.unInitEvents();
         this.users.destroy();
         this.shortUsers.destroy();
         this.sockets.destroy();
@@ -46,6 +47,9 @@ export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
 
     initEvents() {
         this.snsp.nsp.on('connect', this.onConnect)
+    }
+    unInitEvents() {
+        this.snsp.nsp.off('connect', this.onConnect)
     }
     onConnect = (socket: SocketIO.Socket) => {
         console.log('ServerEvent', 'connect', socket.id)

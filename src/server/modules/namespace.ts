@@ -1,4 +1,5 @@
 import * as Cmds from "../cmds/index";
+import * as Helper from "../helper"
 import { ISocketUsers, SocketUsers } from "./users";
 import { IServer } from "./server";
 
@@ -6,7 +7,7 @@ export interface ISocketIONamespace extends SocketIO.Namespace {
     snsp?: ISocketNamespace
 }
 
-export interface ISocketNamespace  {
+export interface ISocketNamespace extends Cmds.Common.IBase {
     nsp: SocketIO.Namespace
     users?: ISocketUsers
     server?: IServer
@@ -18,7 +19,7 @@ export class SocketNamespace  extends Cmds.Common.Base implements ISocketNamespa
     server?: IServer
 
     constructor(nsp: ISocketIONamespace, server?: IServer) {
-        super()
+        super({instanceId: Helper.uuid() })
         this.nsp = nsp;
         this.nsp.snsp = this;
         this.server = server

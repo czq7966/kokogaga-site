@@ -4,11 +4,17 @@ import { Config } from './config';
 import { IHttpServers, HttpServers } from './http-servers';
 import { ServiceServer } from '../services';
 import { IGlobalExpcetion, GlobalExpcetion } from './global-exception';
+import { ISignalClient } from '../amd/signal-client/signal-client';
+import * as Helper from "../helper"
+import * as path from 'path'
+import * as Amd from '../amd/index'
 
 export interface IServer {
     snsps: Cmds.Common.Helper.KeyValue<ISocketNamespace>
     httpServers: IHttpServers
     socketioServer: SocketIO.Server;
+    globalExpcetion: IGlobalExpcetion
+    signalClient: ISignalClient
     initNamespaces(): Promise<any>
     unInitNamespaces(): Promise<any>
     resetNamespaces(): Promise<any>
@@ -22,7 +28,8 @@ export class Server implements IServer {
     snsps: Cmds.Common.Helper.KeyValue<ISocketNamespace>
     httpServers: IHttpServers
     socketioServer: SocketIO.Server;
-    globalExpcetion: IGlobalExpcetion
+    globalExpcetion: IGlobalExpcetion;
+    signalClient: ISignalClient;
 
     constructor() {
         Server.instance = this;
@@ -32,15 +39,21 @@ export class Server implements IServer {
         this.initNamespaces();
         this.initEvents();       
         this.run(); 
-        this.globalExpcetion = new GlobalExpcetion(this)        
+        this.globalExpcetion = new GlobalExpcetion(this)      
+        Amd.requirejs(path.resolve(__dirname, 'amd/signal-client/index.js'), [])
+        .then((modules: any) => {
+            this.signalClient = new modules.SignalClient();
+        })
     }    
     destroy() {
+        this.signalClient && this.signalClient.destroy();
         this.globalExpcetion.destroy()
         this.httpServers.destroy();
         this.snsps.destroy();
         delete this.snsps;
         delete this.httpServers;
         delete this.globalExpcetion;
+        delete this.signalClient;
         this.unInitEvents();
         this.unInitNamespaces();
         this.unInitSocketIOServer();

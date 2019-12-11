@@ -8,7 +8,6 @@ function requirejs(urlOrFile: string, modules: Array<string>, success?: (...args
             try {
                 let req = http.get(url, (function(res) {
                     let js = ''
-                    exports = {};        
                     res.on('data',(data)=>{
                         js+=data;
                     });            
@@ -83,7 +82,7 @@ function requirejs(urlOrFile: string, modules: Array<string>, success?: (...args
                 _useFile(file);
             }
         }
-
+        exports = {};
         start();
     })
 }
