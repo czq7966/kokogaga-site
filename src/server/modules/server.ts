@@ -21,6 +21,7 @@ export interface IServer {
     openNamespace(name: string): Promise<any>
     closeNamespace(name: string): Promise<any>
     resetNamespace(name: string): Promise<any>
+    onDeliverCommand(cmd: Cmds.Common.ICommandData<any>): Promise<any>
 }
 
 export class Server implements IServer {
@@ -42,7 +43,7 @@ export class Server implements IServer {
         this.globalExpcetion = new GlobalExpcetion(this)      
         Amd.requirejs(path.resolve(__dirname, 'amd/signal-client/index.js'), [])
         .then((modules: any) => {
-            this.signalClient = new modules.SignalClient();
+            this.signalClient = new modules.SignalClient({instanceId: Helper.uuid()}, this);
         })
     }    
     destroy() {
@@ -119,5 +120,9 @@ export class Server implements IServer {
         this.httpServers.servers.forEach(server => {
             server.httpServer.close();
         })        
+    }
+
+    async onDeliverCommand(cmd: Cmds.Common.ICommandData<any>): Promise<any> {
+        return await ServiceServer.onDeliverCommand(this, cmd);
     }
 }

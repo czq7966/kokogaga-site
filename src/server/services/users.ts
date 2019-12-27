@@ -26,6 +26,7 @@ export class ServiceUsers  {
     static addUser(sckUsers: Modules.ISocketUsers, sckUser: Modules.ISocketUser): boolean {
         if (!this.existUser(sckUsers, sckUser.user)) {
             sckUsers.users.add(sckUser.user.id, sckUser)
+            sckUsers.sockets.add(sckUser.socket.id, sckUser);
             sckUser.user.sid && sckUsers.shortUsers.add(sckUser.user.sid, sckUser)
             return true;
         }
@@ -34,6 +35,7 @@ export class ServiceUsers  {
     static delUser(sckUsers: Modules.ISocketUsers, sckUser: Modules.ISocketUser): boolean {
         if (this.existUser(sckUsers, sckUser.user)) {
             sckUsers.users.del(sckUser.user.id)
+            sckUsers.sockets.del(sckUser.socket.id);
             sckUsers.shortUsers.del(sckUser.user.sid)
             return true;
         }

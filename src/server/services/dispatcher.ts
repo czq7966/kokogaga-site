@@ -25,22 +25,24 @@ export class Dispatcher extends Cmds.Common.Base implements Cmds.Common.IDispatc
 
     }
 
-    onCommand = (cmd: Dts.ICommandData<any>, sckUser: Modules.SocketUser) => {
+    polyfillCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser): Dts.ICommandData<any> {
         cmd.type = cmd.type || Dts.ECommandType.req;
         cmd.from = cmd.from || {};
-        cmd.from.type = cmd.from.type || sckUser.user ? 'user' : 'socket';        
-        cmd.from.id = cmd.from.id || sckUser.user ? sckUser.user.id : sckUser.socket.id
+        cmd.from.type = cmd.from.type || (sckUser.user ? 'user' : 'socket');
+        cmd.from.id = cmd.from.id || (sckUser.user ? sckUser.user.id : sckUser.socket.id)
         cmd.to = cmd.to || {};        
         cmd.to.type = cmd.to.type || 'server';
-        cmd.to.id = cmd.to.id || '';
+        cmd.to.id = cmd.to.id || '';    
+        return cmd;    
+    }
 
+    onCommand = (cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser) => {
+        cmd = this.polyfillCommand(cmd, sckUser);
         console.log(sckUser.users.snsp.nsp.name, Dts.CommandID + 'Event', cmd.cmdId, cmd.from, cmd.to);
         Cmds.Common.EDCoder.onCommand(cmd, this, sckUser);
     }
-    // sendCommand(cmd: Dts.ICommandData<any>): Promise<any> {
-    //     return;
-    // }
-    sendCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.SocketUser, includeSelf?: boolean): Promise<any> {
+
+    sendCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser, includeSelf?: boolean): Promise<any> {
         cmd.from = cmd.from || {};
         cmd.from.type = cmd.from.type || 'server';
         cmd.from.id = cmd.from.id || '';

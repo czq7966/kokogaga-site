@@ -13,5 +13,8 @@ export * from './network-disconnecting'
 export * from './server'
 export * from './user-get'
 export * from './user-set'
+export * from './users'
+export * from './user'
+export * from './namespace'
 import * as Admin from './admin'
 export { Admin }

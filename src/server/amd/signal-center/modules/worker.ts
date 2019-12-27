@@ -9,38 +9,41 @@ export class SocketWorker  extends Modules.SocketUser implements ISocketWorker {
 
     constructor(socket: Modules.IUserSocket) {
         super(socket)
+        this.onCommand = this.onCommand2;
+        this.sendCommand = this.sendCommand2;
+        this.initEvents2();
     }
 
     destroy() {
+        this.unInitEvents2();
         super.destroy();
     }
 
-    initEvents() {
-        this.socket.on(Dts.CommandID, this.onCommand);
+    //Override
+    initEvents() {}
+    unInitEvents() {}
+
+    initEvents2(){
+        this.socket.on(Dts.CommandID, this.onCommand2);
 
         [Dts.EServerSocketEvents].forEach(events => {
             Object.keys(events).forEach(key => {
                 let value = events[key];
                 this.socket.addListener(value, (...args: any[]) => {
-                    console.log('ServerEvent', value, ...args ? args[0]: '')
+                    console.log('ServerEvent111', value, ...args ? args[0]: '')
                 })
             })
         })
     }
-    unInitEvents() {
+    unInitEvents2() {
         this.socket.removeAllListeners();        
     }
 
     // Command business
-    onCommand = (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => {     
-        if (!this.user && cmd && cmd.cmdId !== Dts.ECommandId.adhoc_login) {
-            cb && cb(false)
-        } else {
-            cb && cb(true)
-            this.dispatcher.onCommand(cmd, this);
-        }
+    onCommand2 = async (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => {     
+        this.dispatcher.onCommand(cmd, this);
     }
-    sendCommand = (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => {
+    sendCommand2 = (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => {
         this.dispatcher && this.dispatcher.sendCommand(cmd, this, includeSelf);
-    }
+    }    
 }

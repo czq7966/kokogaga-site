@@ -13,6 +13,7 @@ export class SocketNamespace  extends Modules.SocketNamespace implements ICertWa
 
     constructor(nsp: Modules.ISocketIONamespace, server?: Modules.IServer) {
         super(nsp, server);
+        this.useSignalCenter = false;
     }
 
     destroy() {

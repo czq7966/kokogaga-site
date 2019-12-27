@@ -1,5 +1,9 @@
 import * as Amd from '../amd/index'
 import * as Modules from '../modules'
+import * as Dts from "../dts";
+import { ICommandDeliverDataExtra } from '../amd/signal-client/dts';
+import { ServiceUser } from './user';
+import { ServiceNamespace } from './namespace';
 
 export class ServiceServer  {
     static openNamespace(server: Modules.IServer, name: string): Promise<any> {
@@ -133,4 +137,13 @@ export class ServiceServer  {
         })        
         return result;
     }  
+    static async onDeliverCommand(server: Modules.IServer, cmd: Dts.ICommandData<any>) {
+        let data = cmd.props as Dts.ICommandData<Dts.ICommandDataProps>;
+        let extra = cmd.extra as Dts.ICommandData<ICommandDeliverDataExtra>;
+        if (data && extra) {
+            let snsp = server.snsps.get(extra.props.namesapce); 
+            if (snsp)
+                return await ServiceNamespace.onDeliverCommand(snsp, cmd);
+        }        
+    }       
 }

@@ -10,6 +10,7 @@ export interface ISocketUsers extends Cmds.Common.IBase {
     sockets: Cmds.Common.Helper.KeyValue<ISocketUser>;
     shortUsers: Cmds.Common.Helper.KeyValue<ISocketUser>;
     rooms:  Cmds.Common.Helper.KeyValue<Dts.IRoom>;
+    onConnect: (socket: SocketIO.Socket) => any;
 }
 
 export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
@@ -58,10 +59,28 @@ export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
             sckUser.onCommand({cmdId: Dts.ECommandId.network_disconnecting});
         })
 
-        socket.once(Dts.EServerSocketEvents.disconnect, () => {
-            sckUser.onCommand({cmdId: Dts.ECommandId.network_disconnect});
-            sckUser.destroy();
-            sckUser = null;
+        socket.once(Dts.EServerSocketEvents.disconnect, async () => {
+            try {
+                await sckUser.onCommand({cmdId: Dts.ECommandId.network_disconnect});
+                this.delayDestroyUser(sckUser);                 
+            } catch(e) {
+                sckUser.destroy();
+                sckUser = null;
+            }
         });
     }       
+    delayDestroyUser(sckUser: ISocketUser) {
+        if (sckUser && sckUser.notDestroyed) {
+            let signalClient = sckUser.users.snsp.server.signalClient;                
+            if (signalClient && signalClient.isReady()) {
+                if (sckUser.users.snsp.server.signalClient.isReady()) {
+                    setTimeout(() => {
+                        sckUser.destroy();
+                    }, 1000);
+                }
+            } else {
+                sckUser.destroy();
+            }
+        } 
+    }
 }

@@ -44,6 +44,7 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
         delete this.socket.user;
         delete this.socket;
         delete this.dispatcher;
+        super.destroy();
     }
 
     initEvents() {
@@ -63,12 +64,12 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
     }
 
     // Command business
-    onCommand = (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => {     
+    onCommand = async (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => {     
         if (!this.user && cmd && cmd.cmdId !== Dts.ECommandId.adhoc_login) {
             cb && cb(false)
         } else {
             cb && cb(true)
-            this.dispatcher.onCommand(cmd, this);
+            await Services.ServiceUser.onCommand(this, cmd);
         }
     }
     sendCommand = (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => {

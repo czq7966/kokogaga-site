@@ -1,13 +1,14 @@
 import * as Dts from "../dts";
 import * as Cmds from '../cmds/index'
-
 import * as Modules from '../modules'
+import { ServiceNamespace } from "./namespace";
+
 
 export class ServiceRoom {
-    static get(roomid: string, sckUser: Modules.SocketUser): Dts.IRoom {
+    static get(roomid: string, sckUser: Modules.ISocketUser): Dts.IRoom {
         return sckUser.users.rooms.get(roomid);
     }
-    static create(roomid: string, sckUser: Modules.SocketUser): Dts.IRoom {
+    static create(roomid: string, sckUser: Modules.ISocketUser): Dts.IRoom {
         let uroom = this.get(roomid, sckUser);
         if (!uroom) {
             uroom = {
@@ -18,7 +19,7 @@ export class ServiceRoom {
         }
         return uroom;        
     }
-    static exist(roomid: string, sckUser: Modules.SocketUser): boolean {
+    static exist(roomid: string, sckUser: Modules.ISocketUser): boolean {
         let uroom = this.get(roomid, sckUser);
         if (uroom) {
             let room = sckUser.socket.adapter.rooms[uroom.sim];
@@ -26,7 +27,7 @@ export class ServiceRoom {
         }
         return false;
     }
-    static open(roomid: string, sckUser: Modules.SocketUser): Promise<any> {
+    static open(roomid: string, sckUser: Modules.ISocketUser, isOwner: boolean = true): Promise<any> {
         return new Promise((resolve, reject) => {
             if (!ServiceRoom.exist(roomid, sckUser)) {
                 let sim = this.create(roomid, sckUser).sim;
@@ -34,7 +35,7 @@ export class ServiceRoom {
                     if (err) {
                         reject(err)                    
                     } else {                        
-                        sckUser.openRooms.add(roomid, true);
+                        isOwner && sckUser.openRooms.add(roomid, true);
                         resolve(roomid)
                     }
                 })
@@ -43,7 +44,7 @@ export class ServiceRoom {
             }            
         })
     }
-    static close(roomid: string, sckUser: Modules.SocketUser): Promise<any> {
+    static close(roomid: string, sckUser: Modules.ISocketUser): Promise<any> {
         let promises = [];
         let adapter = sckUser.socket.adapter;
         let uroom = this.get(roomid, sckUser);
@@ -67,7 +68,7 @@ export class ServiceRoom {
         else 
             return Promise.resolve();
     }    
-    static join(roomid: string, sckUser: Modules.SocketUser):  Promise<any> {
+    static join(roomid: string, sckUser: Modules.ISocketUser):  Promise<any> {
         return new Promise((resolve, reject) => {
             if (ServiceRoom.exist(roomid, sckUser)) {
                 let sim = this.get(roomid, sckUser).sim;
@@ -83,7 +84,7 @@ export class ServiceRoom {
             }
         })
     }
-    static leave(roomid: string, sckUser: Modules.SocketUser): Promise<any> {
+    static leave(roomid: string, sckUser: Modules.ISocketUser): Promise<any> {
         return new Promise((resolve, reject) => {
             let uroom = this.get(roomid, sckUser);
             let sim = uroom && uroom.sim || '';
@@ -92,7 +93,7 @@ export class ServiceRoom {
             });    
         })
     }    
-    static joinOrOpen(roomid: string, sckUser: Modules.SocketUser): Promise<any> {
+    static joinOrOpen(roomid: string, sckUser: Modules.ISocketUser): Promise<any> {
         return new Promise((resolve, reject) => {
             let uroom = this.create(roomid, sckUser);
             sckUser.socket.join(uroom.sim, err => {
@@ -104,7 +105,14 @@ export class ServiceRoom {
             })
         })
     }
-    static changeId(oldId: string, newId: string, sckUser: Modules.SocketUser): Promise<any> {
+    static async leaveOrClose(roomid: string, sckUser: Modules.ISocketUser): Promise<any> {
+        await this.leave(roomid, sckUser);
+        let users = ServiceNamespace.getRoomUsers(sckUser.users.snsp, roomid);
+        if (users.length = 0 ) {
+            await this.close(roomid, users[0]);
+        }
+    }    
+    static changeId(oldId: string, newId: string, sckUser: Modules.ISocketUser): Promise<any> {
         let uroom = this.get(oldId, sckUser);
         if (uroom) {
             uroom.id = newId;
@@ -116,5 +124,14 @@ export class ServiceRoom {
         } else {
             return Promise.reject('Room not exist ' + oldId)
         }
+    }
+    static async onDeliverCommand(namespace: Modules.ISocketNamespace, roomid: string, sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>) {
+        switch(cmd.cmdId) {
+            default:
+            break;                
+        }           
+
+        let _sckUser = sckUser || ServiceNamespace.getRoomFirstUser(namespace, roomid);
+        _sckUser && _sckUser.dispatcher.sendCommand(cmd, _sckUser, !sckUser);
     }
 }

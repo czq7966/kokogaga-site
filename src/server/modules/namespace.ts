@@ -11,18 +11,21 @@ export interface ISocketNamespace extends Cmds.Common.IBase {
     nsp: SocketIO.Namespace
     users?: ISocketUsers
     server?: IServer
+    useSignalCenter?: boolean
 }
 
 export class SocketNamespace  extends Cmds.Common.Base implements ISocketNamespace {
     nsp: ISocketIONamespace
     users?: ISocketUsers
     server?: IServer
+    useSignalCenter?: boolean
 
     constructor(nsp: ISocketIONamespace, server?: IServer) {
         super({instanceId: Helper.uuid() })
         this.nsp = nsp;
         this.nsp.snsp = this;
         this.server = server
+        this.useSignalCenter = true;
         this.users = new SocketUsers(this);
         this.initEvents();          
     }

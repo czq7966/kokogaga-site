@@ -6,8 +6,8 @@ import { ServiceUser } from './user';
 var Tag = 'ServiceNetworkDisconnecting'
 export class ServiceNetworkDisconnecting extends Cmds.Common.Base {
     static onDispatched = {
-        req(cmd: Cmds.CommandNetworkDisconnectingReq, sckUser: Modules.SocketUser) {
-            ServiceUser.logout(sckUser);
+        async req(cmd: Cmds.CommandNetworkDisconnectingReq, sckUser: Modules.SocketUser) {
+            await ServiceUser.logout(sckUser);
         }
     }
 }
