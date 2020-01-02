@@ -11,3 +11,6 @@ Adhoc Cast Signaler-Server
 1. npm start
 
 
+#Signal-Center Dev启动流程
+1. npm run server:dev
+1. npm run amd:dev

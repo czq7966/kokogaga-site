@@ -6,11 +6,11 @@ import { ECommandId } from './dts';
 
 // Req
 export class CommandDeleverReq extends Common.Command<any> {
-    onDispatched(cmd: CommandDeleverReq, sckUser: Modules.ISocketUser) {
+    onDispatched(cmd: CommandDeleverReq, sckWorder: Modules.ISocketUser) {
         let from = cmd.data.from;
         cmd.data.from = cmd.data.to;
         cmd.data.to = from;
-        sckUser.sendCommand(cmd.data)
+        sckWorder.sendCommand(cmd.data)
     }    
 }
 

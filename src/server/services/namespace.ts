@@ -1,14 +1,14 @@
 import * as Amd from '../amd/index'
 import * as Modules from '../modules'
 import * as Dts from "../dts";
-import { ICommandDeliverDataExtra } from '../amd/signal-client/dts';
+import { ICommandDeliverDataExtraProps } from '../amd/signal-client/dts';
 import { ServiceUser } from './user';
 import { ServiceRoom } from './room';
 
 export class ServiceNamespace  {
     static async onDeliverCommand(namespace: Modules.ISocketNamespace, cmd: Dts.ICommandData<any>) {
         let data = cmd.props as Dts.ICommandData<Dts.ICommandDataProps>;
-        let extra = cmd.extra as  Dts.ICommandData<ICommandDeliverDataExtra>;
+        let extra = cmd.extra as  Dts.ICommandData<ICommandDeliverDataExtraProps>;
         let fromSckUser: Modules.ISocketUser;
         let toSckUser: Modules.ISocketUser;
         switch(extra.from.type) {

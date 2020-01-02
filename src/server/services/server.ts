@@ -1,7 +1,7 @@
 import * as Amd from '../amd/index'
 import * as Modules from '../modules'
 import * as Dts from "../dts";
-import { ICommandDeliverDataExtra } from '../amd/signal-client/dts';
+import { ICommandDeliverDataExtraProps } from '../amd/signal-client/dts';
 import { ServiceUser } from './user';
 import { ServiceNamespace } from './namespace';
 
@@ -139,7 +139,7 @@ export class ServiceServer  {
     }  
     static async onDeliverCommand(server: Modules.IServer, cmd: Dts.ICommandData<any>) {
         let data = cmd.props as Dts.ICommandData<Dts.ICommandDataProps>;
-        let extra = cmd.extra as Dts.ICommandData<ICommandDeliverDataExtra>;
+        let extra = cmd.extra as Dts.ICommandData<ICommandDeliverDataExtraProps>;
         if (data && extra) {
             let snsp = server.snsps.get(extra.props.namesapce); 
             if (snsp)

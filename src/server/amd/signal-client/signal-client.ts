@@ -9,7 +9,7 @@ export interface ISignalClient extends ADHOCCAST.Cmds.Common.IBase {
     server: IServer
     tryLogin(): Promise<any>;
     isReady(): boolean;
-    deliverCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, dataExtra: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtra>): Promise<any>
+    deliverCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, dataExtra: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>): Promise<any>
 }
 
 export class SignalClient extends ADHOCCAST.Cmds.Common.Base implements ISignalClient {
@@ -102,7 +102,7 @@ export class SignalClient extends ADHOCCAST.Cmds.Common.Base implements ISignalC
         }        
     }
 
-    async deliverCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, dataExtra: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtra>) {
+    async deliverCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, dataExtra: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>) {
         if (this.isReady()) {
             let cmd: ADHOCCAST.Cmds.Common.ICommandData<any> = {
                 cmdId: Dts.ECommandId.signal_center_deliver,

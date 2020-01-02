@@ -5,7 +5,7 @@ import * as Admin from './admin/index'
 import { ServiceRoom } from "./room";
 import { ServiceRoomClose } from "./room-close";
 import { ServiceUsers } from "./users";
-import { ICommandDeliverDataExtra } from '../amd/signal-client/dts';
+import { ICommandDeliverDataExtraProps } from '../amd/signal-client/dts';
 
 export class ServiceUser extends Cmds.Common.Base {
     static isLogin(sckUser: Modules.SocketUser): boolean {        
@@ -86,7 +86,7 @@ export class ServiceUser extends Cmds.Common.Base {
         if (server && server.signalClient) {
             let namespace = sckUser.users.snsp.nsp.name;
             namespace = namespace.startsWith('/') ? namespace.substr(1): namespace
-            let extra: Dts.ICommandData<ICommandDeliverDataExtra> = {
+            let extra: Dts.ICommandData<ICommandDeliverDataExtraProps> = {
                 props: {
                     namesapce: namespace
                 },

@@ -30,7 +30,7 @@ export class SocketWorker  extends Modules.SocketUser implements ISocketWorker {
             Object.keys(events).forEach(key => {
                 let value = events[key];
                 this.socket.addListener(value, (...args: any[]) => {
-                    console.log('ServerEvent111', value, ...args ? args[0]: '')
+                    console.log('ServerEvent', value, ...args ? args[0]: '')
                 })
             })
         })

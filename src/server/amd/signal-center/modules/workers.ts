@@ -29,7 +29,7 @@ export class SocketWorkers extends Modules.SocketUsers implements ISocketWorkers
         this.snsp.nsp.off('connect', this.onConnect2)
     }    
     onConnect2 = (socket: SocketIO.Socket) => {
-        console.log('ServerEvent222', 'connect', socket.id)
+        console.log('ServerEvent', 'connect', socket.id)
         let sckUser = new SocketWorker(socket);
         socket.once(Dts.EServerSocketEvents.disconnecting, () => {
             sckUser.onCommand({cmdId: Dts.ECommandId.network_disconnecting});
