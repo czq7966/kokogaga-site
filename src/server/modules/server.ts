@@ -10,6 +10,7 @@ import * as path from 'path'
 import * as Amd from '../amd/index'
 
 export interface IServer {
+    id: string
     snsps: Cmds.Common.Helper.KeyValue<ISocketNamespace>
     httpServers: IHttpServers
     socketioServer: SocketIO.Server;
@@ -26,6 +27,7 @@ export interface IServer {
 
 export class Server implements IServer {
     static instance: IServer;
+    id: string
     snsps: Cmds.Common.Helper.KeyValue<ISocketNamespace>
     httpServers: IHttpServers
     socketioServer: SocketIO.Server;
@@ -34,6 +36,7 @@ export class Server implements IServer {
 
     constructor() {
         Server.instance = this;
+        this.id = Helper.uuid();
         this.httpServers = new HttpServers(new Config());
         this.snsps = new Cmds.Common.Helper.KeyValue();
         this.initSocketIOServer();
