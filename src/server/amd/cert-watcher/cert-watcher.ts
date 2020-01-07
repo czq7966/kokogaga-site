@@ -11,17 +11,17 @@ export interface ICertWatcher extends Modules.ISocketNamespace  {
 export class SocketNamespace  extends Modules.SocketNamespace implements ICertWatcher {
     reloadTimerHandler: any;
 
-    constructor(nsp: Modules.ISocketIONamespace, server?: Modules.IServer) {
-        super(nsp, server);
-        this.useSignalCenter = false;
+    constructor(nsp: Modules.ISocketIONamespace, server?: Modules.IServer,  options?: Modules.ISocketNamespaceOptions) {
+        super(nsp, server, options);
+        this.initEvents();
     }
 
     destroy() {
+        this.unInitEvents();
         super.destroy();
     }
 
     initEvents() {
-        super.initEvents();
         this.reloadCert();
         this.watch(10 * 1000);
 
@@ -29,7 +29,6 @@ export class SocketNamespace  extends Modules.SocketNamespace implements ICertWa
     unInitEvents() {
         if (!!this.reloadTimerHandler)
             clearTimeout(this.reloadTimerHandler);
-        super.initEvents();
     }    
 
     watch(loadDelay: number) {

@@ -1,6 +1,6 @@
 import * as Cmds from '../cmds/index'
-import { ISocketNamespace } from './namespace';
-import { Config } from './config';
+import { ISocketNamespace, ESocketNamespaceType } from './namespace';
+import { Config, IConfig } from './config';
 import { IHttpServers, HttpServers } from './http-servers';
 import { ServiceServer } from '../services';
 import { IGlobalExpcetion, GlobalExpcetion } from './global-exception';
@@ -8,14 +8,18 @@ import { ISignalClient } from '../amd/signal-client/signal-client';
 import * as Helper from "../helper"
 import * as path from 'path'
 import * as Amd from '../amd/index'
+import { ISocketUsers, SocketUsers } from './users';
 
 export interface IServer {
-    id: string
     snsps: Cmds.Common.Helper.KeyValue<ISocketNamespace>
     httpServers: IHttpServers
     socketioServer: SocketIO.Server;
     globalExpcetion: IGlobalExpcetion
-    signalClient: ISignalClient
+    getSignalClient(): ISignalClient
+    getId(): string            
+    getConfig(): IConfig
+    newConfig(): IConfig
+    newSocketUsers(snsp: ISocketNamespace): ISocketUsers
     initNamespaces(): Promise<any>
     unInitNamespaces(): Promise<any>
     resetNamespaces(): Promise<any>
@@ -28,6 +32,7 @@ export interface IServer {
 export class Server implements IServer {
     static instance: IServer;
     id: string
+    config: IConfig
     snsps: Cmds.Common.Helper.KeyValue<ISocketNamespace>
     httpServers: IHttpServers
     socketioServer: SocketIO.Server;
@@ -37,19 +42,23 @@ export class Server implements IServer {
     constructor() {
         Server.instance = this;
         this.id = Helper.uuid();
-        this.httpServers = new HttpServers(new Config());
+        this.config = new Config();
+        this.httpServers = new HttpServers(this.getConfig());
         this.snsps = new Cmds.Common.Helper.KeyValue();
         this.initSocketIOServer();
         this.initNamespaces();
         this.initEvents();       
         this.run(); 
         this.globalExpcetion = new GlobalExpcetion(this)      
-        Amd.requirejs(path.resolve(__dirname, 'amd/signal-client/index.js'), [])
-        .then((modules: any) => {
-            this.signalClient = new modules.SignalClient({instanceId: Helper.uuid()}, this);
-        })
+        // Amd.requirejs(path.resolve(__dirname, 'amd/signal-client/index.js'), [])
+        // .then((modules: any) => {
+        //     this.signalClient = new modules.SignalClient({instanceId: Helper.uuid()}, this);
+        // });
     }    
     destroy() {
+        this.unInitEvents();
+        this.unInitNamespaces();
+        this.unInitSocketIOServer();        
         this.signalClient && this.signalClient.destroy();
         this.globalExpcetion.destroy()
         this.httpServers.destroy();
@@ -58,9 +67,6 @@ export class Server implements IServer {
         delete this.httpServers;
         delete this.globalExpcetion;
         delete this.signalClient;
-        this.unInitEvents();
-        this.unInitNamespaces();
-        this.unInitSocketIOServer();
     }
     initEvents() {
 
@@ -68,11 +74,47 @@ export class Server implements IServer {
     unInitEvents() {
 
     }    
+    getId(): string {    
+        return this.id;
+    }
+    getConfig(): IConfig {
+        this.config = this.config || this.newConfig()
+        return this.config;
+    }
+    newConfig(): IConfig {
+        return new Config;
+    }
+    newSocketUsers(snsp: ISocketNamespace): ISocketUsers {
+        return new SocketUsers(snsp);
+    }
+    getSignalClient(): ISignalClient {
+        if (!!this.signalClient) {
+            this.snsps.keys().some(key => {
+                let snsp = this.snsps.get(key);
+                if (!snsp.options.disabled) {
+                    switch(snsp.options.type) {
+                        case ESocketNamespaceType.signalClient:
+                        case ESocketNamespaceType.signalRedis:
+                            this.signalClient = snsp as ISignalClient ;
+                            return true;
+                            break
+                    } 
+                }
+            })
+        }
+        
+        return this.signalClient
+    }
+        
     initSocketIOServer() {
-        let server = this.httpServers.servers[0]
+        let server = this.httpServers.servers[0];
+        let config = this.getConfig();
+        let path = config.socketIOServer && config.socketIOServer.path || 'socket.io';
+        path = path[0] != '/' ? '/' + path : path
         this.socketioServer = require('socket.io')(server.httpServer, {
                     transports: ['websocket'],
                     serveClient: false,
+                    path: path
                 }) as SocketIO.Server;
         
         for (let index = 1; index < this.httpServers.servers.length; index++) {
@@ -84,7 +126,7 @@ export class Server implements IServer {
 
     }
     initNamespaces(): Promise<any> {
-        let config = new Config()
+        let config = this.newConfig()
         let promises = []
         Object.keys(config.namespaces).forEach(name => {
             promises.push(this.openNamespace(name))

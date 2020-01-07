@@ -3,19 +3,24 @@ import { EventEmitter } from 'events';
 import * as Redis from 'redis'
 
 import { ADHOCCAST } from '../libex'
-import { url } from 'inspector';
 
-export interface ISocket extends Redis.RedisClient {
+export interface IRedisSocket extends Redis.RedisClient {
     id?: string
 }
 
-export interface IClient extends ADHOCCAST.Network.ISignaler {
-    socket: ISocket
+export interface IClientSocket extends ADHOCCAST.Network.ISignaler {
+    socket: IRedisSocket
+    getPath(): string
+    setPath(value: string)
+    getServerChannel(id: string): string
+    getRoomChannel(id: string): string
+    getUserChannel(id: string): string
+    getSocketChannel(id: string): string
 }
 
-export class Client implements IClient {
+export class ClientSocket implements IClientSocket {
     eventEmitter: EventEmitter;
-    socket: ISocket
+    socket: IRedisSocket
     _url: string;
     _path: string;    
 
@@ -62,10 +67,13 @@ export class Client implements IClient {
         if (this._connectPromise != null)
             return this._connectPromise;
 
+        if (url) this.setUrl(url, path);
         this._connectPromise = new Promise((resolve, reject) => {
             this.unInitEvents(this.socket);
             delete this.socket;
-            this.socket = new Redis.RedisClient(this.getOptions());
+            let options = this.getOptions();
+            this.socket = Redis.createClient(options.url,options);
+            this.socket.id = ADHOCCAST.Cmds.Common.Helper.uuid();
             this.socket.once(ADHOCCAST.Dts.EClientSocketEvents.connect, () => {
  
             })
@@ -95,7 +103,10 @@ export class Client implements IClient {
         })
         socket.once("error", (...args) => {
             this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.message_error, ...args);
-        })        
+        })    
+        socket.on('message', (channel: string, message: string) => {
+            this.eventEmitter.emit('message', channel, message);            
+        })    
     }    
     unInitEvents(socket: Redis.RedisClient) {
         socket && socket.removeAllListeners();
@@ -119,5 +130,17 @@ export class Client implements IClient {
             url: url
         }
         return options;
+    }
+    getServerChannel(id: string): string {
+        return 'path:' + this.getPath() + '/server:' + id;
+    }
+    getRoomChannel(id: string): string {
+        return 'path:' + this.getPath() + '/room:' + id;
+    }
+    getUserChannel(id: string): string {
+        return 'path:' + this.getPath() + '/user:' + id;
+    }
+    getSocketChannel(id: string): string {
+        return 'path:' + this.getPath() + '/socket:' + id;
     }
 }

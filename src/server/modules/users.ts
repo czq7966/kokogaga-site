@@ -71,13 +71,11 @@ export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
     }       
     delayDestroyUser(sckUser: ISocketUser) {
         if (sckUser && sckUser.notDestroyed) {
-            let signalClient = sckUser.users.snsp.server.signalClient;                
+            let signalClient = sckUser.users.snsp.server.getSignalClient();
             if (signalClient && signalClient.isReady()) {
-                if (sckUser.users.snsp.server.signalClient.isReady()) {
-                    setTimeout(() => {
-                        sckUser.destroy();
-                    }, 1000);
-                }
+                setTimeout(() => {
+                    sckUser.destroy();
+                }, 1000);
             } else {
                 sckUser.destroy();
             }

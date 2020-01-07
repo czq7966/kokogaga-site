@@ -11,7 +11,6 @@ export class SocketNamespace  extends Modules.SocketNamespace implements ISignal
     database: IDatabase;
     constructor(nsp: Modules.ISocketIONamespace, server?: Modules.IServer) {
         super(nsp, server);
-        this.useSignalCenter = false;
         this.database = new Database();
     }
 }

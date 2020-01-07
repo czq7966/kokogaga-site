@@ -17,11 +17,12 @@ module.exports = env => {
     // const distDir = path.resolve(__dirname, 'dist', libraryTargetPath);
     const distDir = path.resolve(__dirname, env.distDir ? env.distDir : '../dist/server/amd');
     const srcDir =  path.resolve(__dirname, '../src/server/amd');
-    entry['common/index'] = path.resolve(srcDir, "common/index.ts");
+    entry['common/index'] = path.resolve(srcDir, "common/namespace.ts");
     entry['cert-watcher/index'] = path.resolve(srcDir, "cert-watcher/index.ts");
     entry['admin/index'] = path.resolve(srcDir, "admin/index.ts");
     entry['signal-center/index'] = path.resolve(srcDir, "signal-center/index.ts");
     entry['signal-client/index'] = path.resolve(srcDir, "signal-client/index.ts");
+    entry['redis-signaler/index'] = path.resolve(srcDir, "redis-signaler/index.ts");
 
     
     optimization['minimizer'] = minimizer;  
@@ -79,7 +80,8 @@ module.exports = env => {
                 'fs': 'fs',
                 'path': 'path',
                 'http': 'http',
-                'https': 'https' 
+                'https': 'https',
+                'socket.io-client': 'socket.io-client'
             }
 
         ],

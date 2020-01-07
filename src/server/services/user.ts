@@ -6,6 +6,7 @@ import { ServiceRoom } from "./room";
 import { ServiceRoomClose } from "./room-close";
 import { ServiceUsers } from "./users";
 import { ICommandDeliverDataExtraProps } from '../amd/signal-client/dts';
+import e = require("express");
 
 export class ServiceUser extends Cmds.Common.Base {
     static isLogin(sckUser: Modules.SocketUser): boolean {        
@@ -66,24 +67,26 @@ export class ServiceUser extends Cmds.Common.Base {
         })
     }    
     static async onCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>)  {   
-        let signalCenter = sckUser.users.snsp.server.signalClient;
-        let useSignalCenter = sckUser.users.snsp.useSignalCenter;
-        if (!!useSignalCenter && !!signalCenter && signalCenter.isReady() ) {
-            try {
-                sckUser.dispatcher.polyfillCommand(cmd, sckUser);
-                await this.deliverCommand(sckUser, cmd);                    
-            } catch(e) {
-                sckUser.dispatcher.onCommand(cmd, sckUser);                    
+        let useSignalCenter = sckUser.users.snsp.options.useSignalCenter;
+        if (!!useSignalCenter) {
+            let signalCenter = sckUser.users.snsp.server.getSignalClient();
+            if (signalCenter && signalCenter.isReady()) {
+                try {
+                    sckUser.dispatcher.polyfillCommand(cmd, sckUser);
+                    await this.deliverCommand(sckUser, cmd);                    
+                } catch(e) {
+                    sckUser.dispatcher.onCommand(cmd, sckUser);                    
+                }
+            } else {
+                sckUser.dispatcher.onCommand(cmd, sckUser);   
             }
         } else {
             sckUser.dispatcher.onCommand(cmd, sckUser);
-        }    
-        
-        
+        }
     }
     static async deliverCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>) {
-        let server = sckUser.users.snsp.server;
-        if (server && server.signalClient) {
+        let signalClient = sckUser.users.snsp.server.getSignalClient();
+        if (signalClient) {
             let namespace = sckUser.users.snsp.nsp.name;
             namespace = namespace.startsWith('/') ? namespace.substr(1): namespace
             let extra: Dts.ICommandData<ICommandDeliverDataExtraProps> = {
@@ -94,10 +97,9 @@ export class ServiceUser extends Cmds.Common.Base {
                     type: sckUser.user ? 'user' : 'socket',
                     id: sckUser.user ? sckUser.user.id : sckUser.socket.id                    
                 },
-                to: cmd.to                
-
+                to: cmd.to 
             }
-            await server.signalClient.deliverCommand(cmd, extra);
+            await signalClient.deliverCommand(cmd, extra);
         } else {
             throw "signal client is not loaded yet!"
         }
@@ -113,7 +115,6 @@ export class ServiceUser extends Cmds.Common.Base {
             case 'server':
                 sckUser && sckUser.notDestroyed && sckUser.dispatcher.onCommand(cmd, sckUser);
                 break;                
-        }        
-
+        } 
     }      
 }

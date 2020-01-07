@@ -3,6 +3,7 @@ import * as path from 'path'
 import * as Amd from '../amd/index'
 import * as Url from 'url'
 import * as Cmds from "../cmds/index";
+import { ISocketNamespaceOptions, ESocketNamespaceType } from './namespace';
 
 var ConfigFile = './config.json'
 
@@ -35,18 +36,28 @@ export interface ISignalCenter {
     signalerBase: string,
     namespace: string
 }
+export interface ISignalRedis {
+    enabled: boolean
+    url: string
+}
+export interface ISocketIOServer {
+    path: string
+}
 
 export interface IConfig {
     version: string
     updateUrl: string
     configUrl: string
     autoUpdateConfig: boolean
-    namespaces: {[name:string]: string}
+    namespaces: {[name:string]: string} | {[name:string]: ISocketNamespaceOptions}
     websites: {[name:string]: string}
     clientConfig: IClientConfig
     http: Array<IHttpOption>
     https: Array<IHttpsOption2>
-    signalCenter: ISignalCenter    
+    signalCenter: ISignalCenter 
+    signalRedis: ISignalRedis
+    socketIOServer: ISocketIOServer
+    destroy()
     httpsOption2To1(option2: IHttpsOption2): IHttpsOption
 }
 
@@ -55,12 +66,14 @@ export class Config extends Cmds.Common.Base implements IConfig {
     configUrl: string
     updateUrl: string
     autoUpdateConfig: boolean
-    namespaces: {[name:string]: string}
+    namespaces: {[name:string]: string} | {[name:string]: ISocketNamespaceOptions}
     websites: {[name:string]: string}
     clientConfig: IClientConfig
     http: Array<IHttpOption>
     https: Array<IHttpsOption2>
-    signalCenter: ISignalCenter    
+    signalCenter: ISignalCenter   
+    signalRedis: ISignalRedis 
+    socketIOServer: ISocketIOServer
     constructor() {
         super();
         let jsonConfig = Config.getJsonConfig();
@@ -69,8 +82,32 @@ export class Config extends Cmds.Common.Base implements IConfig {
     destroy() {
         super.destroy();
     }
+
+    getNamespaces(): {[name:string]: ISocketNamespaceOptions} {
+        let namespaces: {[name:string]: ISocketNamespaceOptions} = {};
+        Object.keys(this.namespaces).forEach(key => {
+            let namespace = this.namespaces[key];
+            let options: ISocketNamespaceOptions;
+            if (typeof(namespace) == 'string') {
+                options = {
+                    name: key,
+                    url: namespace,
+                    type: ESocketNamespaceType.common
+                }
+            } else {
+                options = namespace;
+            }
+            options.name = options.name || key;
+            namespaces[key] = options;
+        })
+        return namespaces;
+    }
+    getNamespace(name: string): ISocketNamespaceOptions {    
+        return this.getNamespaces()[name];
+    }
     getNamespaceModuleUrl(nsp: string): string {
-        let addr = this.namespaces[nsp];
+        let namespace = this.getNamespace(nsp);
+        let addr = namespace.url;
         if (addr) {
             if (this.updateUrl && (this.updateUrl.indexOf("http://") >=0 || this.updateUrl.indexOf("https://") >= 0)) {
                 let url = this.version + '/' + addr;
@@ -161,7 +198,7 @@ export class Config extends Cmds.Common.Base implements IConfig {
     namespacesExist(names: Array<string>): Array<string> {
         let result = [];
         names.forEach(name => {
-            if (this.namespaces[name] !== undefined) 
+            if (this.getNamespace(name) !== undefined) 
                 result.push(name)
         })
         return result;       
@@ -170,7 +207,7 @@ export class Config extends Cmds.Common.Base implements IConfig {
     namespacesNotExist(names: Array<string>): Array<string> {
         let result = [];
         names.forEach(name => {
-            if (this.namespaces[name] === undefined) 
+            if (this.getNamespace(name) === undefined) 
                 result.push(name)
         })
         return result;       

@@ -9,8 +9,12 @@ export interface IDispatcherConstructorParams extends Cmds.Common.IBaseConstruct
 }
 
 export class Dispatcher extends Cmds.Common.Base implements Cmds.Common.IDispatcher {
-    constructor(params: IDispatcherConstructorParams) {
+    edCoder: Cmds.Common.IEDCoderClass
+    isServer: boolean    
+    constructor(params: IDispatcherConstructorParams, edCoder?: Cmds.Common.IEDCoderClass) {
         super(params);
+        this.isServer = true;
+        this.edCoder = edCoder || Cmds.Common.EDCoder;
         this.initEvents();
     }
     destroy() {
@@ -19,10 +23,10 @@ export class Dispatcher extends Cmds.Common.Base implements Cmds.Common.IDispatc
     }
 
     initEvents() {
-
+        this.edCoder.addDispatcherInstance(this.instanceId, this);
     }
-    unInitEvents = () => {
-
+    unInitEvents() {
+        this.edCoder.removeDispatcherInstance(this.instanceId);
     }
 
     polyfillCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser): Dts.ICommandData<any> {
@@ -86,4 +90,4 @@ export class Dispatcher extends Cmds.Common.Base implements Cmds.Common.IDispatc
     }    
 }
 
-Cmds.Common.EDCoder.setDispatcher(Dispatcher as any, true)
+// Cmds.Common.EDCoder.setDispatcher(Dispatcher as any, true)
