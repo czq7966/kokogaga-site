@@ -142,7 +142,7 @@ export class ServiceServer  {
         let data = cmd.props as Dts.ICommandData<Dts.ICommandDataProps>;
         let extra = cmd.extra as Dts.ICommandData<ICommandDeliverDataExtraProps>;
         if (data && extra) {
-            let snsp = server.snsps.get(extra.props.namesapce); 
+            let snsp = server.snsps.get(extra.props.namespace); 
             if (snsp)
                 return await ServiceNamespace.onDeliverCommand(snsp, cmd);
         }        

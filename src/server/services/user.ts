@@ -84,37 +84,48 @@ export class ServiceUser extends Cmds.Common.Base {
             sckUser.dispatcher.onCommand(cmd, sckUser);
         }
     }
-    static async deliverCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>) {
+    static async sendCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean) {
+        let useSignalCenter = sckUser.users.snsp.options.useSignalCenter;
+        if (!!useSignalCenter) {
+            let signalCenter = sckUser.users.snsp.server.getSignalClient();
+            if (signalCenter && signalCenter.isReady()) {
+                try {
+                    sckUser.dispatcher.polyfillCommand(cmd, sckUser);
+                    await this.deliverCommand(sckUser, cmd, includeSelf);                    
+                } catch(e) {
+                    sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);                    
+                }
+            } else {
+                sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);   
+            }
+        } else {
+            sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);
+        }
+    }
+    static async deliverCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean) {
         let signalClient = sckUser.users.snsp.server.getSignalClient();
         if (signalClient) {
             let namespace = sckUser.users.snsp.nsp.name;
             namespace = namespace.startsWith('/') ? namespace.substr(1): namespace
             let extra: Dts.ICommandData<ICommandDeliverDataExtraProps> = {
                 props: {
-                    namesapce: namespace
+                    namespace: namespace,
+                    includeSelf: includeSelf
                 },
                 from: {
                     type: sckUser.user ? 'user' : 'socket',
                     id: sckUser.user ? sckUser.user.id : sckUser.socket.id                    
                 },
-                to: cmd.to 
+                to: Object.assign({}, cmd.to)
             }
             await signalClient.deliverCommand(cmd, extra);
         } else {
             throw "signal client is not loaded yet!"
         }
     }   
-    static async onDeliverCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean) {
-        switch(cmd.to.type) {
-            case 'socket':
-            case 'user':
-                sckUser && sckUser.notDestroyed && sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);
-                break;
-            case 'room':
-                break;
-            case 'server':
-                sckUser && sckUser.notDestroyed && sckUser.dispatcher.onCommand(cmd, sckUser);
-                break;                
-        } 
+    static async onDeliverCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf: boolean) {
+        if(sckUser && sckUser.notDestroyed) {
+            sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);
+        }
     }      
 }

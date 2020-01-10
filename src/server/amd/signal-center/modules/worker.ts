@@ -43,7 +43,7 @@ export class SocketWorker  extends Modules.SocketUser implements ISocketWorker {
     onCommand2 = async (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => {     
         this.dispatcher.onCommand(cmd, this);
     }
-    sendCommand2 = (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => {
+    sendCommand2 = async (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => {
         this.dispatcher && this.dispatcher.sendCommand(cmd, this, includeSelf);
     }    
 }

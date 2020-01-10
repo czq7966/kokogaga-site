@@ -125,13 +125,8 @@ export class ServiceRoom {
             return Promise.reject('Room not exist ' + oldId)
         }
     }
-    static async onDeliverCommand(namespace: Modules.ISocketNamespace, roomid: string, sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>) {
-        switch(cmd.cmdId) {
-            default:
-            break;                
-        }           
-
+    static async onDeliverCommand(namespace: Modules.ISocketNamespace, roomid: string, sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf: boolean) {
         let _sckUser = sckUser || ServiceNamespace.getRoomFirstUser(namespace, roomid);
-        _sckUser && _sckUser.dispatcher.sendCommand(cmd, _sckUser, !sckUser);
+        _sckUser && _sckUser.dispatcher.sendCommand(cmd, _sckUser, includeSelf);
     }
 }

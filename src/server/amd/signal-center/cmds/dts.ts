@@ -12,7 +12,8 @@ export var DefaultPathName = "socket.io"
 
 export interface ICommandDeliverDataExtraProps {
     path?: string
-    namesapce: string
+    includeSelf?: boolean
+    namespace: string
 }
 export interface IDataUser {
     path?: string

@@ -41,7 +41,7 @@ export class Server implements IServer {
 
     constructor() {
         Server.instance = this;
-        this.id = Helper.uuid();
+        this.id = '#server:' + Helper.uuid();
         this.config = new Config();
         this.httpServers = new HttpServers(this.getConfig());
         this.snsps = new Cmds.Common.Helper.KeyValue();
@@ -88,7 +88,7 @@ export class Server implements IServer {
         return new SocketUsers(snsp);
     }
     getSignalClient(): ISignalClient {
-        if (!!this.signalClient) {
+        if (!this.signalClient) {
             this.snsps.keys().some(key => {
                 let snsp = this.snsps.get(key);
                 if (!snsp.options.disabled) {
@@ -114,7 +114,7 @@ export class Server implements IServer {
         this.socketioServer = require('socket.io')(server.httpServer, {
                     transports: ['websocket'],
                     serveClient: false,
-                    path: path
+                    // path: path
                 }) as SocketIO.Server;
         
         for (let index = 1; index < this.httpServers.servers.length; index++) {
@@ -155,9 +155,27 @@ export class Server implements IServer {
     }
 
     run() {
+        // this.httpServers.servers.forEach(server => {
+        //     server.httpServer.listen(server.port);
+        //     console.log(server.listenlog || 'listen on port ' + server.port)
+        // })
+
         this.httpServers.servers.forEach(server => {
-            server.httpServer.listen(server.port);
-            console.log(server.listenlog || 'listen on port ' + server.port)
+            let listenError = () => {
+                process.off('uncaughtException', listenError);
+                server.httpServer.listen(() => {
+                    console.log('listen on port ' + JSON.stringify(server.httpServer.address()))
+                });                
+            }
+            process.on('uncaughtException', listenError);
+            server.httpServer.listen(server.port, () => {
+                process.off('uncaughtException', listenError);
+                console.log(server.listenlog || 'listen on port ' + server.port)                
+            });                
+
+            // server.httpServer.listen(() => {
+            //     console.log('listen on port ' + JSON.stringify(server.httpServer.address()))
+            // });
         })
     }
     close() {

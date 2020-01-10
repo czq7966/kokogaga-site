@@ -33,11 +33,13 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
         this.socket.compress(true);
         this.users = (socket.nsp as ISocketIONamespace).snsp.users;
         this.openRooms = new Cmds.Common.Helper.KeyValue<any>();
+        this.users.sockets.add(this.socket.id, this);
         this.initEvents();          
     }
 
     destroy() {
         this.unInitEvents();
+        this.users.sockets.del(this.socket.id)
         delete this.openRooms;
         delete this.user
         delete this.users
@@ -72,7 +74,7 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
             await Services.ServiceUser.onCommand(this, cmd);
         }
     }
-    sendCommand = (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => {
-        this.dispatcher && this.dispatcher.sendCommand(cmd, this, includeSelf);
+    sendCommand = async (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => {
+        await Services.ServiceUser.sendCommand(this, cmd, includeSelf);
     }
 }

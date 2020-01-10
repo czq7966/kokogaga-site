@@ -13,9 +13,10 @@ export interface IClientSocket extends ADHOCCAST.Network.ISignaler {
     getPath(): string
     setPath(value: string)
     getServerChannel(id: string): string
-    getRoomChannel(id: string): string
-    getUserChannel(id: string): string
-    getSocketChannel(id: string): string
+    getRoomChannel(namespace: string, id: string): string
+    getUserChannel(namespace: string, id: string): string
+    getShortChannel(namespace: string, id: string): string
+    getSocketChannel(namespace: string, id: string): string
 }
 
 export class ClientSocket implements IClientSocket {
@@ -73,7 +74,7 @@ export class ClientSocket implements IClientSocket {
             delete this.socket;
             let options = this.getOptions();
             this.socket = Redis.createClient(options.url,options);
-            this.socket.id = ADHOCCAST.Cmds.Common.Helper.uuid();
+            this.socket.id = '#server-socket:' + ADHOCCAST.Cmds.Common.Helper.uuid();
             this.socket.once(ADHOCCAST.Dts.EClientSocketEvents.connect, () => {
  
             })
@@ -134,13 +135,19 @@ export class ClientSocket implements IClientSocket {
     getServerChannel(id: string): string {
         return 'path:' + this.getPath() + '/server:' + id;
     }
-    getRoomChannel(id: string): string {
-        return 'path:' + this.getPath() + '/room:' + id;
+    getNamespaceChannel(id: string): string {
+        return 'path:' + this.getPath() + '/namespace:' + id;
     }
-    getUserChannel(id: string): string {
-        return 'path:' + this.getPath() + '/user:' + id;
+    getRoomChannel(namespace: string, id: string): string {
+        return this.getNamespaceChannel(namespace) + '/room:' + id;
     }
-    getSocketChannel(id: string): string {
-        return 'path:' + this.getPath() + '/socket:' + id;
+    getUserChannel(namespace: string, id: string): string {
+        return this.getNamespaceChannel(namespace) + '/user:' + id;
+    }
+    getShortChannel(namespace: string, id: string): string {
+        return this.getNamespaceChannel(namespace) + '/short:' + id;
+    }
+    getSocketChannel(namespace: string, id: string): string {
+        return this.getNamespaceChannel(namespace) + '/socket:' + id;
     }
 }

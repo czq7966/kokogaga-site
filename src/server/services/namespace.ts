@@ -24,18 +24,23 @@ export class ServiceNamespace  {
         console.log('onDeliverCommand', cmd.props.cmdId, extra.to);        
         switch(extra.to.type) {
             case 'socket':
-                let userSocket = namespace.nsp.sockets[cmd.from.id] as Modules.IUserSocket;
-                toSckUser = userSocket && userSocket.user;                
+                console.log('socket_onDeliverCommand', data.cmdId )  
+                let userSocket = namespace.nsp.sockets[extra.to.id] as Modules.IUserSocket;
+                toSckUser = userSocket && userSocket.user;           
                 ServiceUser.onDeliverCommand(toSckUser, data, true);
             case 'user':
-                toSckUser = namespace.users.users.get(cmd.from.id);
+                console.log('user_onDeliverCommand', data.cmdId )  
+                toSckUser = namespace.users.users.get(extra.to.id);
                 ServiceUser.onDeliverCommand(toSckUser, data, true);
                 break;
             case 'room':
-                ServiceRoom.onDeliverCommand(namespace, extra.to.id, fromSckUser, data);
+                console.log('room_onDeliverCommand', data.cmdId )  
+                let includeSelf = extra.props.includeSelf;
+                ServiceRoom.onDeliverCommand(namespace, extra.to.id, fromSckUser, data, !fromSckUser || includeSelf);
                 break;
-            case 'server':                
-                ServiceUser.onDeliverCommand(fromSckUser, data);
+            case 'server':       
+                console.log('server_onDeliverCommand', data.cmdId )  
+                fromSckUser && fromSckUser.dispatcher.onCommand(data, fromSckUser);       
                 break;
         }
 

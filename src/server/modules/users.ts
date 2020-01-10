@@ -23,10 +23,10 @@ export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
         super();
         this.snsp = snsp;
         this.snsp.users = this;
-        this.users = new Cmds.Common.Helper.KeyValue();
-        this.shortUsers = new Cmds.Common.Helper.KeyValue();
-        this.sockets = new Cmds.Common.Helper.KeyValue();   
-        this.rooms = new Cmds.Common.Helper.KeyValue();     
+        this.users = new Cmds.Common.Helper.KeyValue(true, this);
+        this.shortUsers = new Cmds.Common.Helper.KeyValue(true, this);
+        this.sockets = new Cmds.Common.Helper.KeyValue(true, this);   
+        this.rooms = new Cmds.Common.Helper.KeyValue(true, this);     
 
         this.initEvents();
     }
