@@ -1,19 +1,17 @@
 import * as Dts from './dts'
-import * as ServerModules from '../../modules'
+import * as Modules_Namespace from '../../modules/namespace'
 import { ADHOCCAST } from './libex'
+import { IServer } from '../../modules/server';
+import { SignalClientBase, ISignalClientBase } from './signal-client-base';
 
-
-export interface ISignalClient extends ServerModules.ISocketNamespace {
-    conneciton: ADHOCCAST.Connection;
-    tryLogin(): Promise<any>;
-    isReady(): boolean;
-    deliverCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, dataExtra: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>): Promise<any>
+export interface ISignalClient extends ISignalClientBase {
+    tryLogin(): Promise<any>
 }
 
-export class SocketNamespace extends ServerModules.SocketNamespace implements ISignalClient {
-    conneciton: ADHOCCAST.Connection;
+export class SocketNamespace extends SignalClientBase implements ISignalClient {
+    conneciton: ADHOCCAST.IConnection
     _isReady: boolean;
-    constructor(nsp: ServerModules.ISocketIONamespace, server?: ServerModules.IServer, options?: ServerModules.ISocketNamespaceOptions) {
+    constructor(nsp: Modules_Namespace.ISocketIONamespace, server?: IServer, options?: Modules_Namespace.ISocketNamespaceOptions) {
         super(nsp, server, options);
         this.init();
         this.initEvents();
@@ -53,7 +51,7 @@ export class SocketNamespace extends ServerModules.SocketNamespace implements IS
     recvFilter_onBeforeRoot = (cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>): any => {
         switch(cmd.cmdId) {
             case Dts.ECommandId.signal_center_deliver:
-                this.on_signal_center_deliver(cmd);
+                this.onDeliverCommand(cmd);
                 return ADHOCCAST.Cmds.Common.EEventEmitterEmit2Result.preventRoot;
                 break;
         }
@@ -103,22 +101,7 @@ export class SocketNamespace extends ServerModules.SocketNamespace implements IS
             throw "signal client no ready"
         }        
     }
-
-    async deliverCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, dataExtra: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>) {
-        if (this.isReady()) {
-            let cmd: ADHOCCAST.Cmds.Common.ICommandData<any> = {
-                cmdId: Dts.ECommandId.signal_center_deliver,
-                props: data,
-                extra: dataExtra
-            }
-            return await this.sendCommand(cmd);
-        } else {
-            throw "signal client no ready"
-        }        
-    }
-
-
-    on_signal_center_deliver(cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>) {
+    async onDeliverCommand(cmd: ADHOCCAST.Cmds.Common.ICommandData<any>) {
         this.server.onDeliverCommand(cmd);
     }
 }

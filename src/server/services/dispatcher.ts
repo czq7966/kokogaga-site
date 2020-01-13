@@ -7,8 +7,13 @@ import * as Modules from '../modules'
 export interface IDispatcherConstructorParams extends Cmds.Common.IBaseConstructorParams {
 
 }
+export interface IDispatcher extends Cmds.Common.IDispatcher {
+    polyfillCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser): Dts.ICommandData<any>
+    onCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser)
+    sendCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser, includeSelf?: boolean): Promise<any>
+}
 
-export class Dispatcher extends Cmds.Common.Base implements Cmds.Common.IDispatcher {
+export class Dispatcher extends Cmds.Common.Base implements IDispatcher {
     edCoder: Cmds.Common.IEDCoderClass
     isServer: boolean    
     constructor(params: IDispatcherConstructorParams, edCoder?: Cmds.Common.IEDCoderClass) {
@@ -40,7 +45,7 @@ export class Dispatcher extends Cmds.Common.Base implements Cmds.Common.IDispatc
         return cmd;    
     }
 
-    onCommand = (cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser) => {
+    onCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser) {
         cmd = this.polyfillCommand(cmd, sckUser);
         console.log(sckUser.users.snsp.nsp.name, Dts.CommandID + 'Event', cmd.cmdId, cmd.from, cmd.to);
         Cmds.Common.EDCoder.onCommand(cmd, this, sckUser);

@@ -29,7 +29,7 @@ export class RedisSignaler {
         },
 
         async on_signal_center_deliver(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>) {
-            signaler.server.onDeliverCommand(cmd);
+            signaler.onDeliverCommand(cmd)
         }
     }
 
@@ -40,7 +40,7 @@ export class RedisSignaler {
                 cmd.from = {};
                 let me = ADHOCCAST.Services.Cmds.User.CurrentUser(signaler.conneciton.instanceId);
                 if (me) {
-                    cmd.from.type = 'user';
+                    cmd.from.type = 'server';
                     cmd.from.id = me.id;
                 } else {
                     cmd.from.type = 'socket';
@@ -100,4 +100,28 @@ export class RedisSignaler {
     static async on_after_network_disconnect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         await signaler.tryLogin();
     }    
+
+
+    static OnDeliverCommand = {
+        async onDevilerCommand(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>) {
+            let result: boolean = false;
+            result == result || await this.onBeforeCommand(cmd);
+            result == result || await this.onCommand(cmd);
+            result == result || await this.onAfterCommand(cmd);
+            return result
+        },
+    
+        async onCommand(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>) {
+            return true;
+    
+        },
+    
+        async onBeforeCommand(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>) {
+            return false;
+    
+        },
+        async onAfterCommand(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>) {
+            return false
+        }          
+    }
 }

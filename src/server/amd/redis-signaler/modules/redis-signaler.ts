@@ -5,11 +5,14 @@ import * as Modules_Namespace from '../../../modules/namespace'
 import { ADHOCCAST } from '../libex'
 import { IServer } from '../../../modules/server';
 import { SocketClient, ISocketClient } from '../network/socket-client';
-import { ISignalClient } from '../../signal-client';
 import { Database, IDatabase } from './database'
+import { ISignalClientBase, SignalClientBase } from '../../signal-client/signal-client-base'
+import { ISignalClient } from '../../signal-client/signal-client'
+
 
 
 export interface IRedisSignaler extends ISignalClient {
+    conneciton: ADHOCCAST.Connection;
     database: IDatabase
     getCmdChannel(cmd: ADHOCCAST.Cmds.ICommandData<any>): string
     getServerChannel(id: string): string
@@ -23,7 +26,7 @@ export interface IRedisSignaler extends ISignalClient {
     sendCommand(cmd: any, channel?: string): Promise<any>    
 }
 
-export class SocketNamespace  extends Modules_Namespace.SocketNamespace implements IRedisSignaler {
+export class SocketNamespace  extends SignalClientBase implements IRedisSignaler {
     conneciton: ADHOCCAST.Connection;
     database: IDatabase
     _isReady: boolean;
@@ -75,9 +78,7 @@ export class SocketNamespace  extends Modules_Namespace.SocketNamespace implemen
         this.conneciton.dispatcher.eventRooter.onAfterRoot.remove(this.onAfterRoot)
         this.conneciton.dispatcher.sendFilter.onAfterRoot.remove(this.sendFilter_onAfterRoot);
         this.conneciton.dispatcher.recvFilter.onAfterRoot.remove(this.recvFilter_onAfterRoot)
-    }
-
-       
+    }       
     recvFilter_onAfterRoot = (cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>): any => {
         return Services.Modules.RedisSignaler.RecvFilter.onAfterRoot(this, cmd);
     }
@@ -97,6 +98,7 @@ export class SocketNamespace  extends Modules_Namespace.SocketNamespace implemen
         switch(cmd.data.cmdId) {
             case ADHOCCAST.Cmds.ECommandId.adhoc_login:
                 this.initDatabase();
+                this._isReady = this.conneciton.isLogin(); 
                 break;
             case ADHOCCAST.Cmds.ECommandId.adhoc_logout:
                 this._isReady = this.conneciton.isLogin(); 
@@ -122,8 +124,13 @@ export class SocketNamespace  extends Modules_Namespace.SocketNamespace implemen
             return false;
         }     
     }
+    //Override
     isReady(): boolean {
         return this._isReady;
+    }
+    //Override
+    async onDeliverCommand(cmd: ADHOCCAST.Cmds.Common.ICommandData<any>): Promise<any> {
+        return Services.Cmds.SignalCenterDeliver.onReq(this, cmd);
     }
     async sendCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>) {
         if (this.isReady()) {
@@ -138,14 +145,7 @@ export class SocketNamespace  extends Modules_Namespace.SocketNamespace implemen
             throw "signal client no ready"
         }        
     }
-    async deliverCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, dataExtra: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>) {
-        let cmd: ADHOCCAST.Cmds.Common.ICommandData<any> = {
-            cmdId: Dts.ECommandId.signal_center_deliver,
-            props: data,
-            extra: dataExtra
-        }
-        return await this.sendCommand(cmd);
-    }
+
     getCmdNamespace = (cmd: ADHOCCAST.Cmds.ICommandData<any>): string  => {    
         let namespace =  cmd.extra && cmd.extra.props && cmd.extra.props.namespace;
         return namespace || this.options.name;

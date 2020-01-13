@@ -40,11 +40,24 @@ export class ServiceNamespace  {
                 break;
             case 'server':       
                 console.log('server_onDeliverCommand', data.cmdId )  
-                fromSckUser && fromSckUser.dispatcher.onCommand(data, fromSckUser);       
+                if (fromSckUser) {
+                    fromSckUser.dispatcher.onCommand(data, fromSckUser);       
+                } else {
+
+                }
                 break;
         }
 
     }      
+
+    static async onDeliverCommand_toServer(namespace: Modules.ISocketNamespace, dlvCmd: Dts.ICommandData<any>) {
+        let data = dlvCmd.props as Dts.ICommandData<Dts.ICommandDataProps>;
+        let extra = dlvCmd.extra as  Dts.ICommandData<ICommandDeliverDataExtraProps>;
+        // switch (data.cmdId) {
+        //     case AD
+        // }
+    
+    }
     
     static getRoomUsers(namespace: Modules.ISocketNamespace, roomid: string, count: number = -1): Modules.ISocketUser[] {
         let result = [];

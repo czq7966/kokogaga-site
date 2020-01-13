@@ -13,7 +13,7 @@ export interface ISocketUser extends Cmds.Common.IBase {
     user: Dts.IUser;
     users: ISocketUsers;
     socket: IUserSocket;
-    dispatcher: Services.Dispatcher;
+    dispatcher: Services.IDispatcher;
     openRooms: Cmds.Common.Helper.KeyValue<boolean>;    
     onCommand: (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => void
     sendCommand: (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => void

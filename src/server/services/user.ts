@@ -5,8 +5,8 @@ import * as Admin from './admin/index'
 import { ServiceRoom } from "./room";
 import { ServiceRoomClose } from "./room-close";
 import { ServiceUsers } from "./users";
-import { ICommandDeliverDataExtraProps } from '../amd/signal-client/dts';
-import e = require("express");
+import { ISignalClient } from "../amd/signal-client";
+
 
 export class ServiceUser extends Cmds.Common.Base {
     static isLogin(sckUser: Modules.SocketUser): boolean {        
@@ -69,11 +69,11 @@ export class ServiceUser extends Cmds.Common.Base {
     static async onCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>)  {   
         let useSignalCenter = sckUser.users.snsp.options.useSignalCenter;
         if (!!useSignalCenter) {
-            let signalCenter = sckUser.users.snsp.server.getSignalClient();
-            if (signalCenter && signalCenter.isReady()) {
+            let signalClient = sckUser.users.snsp.server.getSignalClient();
+            if (signalClient && signalClient.isReady()) {
                 try {
                     sckUser.dispatcher.polyfillCommand(cmd, sckUser);
-                    await this.deliverCommand(sckUser, cmd);                    
+                    await this.deliverCommand(signalClient, sckUser, cmd);                    
                 } catch(e) {
                     sckUser.dispatcher.onCommand(cmd, sckUser);                    
                 }
@@ -87,11 +87,11 @@ export class ServiceUser extends Cmds.Common.Base {
     static async sendCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean) {
         let useSignalCenter = sckUser.users.snsp.options.useSignalCenter;
         if (!!useSignalCenter) {
-            let signalCenter = sckUser.users.snsp.server.getSignalClient();
-            if (signalCenter && signalCenter.isReady()) {
+            let signalClient = sckUser.users.snsp.server.getSignalClient();
+            if (signalClient && signalClient.isReady()) {
                 try {
                     sckUser.dispatcher.polyfillCommand(cmd, sckUser);
-                    await this.deliverCommand(sckUser, cmd, includeSelf);                    
+                    await this.deliverCommand(signalClient, sckUser, cmd, includeSelf);                    
                 } catch(e) {
                     sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);                    
                 }
@@ -102,23 +102,9 @@ export class ServiceUser extends Cmds.Common.Base {
             sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);
         }
     }
-    static async deliverCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean) {
-        let signalClient = sckUser.users.snsp.server.getSignalClient();
+    static async deliverCommand(signalClient: ISignalClient, sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean) {
         if (signalClient) {
-            let namespace = sckUser.users.snsp.nsp.name;
-            namespace = namespace.startsWith('/') ? namespace.substr(1): namespace
-            let extra: Dts.ICommandData<ICommandDeliverDataExtraProps> = {
-                props: {
-                    namespace: namespace,
-                    includeSelf: includeSelf
-                },
-                from: {
-                    type: sckUser.user ? 'user' : 'socket',
-                    id: sckUser.user ? sckUser.user.id : sckUser.socket.id                    
-                },
-                to: Object.assign({}, cmd.to)
-            }
-            await signalClient.deliverCommand(cmd, extra);
+            return await signalClient.deliverUserCommand(sckUser, cmd, includeSelf);
         } else {
             throw "signal client is not loaded yet!"
         }

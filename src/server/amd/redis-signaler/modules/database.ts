@@ -1,4 +1,5 @@
 import * as Modules_Namespace from '../../../modules/namespace'
+import * as Services from '../services'
 import { ADHOCCAST } from '../libex'
 import { IRedisSignaler } from './redis-signaler';
 import { ISocketUser } from '../../../modules/user'
@@ -66,37 +67,29 @@ export class Database extends ADHOCCAST.Cmds.Common.Base implements IDatabase {
             users.rooms.off('del', this.users_onRoomDel) 
         }
     }
-    users_onUserAdd = (id: string, user: ISocketUser, keyValue: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        let users = keyValue.extra as ISocketUsers;        
-        this.signaler.subscribe(this.signaler.getUserChannel(id, users.snsp.options.name)) 
+    users_onUserAdd = (id: string, user: ISocketUser, kvUsers: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
+        Services.Modules.Database.users_onUserAdd(this, id, user, kvUsers);
     }
-    users_onUserDel = (id: string, user: ISocketUser, keyValue: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        let users = keyValue.extra as ISocketUsers;
-        this.signaler.unsubscribe(this.signaler.getUserChannel(id, users.snsp.options.name)) 
+    users_onUserDel = (id: string, user: ISocketUser, kvUsers: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
+        Services.Modules.Database.users_onUserDel(this, id, user, kvUsers);
     }
-    users_onShortAdd = (id: string, user: ISocketUser, keyValue: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        let users = keyValue.extra as ISocketUsers;
-        this.signaler.subscribe(this.signaler.getShortChannel(id, users.snsp.options.name)) 
+    users_onShortAdd = (id: string, user: ISocketUser, kvShortUsers: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
+        Services.Modules.Database.users_onShortAdd(this, id, user, kvShortUsers);
     }
-    users_onShortDel = (id: string, user: ISocketUser, keyValue: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        let users = keyValue.extra as ISocketUsers;
-        this.signaler.unsubscribe(this.signaler.getShortChannel(id, users.snsp.options.name)) 
+    users_onShortDel = (id: string, user: ISocketUser, kvShortUsers: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
+        Services.Modules.Database.users_onShortDel(this, id, user, kvShortUsers);
     }
-    users_onSocketAdd = (id: string, user: ISocketUser, keyValue: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        let users = keyValue.extra as ISocketUsers;
-        this.signaler.subscribe(this.signaler.getSocketChannel(id, users.snsp.options.name)) 
+    users_onSocketAdd = (id: string, user: ISocketUser, kvSockets: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
+        Services.Modules.Database.users_onSocketAdd(this, id, user, kvSockets);
     }
-    users_onSocketDel = (id: string, user: ISocketUser, keyValue: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        let users = keyValue.extra as ISocketUsers;
-        this.signaler.unsubscribe(this.signaler.getSocketChannel(id, users.snsp.options.name)) 
+    users_onSocketDel = (id: string, user: ISocketUser, kvSockets: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
+        Services.Modules.Database.users_onSocketDel(this, id, user, kvSockets);
     }
-    users_onRoomAdd = (id: string, room: ADHOCCAST.Dts.IRoom, keyValue: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        let users = keyValue.extra as ISocketUsers;
-        this.signaler.subscribe(this.signaler.getRoomChannel(id, users.snsp.options.name)) 
+    users_onRoomAdd = (id: string, room: ADHOCCAST.Dts.IRoom, kvRooms: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
+        Services.Modules.Database.users_onRoomAdd(this, id, room, kvRooms);
     }
-    users_onRoomDel = (id: string, room: ADHOCCAST.Dts.IRoom, keyValue: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        let users = keyValue.extra as ISocketUsers;
-        this.signaler.unsubscribe(this.signaler.getRoomChannel(id, users.snsp.options.name)) 
+    users_onRoomDel = (id: string, room: ADHOCCAST.Dts.IRoom, kvRooms: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
+        Services.Modules.Database.users_onRoomDel(this, id, room, kvRooms);
     }
 
 }
