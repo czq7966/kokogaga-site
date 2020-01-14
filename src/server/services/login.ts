@@ -5,60 +5,62 @@ import * as Helper from '../helper'
 import { ServiceRoom } from './room';
 import { ServiceUser } from './user';
 import { ServiceUsers } from './users';
+import { ServiceKickoff } from './kickoff';
 
 var Tag = 'ServiceLogin'
 export class ServiceLogin extends Cmds.Common.Base {
     static onDispatched = {
-        req(cmd: Cmds.CommandLoginReq, sckUser: Modules.SocketUser) {
+        async req(cmd: Cmds.CommandLoginReq, sckUser: Modules.SocketUser) {
             let data = cmd.data;            
             let room: Dts.IRoom = data.props.user.room || {} as any;
             room.id = room.id || Helper.getAdhocRoomId(sckUser.socket)
             data.props.user = data.props.user || sckUser.user;
             data.props.user.room = data.props.user.room || room;
             data.props.user.id = data.props.user.id || Cmds.Common.Helper.uuid();
-            data.props.user.sid = data.props.user.sid || ServiceUsers.newShortID(sckUser.users);
-            ServiceLogin.onReq(sckUser, data)
+            data.props.user.sid = data.props.user.sid || await ServiceUsers.newShortID(sckUser.users);
+            data.props.user.socketId = data.props.user.socketId || sckUser.socket.id;
+            data.props.user.serverId = data.props.user.serverId || sckUser.users.snsp.server.getId();
+            await ServiceLogin.onReq(sckUser, data)
+            console.log('11111111', ServiceUser.getDatabaseNamespace(sckUser), sckUser.openRooms);
         }
     }
 
     // logical business
-    static onReq(sckUser: Modules.SocketUser, reqData: Dts.ICommandData<Dts.ICommandLoginReqDataProps>) {
-        let _kickoff = (user: Dts.IUser): Promise<any> => {
-            return new Promise((resolve, reject) => {
-                if (user) {
-                    let sckLoginUser = ServiceUsers.getUser(sckUser.users, user);
-                    if (sckLoginUser && sckLoginUser.socket.id != sckUser.socket.id) 
-                        ServiceUser.logout(sckLoginUser as Modules.SocketUser, null, true, true)
-                        .then(v => resolve())
-                        .catch(e => resolve());
-                    else 
-                        resolve(sckLoginUser);
-                } else 
-                    resolve();
-            })
+    static async onReq(sckUser: Modules.SocketUser, reqData: Dts.ICommandData<Dts.ICommandLoginReqDataProps>) {
+        let _kickoff = async (user: Dts.IUser): Promise<any> => {
+            await ServiceKickoff.kickoff(sckUser, user)
+            // return new Promise(async (resolve, reject) => {
+            //     if (user) {
+            //         let sckLoginUser = await ServiceUsers.getSocketUser(sckUser.users, user);
+            //         if (sckLoginUser && sckLoginUser.socket.id != sckUser.socket.id) 
+            //             ServiceUser.logout(sckLoginUser as Modules.SocketUser, null, true, true)
+            //             .then(v => resolve())
+            //             .catch(e => resolve());
+            //         else 
+            //             resolve(sckLoginUser);
+            //     } else 
+            //         resolve();
+            // })
         }
 
-        let _doLogin = () => {
-            if (ServiceUser.isLogin(sckUser)) {
-                let sckLoginUser = ServiceUsers.getUser(sckUser.users, sckUser.user);
+        let _doLogin = async () => {
+            let isLogin: boolean = await ServiceUser.isLogin(sckUser);
+            if (isLogin) {
+                let sckLoginUser = await ServiceUsers.getSocketUser(sckUser.users, sckUser.user);
                 reqData.extra = sckLoginUser.user;
-                this.doLogin_failed(sckUser, reqData, 'already login!');
+                await this.doLogin_failed(sckUser, reqData, 'already login!');
             } else 
-                this.doLogin(sckUser, reqData);
+                await this.doLogin(sckUser, reqData);
         }
 
-        _kickoff(reqData.props.user)
-        .then(v => {
-            _kickoff(sckUser.user)
-            .then(v => {
-                _doLogin();
-            })
-        })
+        await _kickoff(reqData.props.user);
+        await _kickoff(sckUser.user);
+        await _doLogin();
     }    
 
 
-    static doLogin(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>) {
-        ServiceUser.login(sckUser, data)
+    static async doLogin(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>) {
+        return ServiceUser.login(sckUser, data)
         .then(roomid => {
             this.doLogin_success(sckUser, data)
         })
@@ -69,7 +71,7 @@ export class ServiceLogin extends Cmds.Common.Base {
 
 
 
-    static doLogin_failed(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>, msg: string) {
+    static async doLogin_failed(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>, msg: string) {
         let props: Dts.ICommandLoginRespDataProps = {
             user: data.props.user
         }

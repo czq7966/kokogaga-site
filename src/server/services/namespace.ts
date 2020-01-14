@@ -43,7 +43,7 @@ export class ServiceNamespace  {
                 if (fromSckUser) {
                     fromSckUser.dispatcher.onCommand(data, fromSckUser);       
                 } else {
-
+                    this.onDeliverCommand_toServer(namespace, cmd)
                 }
                 break;
         }
@@ -59,7 +59,7 @@ export class ServiceNamespace  {
     
     }
     
-    static getRoomUsers(namespace: Modules.ISocketNamespace, roomid: string, count: number = -1): Modules.ISocketUser[] {
+    static async getLocalRoomUsers(namespace: Modules.ISocketNamespace, roomid: string, count: number = -1): Promise<Modules.ISocketUser[]> {
         let result = [];
         let users = namespace.users;  
         let adapter = namespace.nsp.adapter;
@@ -77,8 +77,8 @@ export class ServiceNamespace  {
         }
         return result;
     }
-    static getRoomFirstUser(namespace: Modules.ISocketNamespace, roomid: string): Modules.ISocketUser {
-        let result = this.getRoomUsers(namespace, roomid, 1);
+    static async getLocalRoomFirstUser(namespace: Modules.ISocketNamespace, roomid: string): Promise<Modules.ISocketUser> {
+        let result = await this.getLocalRoomUsers(namespace, roomid, 1);
         return result.length > 0 ? result[0] : null;
     }    
  }

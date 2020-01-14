@@ -8,7 +8,7 @@ import { ServiceUser } from './user';
 var Tag = 'ServiceLogout'
 export class ServiceLogout extends Cmds.Common.Base {
     static onDispatched = {
-        req(cmd: Cmds.CommandLogoutReq, sckUser: Modules.SocketUser) {
+        async req(cmd: Cmds.CommandLogoutReq, sckUser: Modules.SocketUser) {
             let data = cmd.data;            
             let room: Dts.IRoom = data.props.user.room || {id: Helper.getAdhocRoomId(sckUser.socket)};
             let req: Dts.ICommandData<Dts.ICommandLogoutReqDataProps>;
@@ -17,7 +17,7 @@ export class ServiceLogout extends Cmds.Common.Base {
             data.props.user.room = data.props.user.room || room;
 
             // Send to members
-            ServiceUser.logout(sckUser);
+            await ServiceUser.logout(sckUser);
 
             // Resp to user
             resp = Object.assign({}, data, {
@@ -29,7 +29,7 @@ export class ServiceLogout extends Cmds.Common.Base {
                 },
             }); 
             resp.respResult = true;
-            sckUser.sendCommand(resp);
+            await sckUser.sendCommand(resp);
             sckUser.socket.connected && sckUser.socket.disconnect();
         }
     }

@@ -9,12 +9,14 @@ import * as path from 'path'
 import * as Amd from '../amd/index'
 import { ISocketUsers, SocketUsers } from './users';
 import { ISignalClient } from '../amd/signal-client';
+import { IDatabase, Database } from './database';
 
 export interface IServer {
     snsps: Cmds.Common.Helper.KeyValue<ISocketNamespace>
     httpServers: IHttpServers
     socketioServer: SocketIO.Server;
     globalExpcetion: IGlobalExpcetion
+    database: IDatabase
     getSignalClient(): ISignalClient
     getId(): string            
     getConfig(): IConfig
@@ -38,6 +40,7 @@ export class Server implements IServer {
     socketioServer: SocketIO.Server;
     globalExpcetion: IGlobalExpcetion;
     signalClient: ISignalClient;
+    database: IDatabase
 
     constructor() {
         Server.instance = this;
@@ -45,11 +48,13 @@ export class Server implements IServer {
         this.config = new Config();
         this.httpServers = new HttpServers(this.getConfig());
         this.snsps = new Cmds.Common.Helper.KeyValue();
+        this.database = new Database(this.config.socketIOServer.path);
         this.initSocketIOServer();
         this.initNamespaces();
         this.initEvents();       
         this.run(); 
-        this.globalExpcetion = new GlobalExpcetion(this)      
+        this.globalExpcetion = new GlobalExpcetion(this)     
+
     }    
     destroy() {
         this.unInitEvents();

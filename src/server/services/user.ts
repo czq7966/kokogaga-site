@@ -9,59 +9,58 @@ import { ISignalClient } from "../amd/signal-client";
 
 
 export class ServiceUser extends Cmds.Common.Base {
-    static isLogin(sckUser: Modules.SocketUser): boolean {        
-        return !!(sckUser.user && ServiceUsers.existUser(sckUser.users, sckUser.user))
+    static getDatabaseNamespace(sckUser: Modules.ISocketUser): Modules.IDataNamespace {
+        return sckUser.users.snsp.server.database.getNamespace(sckUser.users.snsp.options.name)
+    }    
+    static async isLogin(sckUser: Modules.ISocketUser): Promise<boolean> {        
+        return !!(sckUser.user && await ServiceUsers.existSocketUser(sckUser.users, sckUser.user))
     }
 
-    static login(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
+    static async login(sckUser: Modules.ISocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
         if (sckUser.users.snsp.nsp.name === Dts.AdminNamespacename) 
-            return Admin.Admin.login(sckUser, data)
+            return await Admin.Admin.login(sckUser, data)
         else 
-            return this.userLogin(sckUser, data)
+            return await this.userLogin(sckUser, data)
     }
-    static userLogin(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
+    static async userLogin(sckUser: Modules.ISocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
         let room = data.props.user.room;
-        if (!ServiceUser.isLogin(sckUser)) {
+        let isLogin = await ServiceUser.isLogin(sckUser) 
+        if (!isLogin) {
             let user = Object.assign({}, data.props.user) as Dts.IUser;  
             user.room = room;
             sckUser.user = user;   
-            ServiceUsers.addUser(sckUser.users, sckUser)     
-            return ServiceRoom.joinOrOpen(room.id, sckUser)
+            await ServiceUsers.addSocketUser(sckUser.users, sckUser)     
+            await ServiceRoom.joinOrOpen(room.id, sckUser)
         } else {
-            return Promise.resolve(room.id)
+            return room.id
         }
     }
 
-    static logout(sckUser: Modules.SocketUser, 
+    static async logout(sckUser: Modules.ISocketUser, 
                     data?: Dts.ICommandData<Dts.ICommandLogoutReqDataProps>, 
                     includeSelf?: boolean, disconnect?: boolean): Promise<any> {
-        return new Promise((resolve, reject) => {
-            if (this.isLogin(sckUser)) {
-                this.closeOpenRooms(sckUser);
+        let isLogin = await this.isLogin(sckUser);
+        if (isLogin) {
+            await this.closeOpenRooms(sckUser);
 
-                data = data || {
-                    cmdId: Dts.ECommandId.adhoc_logout,
-                    props: {
-                        user: sckUser.user
-                    }
+            data = data || {
+                cmdId: Dts.ECommandId.adhoc_logout,
+                props: {
+                    user: sckUser.user
                 }
-                data.to = {type: 'room', id: sckUser.user.room.id};
-                sckUser.sendCommand(data, includeSelf);
+            }
+            data.to = {type: 'room', id: sckUser.user.room.id};
+            await sckUser.sendCommand(data, includeSelf);
 
-                ServiceUsers.delUser(sckUser.users, sckUser);
-                delete sckUser.user;
-                ServiceRoom.leave(data.props.user.room.id, sckUser)
-                .then(() => {
-                    resolve()
-                })
-                .catch(err => {
-                    reject(err)
-                })
-            }    
-            disconnect && sckUser.socket.connected && sckUser.socket.disconnect();
-        })
+            await ServiceUsers.delSocketUser(sckUser.users, sckUser);
+            delete sckUser.user;
+            await ServiceRoom.leaveOrClose(data.props.user.room.id, sckUser)
+        }    
+        disconnect && sckUser.socket.connected && sckUser.socket.disconnect();
+        console.log('22222222', ServiceUser.getDatabaseNamespace(sckUser));        
+
     }
-    static closeOpenRooms(sckUser: Modules.SocketUser) {
+    static async closeOpenRooms(sckUser: Modules.ISocketUser) {
         sckUser.openRooms.keys().forEach(key => {
             ServiceRoomClose.close(key, sckUser)
         })
@@ -75,13 +74,13 @@ export class ServiceUser extends Cmds.Common.Base {
                     sckUser.dispatcher.polyfillCommand(cmd, sckUser);
                     await this.deliverCommand(signalClient, sckUser, cmd);                    
                 } catch(e) {
-                    sckUser.dispatcher.onCommand(cmd, sckUser);                    
+                    await sckUser.dispatcher.onCommand(cmd, sckUser);                    
                 }
             } else {
-                sckUser.dispatcher.onCommand(cmd, sckUser);   
+                await sckUser.dispatcher.onCommand(cmd, sckUser);   
             }
         } else {
-            sckUser.dispatcher.onCommand(cmd, sckUser);
+            await sckUser.dispatcher.onCommand(cmd, sckUser);
         }
     }
     static async sendCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean) {
@@ -93,13 +92,13 @@ export class ServiceUser extends Cmds.Common.Base {
                     sckUser.dispatcher.polyfillCommand(cmd, sckUser);
                     await this.deliverCommand(signalClient, sckUser, cmd, includeSelf);                    
                 } catch(e) {
-                    sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);                    
+                    await sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);                    
                 }
             } else {
-                sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);   
+                await sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);   
             }
         } else {
-            sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);
+            await sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);
         }
     }
     static async deliverCommand(signalClient: ISignalClient, sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean) {
@@ -111,7 +110,7 @@ export class ServiceUser extends Cmds.Common.Base {
     }   
     static async onDeliverCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf: boolean) {
         if(sckUser && sckUser.notDestroyed) {
-            sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);
+            await sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);
         }
     }      
 }

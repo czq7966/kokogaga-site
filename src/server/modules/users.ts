@@ -62,23 +62,31 @@ export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
         socket.once(Dts.EServerSocketEvents.disconnect, async () => {
             try {
                 await sckUser.onCommand({cmdId: Dts.ECommandId.network_disconnect});
-                this.delayDestroyUser(sckUser);                 
+                await this.delayDestroyUser(sckUser);
             } catch(e) {
-                sckUser.destroy();
-                sckUser = null;
+                await this.delayDestroyUser(sckUser);
             }
         });
     }       
-    delayDestroyUser(sckUser: ISocketUser) {
-        if (sckUser && sckUser.notDestroyed) {
-            let signalClient = sckUser.users.snsp.server.getSignalClient();
-            if (signalClient && signalClient.isReady()) {
+    async delayDestroyUser(sckUser: ISocketUser, timeout?: number, maxCount?: number): Promise<boolean> {
+        timeout = timeout || 100;
+        maxCount = maxCount || 30;
+
+        let destroy = (): Promise<true> => {
+            return new Promise((resolve, reject) => {
+                maxCount--;                
                 setTimeout(() => {
-                    sckUser.destroy();
-                }, 1000);
-            } else {
-                sckUser.destroy();
-            }
-        } 
+                    if (!sckUser.user || maxCount <=0) {
+                        sckUser.destroy();
+                        resolve(true);
+                    } else {
+                        destroy()
+                        .then(v => resolve(true))
+                        .catch(e => resolve(true))
+                    }
+                }, timeout);                
+            })
+        }
+        return destroy();
     }
 }

@@ -14,7 +14,8 @@ export class ServiceServer  {
             let _openNamespace = (_snsp?: Modules.ISocketNamespace) => {
                 snsp = _snsp || new Modules.SocketNamespace(nsp, server);
                 snsp.options = config.getNamespace(name);
-                server.snsps.add(name, snsp);                        
+                server.snsps.add(name, snsp);     
+                server.database.createNamespace(name);
                 !_snsp && console.log('Open default namespace : ', name);                                               
                 resolve(snsp)
             }              
@@ -77,13 +78,15 @@ export class ServiceServer  {
 
                 if (Object.keys(nsp.sockets).length == 0) {
                     delete server.socketioServer.nsps['/' + name]
-                    server.snsps.del(name)
+                    server.snsps.del(name);
+                    server.database.destroyNamespace(name);
                     resolve()
                 } else {
                     setTimeout(() => {
                         if (Object.keys(nsp.sockets).length == 0) {
                             delete server.socketioServer.nsps['/' + name]
-                            server.snsps.del(name)
+                            server.snsps.del(name);
+                            server.database.destroyNamespace(name);
                             resolve()
                         } else {
                             console.log('Close namespace timeout: ' , name, nsp.sockets.length)
@@ -93,6 +96,7 @@ export class ServiceServer  {
                 }                
             } else {
                 server.snsps.del(name);
+                server.database.destroyNamespace(name);
                 resolve()
             }         
         })

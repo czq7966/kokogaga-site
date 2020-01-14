@@ -6,7 +6,7 @@ import { ServiceRoom } from './room';
 var Tag = 'ServiceRoomLeave'
 export class ServiceRoomLeave extends Cmds.Common.Base {
     static onDispatched = {
-        req(cmd: Cmds.CommandRoomLeaveReq, sckUser: Modules.SocketUser) {
+        async req(cmd: Cmds.CommandRoomLeaveReq, sckUser: Modules.SocketUser) {
             let data = cmd.data;
             let room = data.props.user.room
             let req: Dts.ICommandData<Dts.ICommandRoomLeaveReqDataProps>;
@@ -15,7 +15,7 @@ export class ServiceRoomLeave extends Cmds.Common.Base {
             data.props.user = data.props.user || sckUser.user;
             req = Object.assign({}, data);     
             req.to = {type: 'room', id: room.id}
-            sckUser.sendCommand(req);
+            await sckUser.sendCommand(req);
 
             // Leave room
             ServiceRoom.leave(room.id, sckUser)

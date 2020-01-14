@@ -6,10 +6,10 @@ import { ServiceRoom } from './room';
 export class ServiceRoomOpen extends Cmds.Common.Base {
 
     static onDispatched = {
-        req(cmd: Cmds.CommandRoomOpenReq, sckUser: Modules.SocketUser) {
+        async req(cmd: Cmds.CommandRoomOpenReq, sckUser: Modules.SocketUser) {
             let data = cmd.data;
             let room = data.props.user.room
-            if (sckUser.openRooms.exist(room.id) && ServiceRoom.exist(room.id, sckUser)) {
+            if (sckUser.openRooms.exist(room.id) && await ServiceRoom.exist(room.id, sckUser)) {
                 let resp: Dts.ICommandData<Dts.ICommandRoomOpenRespDataProps> = Object.assign({}, data, {
                     type: Dts.ECommandType.resp,
                     from: {type: 'server', id: ''},
@@ -17,7 +17,7 @@ export class ServiceRoomOpen extends Cmds.Common.Base {
                 }) as any;                    
                 resp.respResult = true;
                 sckUser.sendCommand(resp);
-            } else if (ServiceRoom.exist(room.id, sckUser)) {                
+            } else if (await ServiceRoom.exist(room.id, sckUser)) {       
                 let resp: Dts.ICommandData<Dts.ICommandRoomOpenRespDataProps> = Object.assign({}, data, {
                     type: Dts.ECommandType.resp,
                     from: {type: 'server', id: ''},

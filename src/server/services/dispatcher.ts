@@ -9,7 +9,7 @@ export interface IDispatcherConstructorParams extends Cmds.Common.IBaseConstruct
 }
 export interface IDispatcher extends Cmds.Common.IDispatcher {
     polyfillCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser): Dts.ICommandData<any>
-    onCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser)
+    onCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser): Promise<any>
     sendCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser, includeSelf?: boolean): Promise<any>
 }
 
@@ -45,7 +45,7 @@ export class Dispatcher extends Cmds.Common.Base implements IDispatcher {
         return cmd;    
     }
 
-    onCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser) {
+    async onCommand(cmd: Dts.ICommandData<any>, sckUser: Modules.ISocketUser): Promise<any> {
         cmd = this.polyfillCommand(cmd, sckUser);
         console.log(sckUser.users.snsp.nsp.name, Dts.CommandID + 'Event', cmd.cmdId, cmd.from, cmd.to);
         Cmds.Common.EDCoder.onCommand(cmd, this, sckUser);

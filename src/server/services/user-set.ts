@@ -6,10 +6,10 @@ import { ServiceUsers } from './users'
 
 export class ServiceUserSet extends Cmds.Common.Base {
     static onDispatched = {
-        req(cmd: Cmds.CommandUserSetReq, sckUser: Modules.SocketUser) {
+        async req(cmd: Cmds.CommandUserSetReq, sckUser: Modules.SocketUser) {
             let data = cmd.data;
             let user = data.props.user;
-            let sckGetUser = ServiceUsers.getUser(sckUser.users, user);
+            let sckGetUser = await ServiceUsers.getSocketUser(sckUser.users, user);
             if (sckGetUser) {
                 sckGetUser.user =  Object.assign(sckGetUser.user, user);
                 let resp: Dts.ICommandData<Dts.ICommandRespDataProps> = Object.assign({}, data, {

@@ -4,6 +4,7 @@ export { Common }
 export * from './network'
 export * from './adhoc/login'
 export * from './adhoc/logout'
+export * from './adhoc/kickoff'
 export * from './room/open'
 export * from './room/join'
 export * from './room/close'

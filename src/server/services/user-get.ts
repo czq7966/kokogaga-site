@@ -5,12 +5,11 @@ import { ServiceRoom } from './room';
 import { ServiceUsers } from './users'
 
 export class ServiceUserGet extends Cmds.Common.Base {
-
     static onDispatched = {
-        req(cmd: Cmds.CommandUserGetReq, sckUser: Modules.SocketUser) {
+        async req(cmd: Cmds.CommandUserGetReq, sckUser: Modules.SocketUser) {
             let data = cmd.data;
             let user = data.props.user;
-            let sckGetUser = ServiceUsers.getUser(sckUser.users, user);
+            let sckGetUser = await ServiceUsers.getSocketUser(sckUser.users, user);
             if (sckGetUser) {
                 let resp: Dts.ICommandData<Dts.ICommandRespDataProps> = Object.assign({}, data, {
                     type: Dts.ECommandType.resp,

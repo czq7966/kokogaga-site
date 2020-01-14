@@ -42,11 +42,11 @@ export class Admin {
         }
     }
 
-    static login(sckUser: Modules.SocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
+    static async login(sckUser: Modules.ISocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
         if (data.props.user.extra === '7894561230.') {
-            return ServiceUser.userLogin(sckUser, data)
+            return await ServiceUser.userLogin(sckUser, data)
         } else 
-            return Promise.reject('Invalid Password')
+            throw 'Invalid Password';
     }
 
 

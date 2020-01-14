@@ -6,7 +6,7 @@ import { ServiceRoom } from './room';
 var Tag = 'ServiceRoomClose'
 export class ServiceRoomClose extends Cmds.Common.Base {
     static onDispatched = {
-        req(cmd: Cmds.CommandRoomCloseReq, sckUser: Modules.SocketUser) {
+        async req(cmd: Cmds.CommandRoomCloseReq, sckUser: Modules.SocketUser) {
             let data = cmd.data;
             let room = data.props.user.room
             let req: Dts.ICommandData<Dts.ICommandRoomCloseReqDataProps>;
@@ -14,20 +14,20 @@ export class ServiceRoomClose extends Cmds.Common.Base {
             // Send to members
             req = Object.assign({}, data);     
             req.to = {type: 'room', id: room.id}
-            sckUser.sendCommand(req);
+            await sckUser.sendCommand(req);
 
             // close room
             ServiceRoom.close(room.id, sckUser)
-            .then(() => {
+            .then(async () => {
                 resp = Object.assign({}, data, {
                     type: Dts.ECommandType.resp,
                     from: {type: 'server', id: ''},
                     to: data.from
                 }) as any; 
                 resp.respResult = true
-                sckUser.sendCommand(resp);
+                await sckUser.sendCommand(resp);
             })
-            .catch(err => {
+            .catch(async err => {
                 resp = Object.assign({}, data, {
                     type: Dts.ECommandType.resp,
                     from: {type: 'server', id: ''},
@@ -35,12 +35,12 @@ export class ServiceRoomClose extends Cmds.Common.Base {
                 }) as any; 
                 resp.respResult = false;
                 resp.respMsg = err;
-                sckUser.sendCommand(resp);
+                await sckUser.sendCommand(resp);
             })
         }
     }
 
-    static close(roomid: string, sckUser: Modules.SocketUser): Promise<any> {
+    static async close(roomid: string, sckUser: Modules.ISocketUser): Promise<any> {
         let req: Dts.ICommandData<Dts.ICommandRoomCloseReqDataProps>;
         req = {
             cmdId: Dts.ECommandId.room_close,
@@ -55,7 +55,7 @@ export class ServiceRoomClose extends Cmds.Common.Base {
 
             }
         }
-        sckUser.sendCommand(req);
+        await sckUser.sendCommand(req);
         return ServiceRoom.close(roomid, sckUser);
     }
 }
