@@ -53,9 +53,11 @@ export class ServiceNamespace  {
     static async onDeliverCommand_toServer(namespace: Modules.ISocketNamespace, dlvCmd: Dts.ICommandData<any>) {
         let data = dlvCmd.props as Dts.ICommandData<Dts.ICommandDataProps>;
         let extra = dlvCmd.extra as  Dts.ICommandData<ICommandDeliverDataExtraProps>;
-        // switch (data.cmdId) {
-        //     case AD
-        // }
+        switch (data.cmdId) {
+            case Dts.ECommandId.adhoc_kickoff:
+                
+                break;
+        }
     
     }
     

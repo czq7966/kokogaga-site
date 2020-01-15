@@ -22,8 +22,8 @@ export class RedisSignaler {
         async on_after_adhoc_login(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>) {
             if (cmd.respResult && cmd.type == ADHOCCAST.Cmds.ECommandType.resp) {
                 let user = cmd.props.user
-                await signaler.subscribe(user);      
-                await signaler.subscribe(signaler.getServerChannel(user.id))
+                await signaler.subscribe(signaler.getServerChannel(signaler.server.getId()))
+                await signaler.subscribe(signaler.getRoomChannel(user.room.id));
             }            
             ADHOCCAST.Cmds.Common.EDCoder.onCommand(cmd, signaler.conneciton.dispatcher);
         },

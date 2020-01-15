@@ -16,10 +16,10 @@ export interface IServer {
     httpServers: IHttpServers
     socketioServer: SocketIO.Server;
     globalExpcetion: IGlobalExpcetion
-    database: IDatabase
     getSignalClient(): ISignalClient
     getId(): string            
     getConfig(): IConfig
+    getDatabase(): IDatabase
     newConfig(): IConfig
     newSocketUsers(snsp: ISocketNamespace): ISocketUsers
     initNamespaces(): Promise<any>
@@ -81,6 +81,9 @@ export class Server implements IServer {
     getConfig(): IConfig {
         this.config = this.config || this.newConfig()
         return this.config;
+    }
+    getDatabase(): IDatabase {
+        return this.database;
     }
     newConfig(): IConfig {
         return new Config;

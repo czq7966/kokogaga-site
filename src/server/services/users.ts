@@ -5,7 +5,7 @@ import * as Modules from '../modules'
 
 export class ServiceUsers  {
     static getDatabaseNamespace(sckUsers: Modules.ISocketUsers): Modules.IDataNamespace {
-        return sckUsers.snsp.server.database.getNamespace(sckUsers.snsp.options.name)
+        return sckUsers.snsp.server.getDatabase().getNamespace(sckUsers.snsp.options.name)
     }
     static async newShortID(sckUsers: Modules.ISocketUsers): Promise<string> {
         return this.getDatabaseNamespace(sckUsers).newUserShortID();

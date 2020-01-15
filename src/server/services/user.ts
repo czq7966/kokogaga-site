@@ -10,7 +10,7 @@ import { ISignalClient } from "../amd/signal-client";
 
 export class ServiceUser extends Cmds.Common.Base {
     static getDatabaseNamespace(sckUser: Modules.ISocketUser): Modules.IDataNamespace {
-        return sckUser.users.snsp.server.database.getNamespace(sckUser.users.snsp.options.name)
+        return sckUser.users.snsp.server.getDatabase().getNamespace(sckUser.users.snsp.options.name)
     }    
     static async isLogin(sckUser: Modules.ISocketUser): Promise<boolean> {        
         return !!(sckUser.user && await ServiceUsers.existSocketUser(sckUser.users, sckUser.user))

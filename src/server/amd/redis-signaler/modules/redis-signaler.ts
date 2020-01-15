@@ -4,31 +4,34 @@ import * as Services from '../services'
 import * as Modules_Namespace from '../../../modules/namespace'
 import { ADHOCCAST } from '../libex'
 import { IServer } from '../../../modules/server';
-import { SocketClient, ISocketClient } from '../network/socket-client';
-import { Database, IDatabase } from './database'
+import { SocketClient, ISocketClient, IRedisClient } from '../network/socket-client';
 import { ISignalClientBase, SignalClientBase } from '../../signal-client/signal-client-base'
 import { ISignalClient } from '../../signal-client/signal-client'
+import { IDatabaseWrap, DatabaseWrap } from './database-wrap'
 
 
 
-export interface IRedisSignaler extends ISignalClient {
+export interface IRedisSignaler extends ISignalClient, IRedisClient {
     conneciton: ADHOCCAST.Connection;
-    database: IDatabase
-    getCmdChannel(cmd: ADHOCCAST.Cmds.ICommandData<any>): string
+    database: IDatabaseWrap
+    getPath(): string
+    getCmdChannel(cmd: ADHOCCAST.Cmds.ICommandData<any>, namespace?: string): string
+    getPathChannel(id: string): string
     getServerChannel(id: string): string
+    getNamespaceChannel(id: string): string
     getRoomChannel(id: string, namespace?: string): string
+    getRoomUsersChannel(id: string, namespace?: string): string 
     getUserChannel(id: string, namespace?: string): string
     getShortChannel(id: string, namespace?: string): string 
     getSocketChannel(id: string, namespace?: string): string    
-    subscribe(channel: string | ADHOCCAST.Cmds.IUser): Promise<any>
-    unsubscribe(channel: string | ADHOCCAST.Cmds.IUser): Promise<any>
-    publish(channel: string, cmd: ADHOCCAST.Cmds.ICommandData<any>): Promise<any>
-    sendCommand(cmd: any, channel?: string): Promise<any>    
+    getSocketClient(): ISocketClient
+    sendCommand(cmd: any, channel?: string): Promise<any>   
+
 }
 
 export class SocketNamespace  extends SignalClientBase implements IRedisSignaler {
     conneciton: ADHOCCAST.Connection;
-    database: IDatabase
+    database: IDatabaseWrap
     _isReady: boolean;
     constructor(nsp: Modules_Namespace.ISocketIONamespace, server?: IServer, options?: Modules_Namespace.ISocketNamespaceOptions) {
         super(nsp, server, options);
@@ -62,14 +65,14 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     }
     initDatabase() {
         this.unInitDatabase();
-        this.database = new Database(this);
+        this.database = new DatabaseWrap(this, this.server.getDatabase());
     }   
     unInitDatabase() {
         this.database && this.database.destroy();
         delete this.database;
     } 
     initEvents() {
-        (this.conneciton.signaler as Network.ISocketClient).getCmdNamespace = this.getCmdNamespace;
+        (this.conneciton.signaler as Network.ISocketClient).onGetCmdChannel = this.getCmdChannel
         this.conneciton.dispatcher.recvFilter.onAfterRoot.add(this.recvFilter_onAfterRoot);
         this.conneciton.dispatcher.sendFilter.onAfterRoot.add(this.sendFilter_onAfterRoot);
         this.conneciton.dispatcher.eventRooter.onAfterRoot.add(this.onAfterRoot)
@@ -78,6 +81,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         this.conneciton.dispatcher.eventRooter.onAfterRoot.remove(this.onAfterRoot)
         this.conneciton.dispatcher.sendFilter.onAfterRoot.remove(this.sendFilter_onAfterRoot);
         this.conneciton.dispatcher.recvFilter.onAfterRoot.remove(this.recvFilter_onAfterRoot)
+        (this.conneciton.signaler as Network.ISocketClient).onGetCmdChannel = null;
     }       
     recvFilter_onAfterRoot = (cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>): any => {
         return Services.Modules.RedisSignaler.RecvFilter.onAfterRoot(this, cmd);
@@ -150,59 +154,100 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         let namespace =  cmd.extra && cmd.extra.props && cmd.extra.props.namespace;
         return namespace || this.options.name;
     }
-    getCmdChannel(cmd: ADHOCCAST.Cmds.ICommandData<any>): string {
-        let socketClient = this.conneciton.signaler as ISocketClient;
-        return socketClient.getCmdChannel(cmd, this.getCmdNamespace(cmd));
+    getCmdChannel = (cmd: ADHOCCAST.Cmds.ICommandData<any>, namespace?: string): string => {
+        namespace = namespace || this.getCmdNamespace(cmd) || '';
+        let channel: string;
+        switch (cmd.to.type) {
+            case 'server':
+                channel = this.getServerChannel(cmd.to.id);
+                break;
+            case 'room': 
+                channel = this.getRoomChannel(namespace, cmd.to.id);
+                break;
+            case 'user':
+                channel = this.getUserChannel(namespace, cmd.to.id);
+                break;
+            case 'socket':
+                channel = this.getSocketChannel(namespace, cmd.to.id);
+                break;
+        }  
+        return channel;  
     }    
+    getPath(): string {
+        return this.server.getConfig().socketIOServer.path;
+    }
+    getPathChannel(id?: string): string {
+        return '/path:' + id || this.getPath();
+    }
     getServerChannel(id: string): string {
-        let socketClient = this.conneciton.signaler as ISocketClient;
-        return socketClient.getServerChannel(id);
+        return this.getPathChannel() + '/server:' + id;
     }
+    getNamespaceChannel(id?: string): string {
+        return this.getPathChannel() + '/namespace:' + id || this.options.name;
+    }    
     getRoomChannel(id: string, namespace?: string): string {
-        let socketClient = this.conneciton.signaler as ISocketClient;
-        namespace = namespace || this.options.name;
-        return socketClient.getRoomChannel(namespace, id);
+        return this.getNamespaceChannel(namespace) + '/room:' + id;
     }
+    getRoomUsersChannel(id: string, namespace?: string): string {
+        return this.getNamespaceChannel(namespace) + '/roomusers:' + id;
+    }    
     getUserChannel(id: string, namespace?: string): string {
-        let socketClient = this.conneciton.signaler as ISocketClient;
-        namespace = namespace || this.options.name;
-        return socketClient.getUserChannel(namespace, id);
+        return this.getNamespaceChannel(namespace) + '/user:' + id;
     }
     getShortChannel(id: string, namespace?: string): string {
-        let socketClient = this.conneciton.signaler as ISocketClient;
-        namespace = namespace || this.options.name;
-        return socketClient.getShortChannel(namespace, id);
+        return this.getNamespaceChannel(namespace) + '/short:' + id;
     }    
     getSocketChannel( id: string, namespace?: string): string {
-        let socketClient = this.conneciton.signaler as ISocketClient;
-        namespace = namespace || this.options.name;
-        return socketClient.getSocketChannel(namespace, id);
+        return this.getNamespaceChannel(namespace) + '/socket:' + id;
     }
-    async subscribe(channel: string | ADHOCCAST.Cmds.IUser): Promise<any> {
-        let socketClient = this.conneciton.signaler as ISocketClient;
-        if (typeof(channel) === 'string') {
-            await socketClient.subscribe(channel);
-        } else {
-            let user: ADHOCCAST.Cmds.IUser = channel;
-            user.id && await socketClient.subscribe(this.getUserChannel(user.id));
-            user.sid && await socketClient.subscribe(this.getShortChannel(user.sid));
-            user.room && user.room.id && await socketClient.subscribe(this.getRoomChannel(user.room.id));
-        }
+    getSocketClient(): ISocketClient {
+        return this.conneciton.signaler as ISocketClient;
+    }
+    async subscribe(channel: string): Promise<any> {
+        return this.getSocketClient().subscribe(channel);
     }
     async unsubscribe(channel: string): Promise<any> {
-        let socketClient = this.conneciton.signaler as ISocketClient;
-        if (typeof(channel) === 'string') {
-            await socketClient.unsubscribe(channel);
-        } else {
-            let user: ADHOCCAST.Cmds.IUser = channel;
-            await socketClient.unsubscribe(this.getUserChannel(user.id));
-            await socketClient.unsubscribe(this.getRoomChannel(user.room.id));
-        }
+        return this.getSocketClient().unsubscribe(channel);
     }
-    publish(channel: string, cmd: ADHOCCAST.Cmds.ICommandData<any>): Promise<any> {
-        let socketClient = this.conneciton.signaler as ISocketClient;
-        return socketClient.publish(channel, cmd);
+    async publish(channel: string, cmd: ADHOCCAST.Cmds.ICommandData<any>): Promise<any> {
+        return this.getSocketClient().publish(channel, cmd);
     }
+    async get(key: string): Promise<string> {
+        return this.getSocketClient().get(key);        
+    }
+    async set(key: string, value: string): Promise<boolean> {
+        return this.getSocketClient().set(key, value);
+    }
+    async del(key: string): Promise<boolean> {
+        return this.getSocketClient().del(key);
+    }
+    async exists(key: string): Promise<boolean> {
+        return this.getSocketClient().exists(key);
+    }
+    async hget(key: string, field: string): Promise<string> {
+        return this.getSocketClient().hget(key, field);
+    }
+    async hset(key: string, field: string, value: string): Promise<boolean> {
+        return this.getSocketClient().hset(key, field, value);        
+    }
+    async hdel(key: string, field: string): Promise<boolean> {
+        return this.getSocketClient().hdel(key, field);        
+    }    
+    async hlen(key: string): Promise<number> {
+        return this.getSocketClient().hlen(key);
+    }
+    async hexists(key: string, field: string): Promise<boolean>  {
+        return this.getSocketClient().hexists(key, field);                
+    }
+    async persist(key: string): Promise<boolean> {
+        return this.getSocketClient().persist(key);                        
+    }
+    async expire(key: string, seconds: number): Promise<boolean> {
+        return this.getSocketClient().expire(key, seconds);                                
+    }
+    async pexpire(key: string, milliseconds: number): Promise<boolean> {
+        return this.getSocketClient().expire(key, milliseconds); 
+    }      
 }
 
 

@@ -4,19 +4,31 @@ import { ADHOCCAST } from '../libex'
 import { IRedisSignaler } from './redis-signaler';
 import { ISocketUser } from '../../../modules/user'
 import { ISocketUsers } from '../../../modules/users'
+import { IDatabase, IDataNamespace, IDataNamespaces } from '../../../modules/database';
+import { DataNamespaceWrap } from './datanamespace-wrap';
+import { IServer } from '../../../modules/server';
 
-export interface IDatabase extends ADHOCCAST.Cmds.Common.IBase {
-    signaler: IRedisSignaler
+export interface IDatabaseWrap extends IDatabase {
+    getSignaler(): IRedisSignaler
+    getDatabase(): IDatabase    
 }
-export class Database extends ADHOCCAST.Cmds.Common.Base implements IDatabase {
+export interface IDataNamespacesWrap extends IDataNamespaces {}
+export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabaseWrap {
     signaler: IRedisSignaler
-    constructor(signaler: IRedisSignaler) {
+    database: IDatabase
+    namespaces: IDataNamespacesWrap
+    
+    constructor(signaler: IRedisSignaler, database: IDatabase) {
         super();
         this.signaler = signaler;
+        this.database = database;
+        this.namespaces = new ADHOCCAST.Cmds.Common.Helper.KeyValue<IDataNamespace>();
         this.initEvents();
     }
     destroy() {
         this.unInitEvents();
+        this.namespaces.destroy();
+        delete this.namespaces;
         super.destroy()
     }
     initEvents() {
@@ -91,5 +103,42 @@ export class Database extends ADHOCCAST.Cmds.Common.Base implements IDatabase {
     users_onRoomDel = (id: string, room: ADHOCCAST.Dts.IRoom, kvRooms: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
         Services.Modules.Database.users_onRoomDel(this, id, room, kvRooms);
     }
+    getSignaler(): IRedisSignaler {
+        return this.signaler;
+    }
+    getDatabase(): IDatabase {
+        return this.database;
+    }     
 
+
+    getPath(): string {
+        return this.database.getPath()
+    }
+    getServer(): IServer {
+        return this.database.getServer();
+    }
+    createNamespace(namespace: string): IDataNamespace {        
+        let nspWrap = this.namespaces.get(namespace);
+        if (!nspWrap) {
+            let nsp = this.database.createNamespace(namespace);
+            nspWrap = new DataNamespaceWrap(this, nsp);
+            this.namespaces.add(namespace, nspWrap);
+        }
+        return nspWrap;
+    }
+    destroyNamespace(namespace: string) {
+        let nspWrap = this.namespaces.get(namespace);
+        nspWrap && nspWrap.destroy();
+        this.database.destroyNamespace(namespace);
+    }
+    getNamespace(namespace: string): IDataNamespace {
+        let nspWrap = this.namespaces.get(namespace); 
+        if (!nspWrap) {
+            let nsp = this.database.getNamespace(namespace);
+            if (nsp)
+                nspWrap = this.createNamespace(namespace)
+        }
+        return nspWrap;
+    }
+    
 }

@@ -8,17 +8,13 @@ export interface IDataShortUsers extends IDataUsers{}
 export interface IDataRooms extends Cmds.Common.Helper.IKeyValue<Dts.IRoom> {}
 export interface IDataRoomUsers extends Cmds.Common.Helper.IKeyValue<IDataUsers> {}
 export interface IDataNamespace {
-    database: IDatabase;
-    path: string
-    name: string
-    users: IDataUsers
-    socketUsers: IDataSocketUsers
-    shortUsers: IDataShortUsers
-    rooms:  IDataRooms
-    roomUsers: IDataRoomUsers
     destroy()
+    //Props
+    getDatabase(): IDatabase;
+    getPath(): string
+    getName(): string      
     //User
-    newUserShortID(): Promise<string>
+    newUserShortID(len?: number): Promise<string>
     getUser(user: Dts.IUser): Promise<Dts.IUser>
     existUser(user: Dts.IUser): Promise<boolean>
     addUser(user: Dts.IUser): Promise<boolean>
@@ -41,8 +37,9 @@ export interface IDataNamespace {
 }
 export interface IDataNamespaces extends Cmds.Common.Helper.IKeyValue<IDataNamespace> {}
 export interface IDatabase {
-    path: string
-    namespaces: Cmds.Common.Helper.IKeyValue<IDataNamespace>
+    destroy()
+    getPath(): string
+    getServer(): IServer
     createNamespace(namespace: string): IDataNamespace 
     destroyNamespace(namespace: string)
     getNamespace(namespace: string): IDataNamespace
@@ -83,6 +80,16 @@ export class DataNamespace implements IDataNamespace {
         delete this.rooms;
         delete this.roomUsers;
     }
+    //Props
+    getDatabase(): IDatabase {
+        return this.database;
+    }
+    getPath(): string {
+        return this.path;
+    }
+    getName(): string {
+        return this.name;
+    }      
     //User
     async newUserShortID(len?: number): Promise<string> {
         len = len || 6;
@@ -248,6 +255,12 @@ export class Database implements IDatabase {
         delete this.path;
         delete this.namespaces;
     }
+    getPath(): string {
+        return this.path;
+    }
+    getServer(): IServer {
+        return this.server;
+    }   
     createNamespace(namespace: string): IDataNamespace {
         let nsp = this.namespaces.get(namespace)
         if (!nsp) {

@@ -10,13 +10,13 @@ export interface IRedisSocket extends Redis.RedisClient {
 
 export interface IClientSocket extends ADHOCCAST.Network.ISignaler {
     socket: IRedisSocket
-    getPath(): string
-    setPath(value: string)
-    getServerChannel(id: string): string
-    getRoomChannel(namespace: string, id: string): string
-    getUserChannel(namespace: string, id: string): string
-    getShortChannel(namespace: string, id: string): string
-    getSocketChannel(namespace: string, id: string): string
+    // getPath(): string
+    // setPath(value: string)
+    // getServerChannel(id: string): string
+    // getRoomChannel(namespace: string, id: string): string
+    // getUserChannel(namespace: string, id: string): string
+    // getShortChannel(namespace: string, id: string): string
+    // getSocketChannel(namespace: string, id: string): string
 }
 
 export class ClientSocket implements IClientSocket {
@@ -28,7 +28,7 @@ export class ClientSocket implements IClientSocket {
     constructor(url?: string, path?: string) {
         this.eventEmitter = new EventEmitter();
         this._url = url;   
-        this._path = url;
+        this._path = path;
     }
     destroy() {
         this.eventEmitter.removeAllListeners();
@@ -47,12 +47,12 @@ export class ClientSocket implements IClientSocket {
         this._url = value;
         this._path = path || this._path;
     }
-    getPath(): string {
-        return this._path;
-    }
-    setPath(value: string) {
-        this._path = value;
-    }    
+    // getPath(): string {
+    //     return this._path;
+    // }
+    // setPath(value: string) {
+    //     this._path = value;
+    // }    
 
     connected(): boolean {
         return this.socket && this.socket.connected
@@ -124,7 +124,7 @@ export class ClientSocket implements IClientSocket {
     getOptions(): Redis.ClientOpts {
         let url = this.getUrl() || "";
         url = url[url.length - 1] !== '/' ? url : url.substr(0, url.length - 1);  
-        let path = this.getPath();          
+        // let path = this.getPath();          
 
         let options: Redis.ClientOpts  = {
             max_attempts: 1,
@@ -132,22 +132,22 @@ export class ClientSocket implements IClientSocket {
         }
         return options;
     }
-    getServerChannel(id: string): string {
-        return 'path:' + this.getPath() + '/server:' + id;
-    }
-    getNamespaceChannel(id: string): string {
-        return 'path:' + this.getPath() + '/namespace:' + id;
-    }
-    getRoomChannel(namespace: string, id: string): string {
-        return this.getNamespaceChannel(namespace) + '/room:' + id;
-    }
-    getUserChannel(namespace: string, id: string): string {
-        return this.getNamespaceChannel(namespace) + '/user:' + id;
-    }
-    getShortChannel(namespace: string, id: string): string {
-        return this.getNamespaceChannel(namespace) + '/short:' + id;
-    }
-    getSocketChannel(namespace: string, id: string): string {
-        return this.getNamespaceChannel(namespace) + '/socket:' + id;
-    }
+    // getServerChannel(id: string): string {
+    //     return 'path:' + this.getPath() + '/server:' + id;
+    // }
+    // getNamespaceChannel(id: string): string {
+    //     return 'path:' + this.getPath() + '/namespace:' + id;
+    // }
+    // getRoomChannel(namespace: string, id: string): string {
+    //     return this.getNamespaceChannel(namespace) + '/room:' + id;
+    // }
+    // getUserChannel(namespace: string, id: string): string {
+    //     return this.getNamespaceChannel(namespace) + '/user:' + id;
+    // }
+    // getShortChannel(namespace: string, id: string): string {
+    //     return this.getNamespaceChannel(namespace) + '/short:' + id;
+    // }
+    // getSocketChannel(namespace: string, id: string): string {
+    //     return this.getNamespaceChannel(namespace) + '/socket:' + id;
+    // }
 }
