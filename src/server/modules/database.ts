@@ -8,6 +8,15 @@ export interface IDataShortUsers extends IDataUsers{}
 export interface IDataRooms extends Cmds.Common.Helper.IKeyValue<Dts.IRoom> {}
 export interface IDataRoomUsers extends Cmds.Common.Helper.IKeyValue<IDataUsers> {}
 export interface IDataNamespace {
+    database?: IDatabase;
+    path?: string
+    name?: string    
+    users?: IDataUsers
+    socketUsers?: IDataSocketUsers
+    shortUsers?: IDataShortUsers
+    rooms?:  IDataRooms
+    roomUsers?: IDataRoomUsers 
+
     destroy()
     //Props
     getDatabase(): IDatabase;
@@ -19,6 +28,13 @@ export interface IDataNamespace {
     existUser(user: Dts.IUser): Promise<boolean>
     addUser(user: Dts.IUser): Promise<boolean>
     delUser(user: Dts.IUser): Promise<boolean>
+
+    onNewUserShortID?: (len?: number) => Promise<string>
+    onGetUser?: (user: Dts.IUser) => Promise<Dts.IUser>
+    onExistUser?: (user: Dts.IUser) => Promise<boolean>
+    onAddUser?: (user: Dts.IUser) => Promise<boolean>
+    onDelUser?: (user: Dts.IUser) => Promise<boolean>
+
     //Room
     getRoom(roomid: string): Promise<Dts.IRoom>
     createRoom(roomid: string): Promise<Dts.IRoom>
@@ -26,13 +42,26 @@ export interface IDataNamespace {
     openRoom( roomid: string): Promise<Dts.IRoom>
     closeRoom(roomid: string): Promise<Dts.IRoom>
     changeRoomId(oldId: string, newId: string): Promise<boolean>
+
+    onGetRoom?: (roomid: string) => Promise<Dts.IRoom>
+    onCreateRoom?: (roomid: string) => Promise<Dts.IRoom>
+    onExistRoom?: (roomid: string) => Promise<boolean>
+    onOpenRoom?: ( roomid: string) => Promise<Dts.IRoom>
+    onCloseRoom?: (roomid: string) => Promise<Dts.IRoom>
+    onChangeRoomId?: (oldId: string, newId: string) => Promise<boolean>    
+
     //Room Users    
     joinRoom(roomid: string, user: Dts.IUser):  Promise<boolean> 
     leaveRoom(roomid: string, user: Dts.IUser): Promise<boolean>
-    joinOrOpenRoom(roomid: string, user: Dts.IUser): Promise<boolean>
+    joinOrCreateRoom(roomid: string, user: Dts.IUser): Promise<boolean>
     leaveOrCloseRoom(roomid: string, user: Dts.IUser): Promise<boolean>
-    getRoomUserCount(roomid: string): Promise<number>
+    getRoomUsersCount(roomid: string): Promise<number>
 
+    onJoinRoom?: (roomid: string, user: Dts.IUser) =>  Promise<boolean> 
+    onLeaveRoom?: (roomid: string, user: Dts.IUser) => Promise<boolean>
+    onJoinOrCreateRoom?: (roomid: string, user: Dts.IUser) => Promise<boolean>
+    onLeaveOrCloseRoom?: (roomid: string, user: Dts.IUser) => Promise<boolean>
+    onGetRoomUsersCount?: (roomid: string) => Promise<number>    
 
 }
 export interface IDataNamespaces extends Cmds.Common.Helper.IKeyValue<IDataNamespace> {}
@@ -58,15 +87,31 @@ export class DataNamespace implements IDataNamespace {
     shortUsers: IDataShortUsers
     rooms:  IDataRooms
     roomUsers: IDataRoomUsers    
+    onNewUserShortID?: (len?: number) => Promise<string>
+    onGetUser?: (user: Dts.IUser) => Promise<Dts.IUser>
+    onExistUser?: (user: Dts.IUser) => Promise<boolean>
+    onAddUser?: (user: Dts.IUser) => Promise<boolean>
+    onDelUser?: (user: Dts.IUser) => Promise<boolean>
+    onGetRoom?: (roomid: string) => Promise<Dts.IRoom>
+    onCreateRoom?: (roomid: string) => Promise<Dts.IRoom>
+    onExistRoom?: (roomid: string) => Promise<boolean>
+    onOpenRoom?: ( roomid: string) => Promise<Dts.IRoom>
+    onCloseRoom?: (roomid: string) => Promise<Dts.IRoom>
+    onChangeRoomId?: (oldId: string, newId: string) => Promise<boolean>   
+    onJoinRoom?: (roomid: string, user: Dts.IUser) =>  Promise<boolean> 
+    onLeaveRoom?: (roomid: string, user: Dts.IUser) => Promise<boolean>
+    onJoinOrOpenRoom?: (roomid: string, user: Dts.IUser) => Promise<boolean>
+    onLeaveOrCloseRoom?: (roomid: string, user: Dts.IUser) => Promise<boolean>
+    onGetRoomUsersCount?: (roomid: string) => Promise<number>       
     constructor(database: IDatabase, path:string, name: string) {
         this.database = database;
         this.path = path;
         this.name = name;
-        this.users = new DataUsers();
-        this.socketUsers = new DataSocketUsers();
-        this.shortUsers = new DataShortUsers();
-        this.rooms = new DataRooms();
-        this.roomUsers = new DataRoomUsers();
+        this.users = new DataUsers(true, this);
+        this.socketUsers = new DataSocketUsers(true, this);
+        this.shortUsers = new DataShortUsers(true, this);
+        this.rooms = new DataRooms(true, this);
+        this.roomUsers = new DataRoomUsers(true, this);
     }
     destroy() {
         this.users.destroy();
@@ -92,6 +137,8 @@ export class DataNamespace implements IDataNamespace {
     }      
     //User
     async newUserShortID(len?: number): Promise<string> {
+        if (this.onNewUserShortID) return this.onNewUserShortID(len);
+        //
         len = len || 6;
         let sid = Cmds.Common.Helper.uuid(len, 10)
         if (this.shortUsers.exist(sid)) {
@@ -101,6 +148,8 @@ export class DataNamespace implements IDataNamespace {
         }        
     }
     async getUser(user: Dts.IUser): Promise<Dts.IUser> {
+        if (this.onGetUser) return this.onGetUser(user);
+        //        
         let nspUser: Dts.IUser;
         if (user.id)
             nspUser = this.users.get(user.id);
@@ -111,10 +160,14 @@ export class DataNamespace implements IDataNamespace {
         return nspUser;        
     }
     async existUser(user: Dts.IUser): Promise<boolean> {
+        if (this.onExistUser) return this.onExistUser(user);
+        //        
         let exist = await this.getUser(user);
         return !!exist;        
     }
     async addUser(user: Dts.IUser): Promise<boolean> {
+        if (this.onAddUser) return this.onAddUser(user);
+        //        
         let existUser = await this.existUser(user)
         if (!existUser) {
             user.id && this.users.add(user.id, user)
@@ -125,6 +178,8 @@ export class DataNamespace implements IDataNamespace {
         return false        
     }
     async delUser(user: Dts.IUser): Promise<boolean> {
+        if (this.onDelUser) return this.onDelUser(user);
+        //  
         let existUser = await this.getUser(user);
         if (existUser) {
             this.users.del(existUser.id)
@@ -136,9 +191,13 @@ export class DataNamespace implements IDataNamespace {
     }
     //Room
     async getRoom(roomid: string): Promise<Dts.IRoom> {
+        if (this.onGetRoom) return this.onGetRoom(roomid);
+        //        
         return this.rooms.get(roomid);        
     }
     async createRoom(roomid: string): Promise<Dts.IRoom> {
+        if (this.onCreateRoom) return this.onCreateRoom(roomid);
+        //        
         let uroom = await this.getRoom(roomid);
         if (!uroom) {
             uroom = {
@@ -150,10 +209,14 @@ export class DataNamespace implements IDataNamespace {
         return uroom;           
     }
     async existRoom(roomid: string): Promise<boolean> {
+        if (this.onExistRoom) return this.onExistRoom(roomid);
+        //        
         let uroom = await this.getRoom(roomid);
         return !!uroom;
     }
     async openRoom( roomid: string): Promise<Dts.IRoom> {
+        if (this.onOpenRoom) return this.onOpenRoom(roomid);
+        //        
         let exist = await this.existRoom(roomid)
         if (!exist) {
             let room = await this.createRoom(roomid);
@@ -163,11 +226,15 @@ export class DataNamespace implements IDataNamespace {
         }       
     }
     async closeRoom(roomid: string): Promise<Dts.IRoom> {
+        if (this.onCloseRoom) return this.onCloseRoom(roomid);
+        //        
         let users = await this.roomUsers.del(roomid);
         users && users.destroy();
         return await this.rooms.del(roomid);        
     }
     async changeRoomId(roomOldId: string, roomNewId: string): Promise<boolean> {
+        if (this.onChangeRoomId) return this.onChangeRoomId(roomOldId, roomNewId);
+        //        
         let room = await this.getRoom(roomOldId);
         if (room) {
             room.id = roomNewId;
@@ -185,11 +252,13 @@ export class DataNamespace implements IDataNamespace {
     }
     //Room Users 
     async joinRoom(roomid: string, user: Dts.IUser):  Promise<boolean>  {
+        if (this.onJoinRoom) return this.onJoinRoom(roomid, user);
+        //        
         let room = await this.getRoom(roomid);
         if (room) {
             let users = await this.roomUsers.get(room.id)
             if (!users) {
-                users = new DataUsers()
+                users = new DataUsers(true, room);
                 this.roomUsers.add(room.id, users);
             }
             users.add(user.id, user);
@@ -200,14 +269,17 @@ export class DataNamespace implements IDataNamespace {
     }
 
     async leaveRoom(roomid: string, user: Dts.IUser): Promise<boolean> {
+        if (this.onLeaveRoom) return this.onLeaveRoom(roomid, user);
+        //        
         let users = await this.roomUsers.get(roomid);
-        if (users) {
+        if (users && user) {
             users.del(user.id)
-            users.count()
         }
         return true;
     }
-    async joinOrOpenRoom(roomid: string, user: Dts.IUser): Promise<boolean> {
+    async joinOrCreateRoom(roomid: string, user: Dts.IUser): Promise<boolean> {
+        if (this.joinOrCreateRoom) return this.joinOrCreateRoom(roomid, user);
+        //        
         let existRoom = await this.existRoom(roomid);
         if (!existRoom) {
             await this.createRoom(roomid);
@@ -215,14 +287,18 @@ export class DataNamespace implements IDataNamespace {
         return await this.joinRoom(roomid, user);       
     }
     async leaveOrCloseRoom(roomid: string, user: Dts.IUser): Promise<boolean> {
+        if (this.onLeaveOrCloseRoom) return this.onLeaveOrCloseRoom(roomid, user);
+        //        
         await this.leaveRoom(roomid, user);
-        let count = await this.getRoomUserCount(roomid);
+        let count = await this.getRoomUsersCount(roomid);
         if (count <= 0) {
             this.closeRoom(roomid)
         }
         return true;     
     }    
-    async getRoomUserCount(roomid: string): Promise<number> {
+    async getRoomUsersCount(roomid: string): Promise<number> {
+        if (this.onGetRoomUsersCount) return this.onGetRoomUsersCount(roomid);
+        //        
         let users = this.roomUsers.get(roomid);
         if (users)
             return users.count();

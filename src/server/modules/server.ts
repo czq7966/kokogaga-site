@@ -28,6 +28,7 @@ export interface IServer {
     openNamespace(name: string): Promise<any>
     closeNamespace(name: string): Promise<any>
     resetNamespace(name: string): Promise<any>
+    getNamespace(name: string): ISocketNamespace
     onDeliverCommand(cmd: Cmds.Common.ICommandData<any>): Promise<any>
 }
 
@@ -48,7 +49,7 @@ export class Server implements IServer {
         this.config = new Config();
         this.httpServers = new HttpServers(this.getConfig());
         this.snsps = new Cmds.Common.Helper.KeyValue();
-        this.database = new Database(this.config.socketIOServer.path);
+        this.setDatabase(new Database(this.config.socketIOServer.path));
         this.initSocketIOServer();
         this.initNamespaces();
         this.initEvents();       
@@ -84,6 +85,9 @@ export class Server implements IServer {
     }
     getDatabase(): IDatabase {
         return this.database;
+    }
+    setDatabase(database: IDatabase) {
+        this.database = database;
     }
     newConfig(): IConfig {
         return new Config;
@@ -156,6 +160,9 @@ export class Server implements IServer {
     }
     resetNamespace(name: string): Promise<any> {
         return ServiceServer.resetNamespace(this, name)
+    }
+    getNamespace(name: string): ISocketNamespace {
+        return this.snsps.get(name);
     }
 
     run() {

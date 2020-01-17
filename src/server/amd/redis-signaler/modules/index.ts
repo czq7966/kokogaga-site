@@ -1,2 +1,4 @@
 export * from './redis-signaler'
-export * from './database'
+export * from './database-wrap'
+export * from './datanamespace-wrap'
+export * from './datanamespaces-wrap'

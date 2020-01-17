@@ -23,7 +23,7 @@ export class RedisSignaler {
             if (cmd.respResult && cmd.type == ADHOCCAST.Cmds.ECommandType.resp) {
                 let user = cmd.props.user
                 await signaler.subscribe(signaler.getServerChannel(signaler.server.getId()))
-                await signaler.subscribe(signaler.getRoomChannel(user.room.id));
+                await signaler.subscribe(signaler.getNamespaceRoomChannel(user.room.id));
             }            
             ADHOCCAST.Cmds.Common.EDCoder.onCommand(cmd, signaler.conneciton.dispatcher);
         },

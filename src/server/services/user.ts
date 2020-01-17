@@ -57,8 +57,6 @@ export class ServiceUser extends Cmds.Common.Base {
             await ServiceRoom.leaveOrClose(data.props.user.room.id, sckUser)
         }    
         disconnect && sckUser.socket.connected && sckUser.socket.disconnect();
-        console.log('22222222', ServiceUser.getDatabaseNamespace(sckUser));        
-
     }
     static async closeOpenRooms(sckUser: Modules.ISocketUser) {
         sckUser.openRooms.keys().forEach(key => {
@@ -100,6 +98,19 @@ export class ServiceUser extends Cmds.Common.Base {
         } else {
             await sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);
         }
+    }
+    static async addRoom(sckUser: Modules.ISocketUser, room: Dts.IRoom, notForce?: boolean)  {   
+        if(room) {
+            if (!sckUser.openRooms.exist(room.id) || !notForce) {
+                sckUser.openRooms.add(room.id, room)
+            }
+        }
+    }
+    static async delRoom(sckUser: Modules.ISocketUser, roomid: string, notForce?: boolean)  {   
+        if (sckUser.openRooms.exist(roomid) || !notForce) {
+            sckUser.openRooms.del(roomid)
+        }
+
     }
     static async deliverCommand(signalClient: ISignalClient, sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean) {
         if (signalClient) {

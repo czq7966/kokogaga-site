@@ -111,7 +111,9 @@
 		"namespace": "signalCenter"
 	},
 	"signalRedis": {
-		"enabled": true,
-		"url": "redis://192.168.252.88:6379"
+		"enabled": false,
+		"url": "redis://192.168.252.88:6379",
+		"handshakeInterval": 9000,
+		"handshakeTimeout": 10000
 	}	
 }

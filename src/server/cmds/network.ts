@@ -27,7 +27,7 @@ Common.CommandTypes.RegistCommandType({
 Common.CommandTypes.RegistCommandType({
     cmdId: Dts.ECommandId.network_disconnect,
     name: '已断开',
-    ReqClass: CommandNetworkDisconnectingReq as any,
+    ReqClass: CommandNetworkDisconnectReq as any,
     RespClass: null
 })
 

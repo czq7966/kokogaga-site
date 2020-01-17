@@ -14,7 +14,7 @@ export interface ISocketUser extends Cmds.Common.IBase {
     users: ISocketUsers;
     socket: IUserSocket;
     dispatcher: Services.IDispatcher;
-    openRooms: Cmds.Common.Helper.KeyValue<boolean>;    
+    openRooms: Cmds.Common.Helper.KeyValue<Dts.IRoom>;    
     onCommand: (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => void
     sendCommand: (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => void
 }
@@ -24,7 +24,7 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
     users: ISocketUsers;
     socket: IUserSocket;
     dispatcher: Services.Dispatcher;
-    openRooms: Cmds.Common.Helper.KeyValue<boolean>;
+    openRooms: Cmds.Common.Helper.KeyValue<Dts.IRoom>;
     constructor(socket: IUserSocket) {
         super()
         this.dispatcher = Services.Dispatcher.getInstance(Dts.dispatcherInstanceName);

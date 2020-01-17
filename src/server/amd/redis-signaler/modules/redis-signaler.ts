@@ -17,13 +17,19 @@ export interface IRedisSignaler extends ISignalClient, IRedisClient {
     getPath(): string
     getCmdChannel(cmd: ADHOCCAST.Cmds.ICommandData<any>, namespace?: string): string
     getPathChannel(id: string): string
+    //Server channels
+    getServersChannel(id?: string): string
     getServerChannel(id: string): string
+    getServerExistChannel(id: string): string
+    getServerUsersChannel(id: string): string
+    //Namespace channels
     getNamespaceChannel(id: string): string
-    getRoomChannel(id: string, namespace?: string): string
-    getRoomUsersChannel(id: string, namespace?: string): string 
-    getUserChannel(id: string, namespace?: string): string
-    getShortChannel(id: string, namespace?: string): string 
-    getSocketChannel(id: string, namespace?: string): string    
+    getNamespaceRoomChannel(id: string, namespace?: string): string
+    getNamespaceRoomUsersChannel(id: string, namespace?: string): string 
+    getNamespaceUserChannel(id: string, namespace?: string): string
+    getNamespaceShortChannel(id: string, namespace?: string): string 
+    getNamespaceSocketChannel(id: string, namespace?: string): string    
+    
     getSocketClient(): ISocketClient
     sendCommand(cmd: any, channel?: string): Promise<any>   
 
@@ -162,13 +168,13 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
                 channel = this.getServerChannel(cmd.to.id);
                 break;
             case 'room': 
-                channel = this.getRoomChannel(namespace, cmd.to.id);
+                channel = this.getNamespaceRoomChannel(namespace, cmd.to.id);
                 break;
             case 'user':
-                channel = this.getUserChannel(namespace, cmd.to.id);
+                channel = this.getNamespaceUserChannel(namespace, cmd.to.id);
                 break;
             case 'socket':
-                channel = this.getSocketChannel(namespace, cmd.to.id);
+                channel = this.getNamespaceSocketChannel(namespace, cmd.to.id);
                 break;
         }  
         return channel;  
@@ -177,29 +183,42 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         return this.server.getConfig().socketIOServer.path;
     }
     getPathChannel(id?: string): string {
-        return '/path:' + id || this.getPath();
+        return '/path:' + (id || this.getPath());
+    }
+    //Server channels
+    getServersChannel(id?: string): string {
+        return this.getPathChannel() + '/servers:' + (id || '');
     }
     getServerChannel(id: string): string {
         return this.getPathChannel() + '/server:' + id;
     }
+    getServerExistChannel(id: string): string {
+        return this.getServerChannel(id) + '/exist:'
+    }
+    getServerUsersChannel(id: string): string {
+        return this.getServerChannel(id) + '/users:'
+    }
+
+    //Namespace channels
     getNamespaceChannel(id?: string): string {
-        return this.getPathChannel() + '/namespace:' + id || this.options.name;
+        return this.getPathChannel() + '/namespace:' + (id || this.options.name);
     }    
-    getRoomChannel(id: string, namespace?: string): string {
+    getNamespaceRoomChannel(id: string, namespace?: string): string {
         return this.getNamespaceChannel(namespace) + '/room:' + id;
     }
-    getRoomUsersChannel(id: string, namespace?: string): string {
-        return this.getNamespaceChannel(namespace) + '/roomusers:' + id;
+    getNamespaceRoomUsersChannel(id: string, namespace?: string): string {
+        return this.getNamespaceRoomChannel(id, namespace) + '/users:';
     }    
-    getUserChannel(id: string, namespace?: string): string {
+    getNamespaceUserChannel(id: string, namespace?: string): string {
         return this.getNamespaceChannel(namespace) + '/user:' + id;
     }
-    getShortChannel(id: string, namespace?: string): string {
+    getNamespaceShortChannel(id: string, namespace?: string): string {
         return this.getNamespaceChannel(namespace) + '/short:' + id;
     }    
-    getSocketChannel( id: string, namespace?: string): string {
+    getNamespaceSocketChannel( id: string, namespace?: string): string {
         return this.getNamespaceChannel(namespace) + '/socket:' + id;
     }
+
     getSocketClient(): ISocketClient {
         return this.conneciton.signaler as ISocketClient;
     }

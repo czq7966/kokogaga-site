@@ -7,12 +7,13 @@ import { ISocketUsers } from '../../../modules/users'
 import { IDatabase, IDataNamespace, IDataNamespaces } from '../../../modules/database';
 import { DataNamespaceWrap } from './datanamespace-wrap';
 import { IServer } from '../../../modules/server';
+import { IDataNamespacesWrap, DataNamespacesWrap } from './datanamespaces-wrap';
 
 export interface IDatabaseWrap extends IDatabase {
     getSignaler(): IRedisSignaler
     getDatabase(): IDatabase    
 }
-export interface IDataNamespacesWrap extends IDataNamespaces {}
+
 export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabaseWrap {
     signaler: IRedisSignaler
     database: IDatabase
@@ -22,7 +23,7 @@ export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabas
         super();
         this.signaler = signaler;
         this.database = database;
-        this.namespaces = new ADHOCCAST.Cmds.Common.Helper.KeyValue<IDataNamespace>();
+        this.namespaces = new DataNamespacesWrap(this)
         this.initEvents();
     }
     destroy() {
@@ -80,28 +81,28 @@ export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabas
         }
     }
     users_onUserAdd = (id: string, user: ISocketUser, kvUsers: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        Services.Modules.Database.users_onUserAdd(this, id, user, kvUsers);
+        // Services.Modules.Database.users_onUserAdd(this, id, user, kvUsers);
     }
     users_onUserDel = (id: string, user: ISocketUser, kvUsers: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        Services.Modules.Database.users_onUserDel(this, id, user, kvUsers);
+        // Services.Modules.Database.users_onUserDel(this, id, user, kvUsers);
     }
     users_onShortAdd = (id: string, user: ISocketUser, kvShortUsers: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        Services.Modules.Database.users_onShortAdd(this, id, user, kvShortUsers);
+        // Services.Modules.Database.users_onShortAdd(this, id, user, kvShortUsers);
     }
     users_onShortDel = (id: string, user: ISocketUser, kvShortUsers: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        Services.Modules.Database.users_onShortDel(this, id, user, kvShortUsers);
+        // Services.Modules.Database.users_onShortDel(this, id, user, kvShortUsers);
     }
     users_onSocketAdd = (id: string, user: ISocketUser, kvSockets: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        Services.Modules.Database.users_onSocketAdd(this, id, user, kvSockets);
+        // Services.Modules.Database.users_onSocketAdd(this, id, user, kvSockets);
     }
     users_onSocketDel = (id: string, user: ISocketUser, kvSockets: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        Services.Modules.Database.users_onSocketDel(this, id, user, kvSockets);
+        // Services.Modules.Database.users_onSocketDel(this, id, user, kvSockets);
     }
     users_onRoomAdd = (id: string, room: ADHOCCAST.Dts.IRoom, kvRooms: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        Services.Modules.Database.users_onRoomAdd(this, id, room, kvRooms);
+        // Services.Modules.Database.users_onRoomAdd(this, id, room, kvRooms);
     }
     users_onRoomDel = (id: string, room: ADHOCCAST.Dts.IRoom, kvRooms: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        Services.Modules.Database.users_onRoomDel(this, id, room, kvRooms);
+        // Services.Modules.Database.users_onRoomDel(this, id, room, kvRooms);
     }
     getSignaler(): IRedisSignaler {
         return this.signaler;
@@ -112,10 +113,10 @@ export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabas
 
 
     getPath(): string {
-        return this.database.getPath()
+        return this.getDatabase().getPath()
     }
     getServer(): IServer {
-        return this.database.getServer();
+        return this.getDatabase().getServer();
     }
     createNamespace(namespace: string): IDataNamespace {        
         let nspWrap = this.namespaces.get(namespace);

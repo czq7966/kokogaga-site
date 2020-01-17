@@ -21,7 +21,6 @@ export class ServiceLogin extends Cmds.Common.Base {
             data.props.user.socketId = data.props.user.socketId || sckUser.socket.id;
             data.props.user.serverId = data.props.user.serverId || sckUser.users.snsp.server.getId();
             await ServiceLogin.onReq(sckUser, data)
-            console.log('11111111', ServiceUser.getDatabaseNamespace(sckUser), sckUser.openRooms);
         }
     }
 

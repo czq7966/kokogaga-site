@@ -9,51 +9,7 @@ export class ServiceUsers  {
     }
     static async newShortID(sckUsers: Modules.ISocketUsers): Promise<string> {
         return this.getDatabaseNamespace(sckUsers).newUserShortID();
-        // let sid = Cmds.Common.Helper.uuid(6, 10)
-        // if (sckUsers.shortUsers.exist(sid)) {
-        //     return await this.newShortID(sckUsers)
-        // } else {
-        //     return sid
-        // }
-    }
-    // static async getUser(sckUsers: Modules.ISocketUsers, user: Dts.IUser): Promise<Modules.ISocketUser> {
-    //     let sckUser;
-    //     let nspUser = await this.getDatabaseNamespace(sckUsers).getUser(user);
-    //     if (nspUser)
-    //         sckUser = sckUsers.users.get(nspUser.id);
-    //     return sckUser;
-
-    //     // let sckUser;
-    //     // if (user.id)
-    //     //     sckUser = sckUsers.users.get(user.id);
-    //     // if (!sckUser && user.sid)
-    //     //     sckUser = sckUsers.shortUsers.get(user.sid)
-    //     // return sckUser;
-    // }    
-    // static async existUser(sckUsers: Modules.ISocketUsers, user: Dts.IUser): Promise<boolean> {
-    //     let exist = await ServiceUsers.getUser(sckUsers, user);
-    //     return !!exist;
-    // }
-    // static async addUser(sckUsers: Modules.ISocketUsers, sckUser: Modules.ISocketUser): Promise<boolean> {
-    //     let existUser = await this.existUser(sckUsers, sckUser.user)
-    //     if (!existUser) {
-    //         sckUsers.users.add(sckUser.user.id, sckUser)
-    //         sckUsers.sockets.add(sckUser.socket.id, sckUser);
-    //         sckUser.user.sid && sckUsers.shortUsers.add(sckUser.user.sid, sckUser)
-    //         return true;
-    //     }
-    //     return false
-    // }
-    // static async delUser(sckUsers: Modules.ISocketUsers, sckUser: Modules.ISocketUser): Promise<boolean> {
-    //     let exist = await this.existUser(sckUsers, sckUser.user);
-    //     if (exist) {
-    //         sckUsers.users.del(sckUser.user.id)
-    //         sckUsers.sockets.del(sckUser.socket.id);
-    //         sckUsers.shortUsers.del(sckUser.user.sid)
-    //         return true;
-    //     }
-    //     return false
-    // }    
+    }  
 
     static async getSocketUser(sckUsers: Modules.ISocketUsers, user: Dts.IUser): Promise<Modules.ISocketUser> {
         let sckUser: Modules.ISocketUser;
@@ -78,7 +34,7 @@ export class ServiceUsers  {
             await this.getDatabaseNamespace(sckUsers).addUser(sckUser.user);
             sckUsers.users.add(sckUser.user.id, sckUser)
             sckUsers.sockets.add(sckUser.socket.id, sckUser);
-            sckUser.user.sid && sckUsers.shortUsers.add(sckUser.user.sid, sckUser)
+            sckUsers.shortUsers.add(sckUser.user.sid, sckUser)
             return true;
         }
         return false
@@ -93,6 +49,16 @@ export class ServiceUsers  {
             return true;
         }
         return false
-    }      
- 
+    }   
+    static addRoom(sckUsers: Modules.ISocketUsers, room: Dts.IRoom, notForce?: boolean): Dts.IRoom {
+        if (room && (!sckUsers.rooms.exist(room.id) || !notForce)) {
+            sckUsers.rooms.add(room.id, room);
+        }
+        return room
+    }
+    static delRoom(sckUsers: Modules.ISocketUsers, roomid: string, notForce?: boolean) {
+        if (sckUsers.rooms.exist(roomid) || !notForce) {
+            sckUsers.rooms.del(roomid);
+        }
+    }     
 }
