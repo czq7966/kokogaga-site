@@ -19,9 +19,9 @@ export interface IRedisSignaler extends ISignalClient, IRedisClient {
     getPathChannel(id: string): string
     //Server channels
     getServersChannel(id?: string): string
-    getServerChannel(id: string): string
-    getServerExistChannel(id: string): string
-    getServerUsersChannel(id: string): string
+    getServerChannel(id?: string): string
+    getServerExistChannel(id?: string): string
+    getServerUsersChannel(id?: string): string
     //Namespace channels
     getNamespaceChannel(id: string): string
     getNamespaceRoomChannel(id: string, namespace?: string): string
@@ -30,8 +30,13 @@ export interface IRedisSignaler extends ISignalClient, IRedisClient {
     getNamespaceShortChannel(id: string, namespace?: string): string 
     getNamespaceSocketChannel(id: string, namespace?: string): string    
     
-    getSocketClient(): ISocketClient
+    getSocketClient(): ISocketClient    
+    startHandshake()
+    stopHandshake()
+
+    //Override
     sendCommand(cmd: any, channel?: string): Promise<any>   
+    onDeliverCommand(cmd: ADHOCCAST.Cmds.Common.ICommandData<any>): Promise<any>
 
 }
 
@@ -39,6 +44,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     conneciton: ADHOCCAST.Connection;
     database: IDatabaseWrap
     _isReady: boolean;
+    _handshakeHandler: number
     constructor(nsp: Modules_Namespace.ISocketIONamespace, server?: IServer, options?: Modules_Namespace.ISocketNamespaceOptions) {
         super(nsp, server, options);
         this.init();
@@ -168,13 +174,13 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
                 channel = this.getServerChannel(cmd.to.id);
                 break;
             case 'room': 
-                channel = this.getNamespaceRoomChannel(namespace, cmd.to.id);
+                channel = this.getNamespaceRoomChannel(cmd.to.id, namespace);
                 break;
             case 'user':
-                channel = this.getNamespaceUserChannel(namespace, cmd.to.id);
+                channel = this.getNamespaceUserChannel(cmd.to.id, namespace);
                 break;
             case 'socket':
-                channel = this.getNamespaceSocketChannel(namespace, cmd.to.id);
+                channel = this.getNamespaceSocketChannel(cmd.to.id, namespace);
                 break;
         }  
         return channel;  
@@ -187,15 +193,16 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     }
     //Server channels
     getServersChannel(id?: string): string {
-        return this.getPathChannel() + '/servers:' + (id || '');
+        return this.getNamespaceChannel() + '/servers:' + (id || '');
     }
-    getServerChannel(id: string): string {
-        return this.getPathChannel() + '/server:' + id;
+    getServerChannel(id?: string): string {
+        id = id || this.server.getId();
+        return this.getNamespaceChannel() + '/server:' + id;
     }
-    getServerExistChannel(id: string): string {
+    getServerExistChannel(id?: string): string {
         return this.getServerChannel(id) + '/exist:'
     }
-    getServerUsersChannel(id: string): string {
+    getServerUsersChannel(id?: string): string {
         return this.getServerChannel(id) + '/users:'
     }
 
@@ -222,6 +229,24 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     getSocketClient(): ISocketClient {
         return this.conneciton.signaler as ISocketClient;
     }
+
+    //Hand shake
+    startHandshake() {
+        this.stopHandshake();
+        setInterval(() => {
+            let serverExsitChannel = this.getServerExistChannel();
+            this.getSocketClient().pexpire(serverExsitChannel, this.config.signalRedis.handshakeTimeout);
+
+        }, this.config.signalRedis.handshakeInterval)
+
+    }
+    stopHandshake() {
+        this._handshakeHandler && clearInterval(this._handshakeHandler);
+        this._handshakeHandler = null;
+    }
+
+
+    //Redis client interface
     async subscribe(channel: string): Promise<any> {
         return this.getSocketClient().subscribe(channel);
     }

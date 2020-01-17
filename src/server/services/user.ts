@@ -110,7 +110,6 @@ export class ServiceUser extends Cmds.Common.Base {
         if (sckUser.openRooms.exist(roomid) || !notForce) {
             sckUser.openRooms.del(roomid)
         }
-
     }
     static async deliverCommand(signalClient: ISignalClient, sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean) {
         if (signalClient) {

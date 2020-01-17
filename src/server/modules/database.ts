@@ -72,6 +72,7 @@ export interface IDatabase {
     createNamespace(namespace: string): IDataNamespace 
     destroyNamespace(namespace: string)
     getNamespace(namespace: string): IDataNamespace
+    getNamespaces(): IDataNamespaces
 }
 export class DataUsers extends Cmds.Common.Helper.KeyValue<Dts.IUser> implements IDataUsers {}
 export class DataSocketUsers extends DataUsers implements IDataSocketUsers {}
@@ -322,7 +323,8 @@ export class Database implements IDatabase {
     path: string
     namespaces: IDataNamespaces
     server: IServer
-    constructor(path: string) {
+    constructor(server: IServer, path: string) {
+        this.server = server;
         this.path = path;
         this.namespaces = new DataNamespaces();
     }
@@ -351,6 +353,9 @@ export class Database implements IDatabase {
     }
     getNamespace(namespace: string): IDataNamespace {
         return this.namespaces.get(namespace)
+    }
+    getNamespaces(): IDataNamespaces {
+        return this.namespaces;
     }
 
 }

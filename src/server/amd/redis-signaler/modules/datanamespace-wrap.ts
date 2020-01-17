@@ -32,7 +32,7 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         delete this.namespace;
     }
     initEvents() {
-        // let namespace = this.namespace;
+        let namespace = this.namespace;
         // namespace.users.on('add', this.redis_onUserAdd)
         // namespace.users.on('del', this.redis_onUserDel)
         // namespace.shortUsers.on('add', this.redis_onShortUserAdd)
@@ -41,11 +41,19 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         // namespace.rooms.on('del', this.redis_onRoomDel)                        
         // namespace.roomUsers.on('add', this.redis_onRoomUsersAdd)
         // namespace.roomUsers.on('del', this.redis_onRoomUsersDel)    
+
+        let sckNamespace = namespace.getDatabase().getServer().getNamespace(namespace.getName());
+        sckNamespace.users.sockets.on('add', this.redis_onSocketConnect)
+        sckNamespace.users.sockets.on('del', this.redis_onSocketDisconnect)
         
 
     }
     unInitEvents() {
+        let namespace = this.namespace;
 
+        let sckNamespace = namespace.getDatabase().getServer().getNamespace(namespace.getName());
+        sckNamespace.users.sockets.off('add', this.redis_onSocketConnect)
+        sckNamespace.users.sockets.off('del', this.redis_onSocketDisconnect)
     }
 
     getSignaler(): IRedisSignaler {return this.databasewrap.getSignaler();}
@@ -133,7 +141,8 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         return this.leaveOrCloseRoom(roomid, user);
     }    
     async getRoomUsersCount(roomid: string): Promise<number> {
-        return this.getSignaler().hlen(this.getRoomUsersChannel(roomid))
+        let channel = this.getRoomUsersChannel(roomid);
+        return this.getSignaler().hlen(channel);
     }
     
     async redisAddUser(user:  ADHOCCAST.Dts.IUser): Promise<boolean> {
@@ -167,4 +176,14 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         room.id && await this.getSignaler().del(this.getRoomChannel(room.id));
         return true; 
     }
+
+
+    redis_onSocketConnect = (id: string) => {
+        let channel = this.getSocketChannel(id);
+        this.getSignaler().subscribe(channel);       
+    }
+    redis_onSocketDisconnect = (id: string) => {
+        let channel = this.getSocketChannel(id);
+        this.getSignaler().unsubscribe(channel);
+    }    
 }

@@ -23,14 +23,20 @@ export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabas
         super();
         this.signaler = signaler;
         this.database = database;
-        this.namespaces = new DataNamespacesWrap(this)
-        this.initEvents();
+        this.namespaces = new DataNamespacesWrap(this);
+        this.wrapDataNamespaces();
+        // this.initEvents();
     }
     destroy() {
-        this.unInitEvents();
+        // this.unInitEvents();
         this.namespaces.destroy();
         delete this.namespaces;
         super.destroy()
+    }
+    wrapDataNamespaces() {
+        this.getDatabase().getNamespaces().keys().forEach(namespace => {
+            this.getNamespace(namespace);
+        })
     }
     initEvents() {
         this.initServerEvents();
@@ -141,5 +147,7 @@ export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabas
         }
         return nspWrap;
     }
-    
+    getNamespaces(): IDataNamespaces {
+        return this.namespaces;
+    }    
 }

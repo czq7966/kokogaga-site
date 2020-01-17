@@ -39,6 +39,8 @@ export interface ISignalCenter {
 export interface ISignalRedis {
     enabled: boolean
     url: string
+    handshakeInterval: number
+    handshakeTimeout: number
 }
 export interface ISocketIOServer {
     path: string

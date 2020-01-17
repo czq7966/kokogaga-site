@@ -181,7 +181,7 @@ export class SocketClient implements ISocketClient {
     get(key: string): Promise<string> {
         return new Promise((resolve, reject) => {            
             this.assertConnected().then(v => {
-                this.subSocket.socket.get(key,  (err: Error, value: string) => {
+                this.pubSocket.socket.get(key,  (err: Error, value: string) => {
                     if (err)
                         reject(err.message);
                     else {
@@ -194,7 +194,7 @@ export class SocketClient implements ISocketClient {
     set(key: string, value: string): Promise<boolean> {
         return new Promise((resolve, reject) => {            
             this.assertConnected().then(v => {
-                this.subSocket.socket.set(key, value, (err: Error, value: string) => {
+                this.pubSocket.socket.set(key, value, (err: Error, value: string) => {
                     if (err)
                         reject(err.message);
                     else {
@@ -207,7 +207,7 @@ export class SocketClient implements ISocketClient {
     del(key: string): Promise<boolean> {
         return new Promise((resolve, reject) => {            
             this.assertConnected().then(v => {
-                this.subSocket.socket.del(key, (err: Error, value: number) => {
+                this.pubSocket.socket.del(key, (err: Error, value: number) => {
                     if (err)
                         reject(err.message);
                     else {
@@ -220,7 +220,7 @@ export class SocketClient implements ISocketClient {
     exists(key: string): Promise<boolean> {        
         return new Promise((resolve, reject) => {            
             this.assertConnected().then(v => {
-                this.subSocket.socket.exists(key, (err: Error, value: number) => {
+                this.pubSocket.socket.exists(key, (err: Error, value: number) => {
                     if (err)
                         resolve(false)
                     else {
@@ -233,7 +233,7 @@ export class SocketClient implements ISocketClient {
     hget(key: string, field: string): Promise<string> {
         return new Promise((resolve, reject) => {            
             this.assertConnected().then(v => {
-                this.subSocket.socket.hget(key, field,  (err: Error, value: string) => {
+                this.pubSocket.socket.hget(key, field,  (err: Error, value: string) => {
                     if (err)
                         reject(err.message);
                     else {
@@ -246,7 +246,7 @@ export class SocketClient implements ISocketClient {
     hset(key: string, field: string, value: string): Promise<boolean> {
         return new Promise((resolve, reject) => {            
             this.assertConnected().then(v => {
-                this.subSocket.socket.hset(key, field, value, (err: Error, value: number) => {
+                this.pubSocket.socket.hset(key, field, value, (err: Error, value: number) => {
                     if (err)
                         reject(err.message);
                     else {
@@ -259,7 +259,7 @@ export class SocketClient implements ISocketClient {
     hdel(key: string, field: string): Promise<boolean> {
         return new Promise((resolve, reject) => {            
             this.assertConnected().then(v => {
-                this.subSocket.socket.hdel(key, field,  (err: Error, value: number) => {
+                this.pubSocket.socket.hdel(key, field,  (err: Error, value: number) => {
                     if (err)
                         reject(err.message);
                     else {
@@ -272,7 +272,7 @@ export class SocketClient implements ISocketClient {
     hlen(key: string): Promise<number> {
         return new Promise((resolve, reject) => {            
             this.assertConnected().then(v => {
-                this.subSocket.socket.hlen(key,  (err: Error, value: number) => {
+                this.pubSocket.socket.hlen(key,  (err: Error, value: number) => {
                     if (err)
                         reject(err.message);
                     else {
@@ -285,7 +285,7 @@ export class SocketClient implements ISocketClient {
     hexists(key: string, field: string): Promise<boolean> {  
         return new Promise((resolve, reject) => {            
             this.assertConnected().then(v => {
-                this.subSocket.socket.hexists(key, field, (err: Error, value: number) => {
+                this.pubSocket.socket.hexists(key, field, (err: Error, value: number) => {
                     if (err)
                         resolve(false)
                     else {
@@ -298,7 +298,7 @@ export class SocketClient implements ISocketClient {
     persist(key: string): Promise<boolean> {
         return new Promise((resolve, reject) => {            
             this.assertConnected().then(v => {
-                this.subSocket.socket.persist(key, (err: Error, value: number) => {
+                this.pubSocket.socket.persist(key, (err: Error, value: number) => {
                     if (err)
                         reject(err.message)
                     else {
@@ -311,7 +311,7 @@ export class SocketClient implements ISocketClient {
     expire(key: string, seconds: number): Promise<boolean>  {
         return new Promise((resolve, reject) => {            
             this.assertConnected().then(v => {
-                this.subSocket.socket.expire(key, seconds, (err: Error, value: number) => {
+                this.pubSocket.socket.expire(key, seconds, (err: Error, value: number) => {
                     if (err)
                         reject(err.message)
                     else {
@@ -324,7 +324,7 @@ export class SocketClient implements ISocketClient {
     pexpire(key: string, milliseconds: number): Promise<boolean> {        
         return new Promise((resolve, reject) => {            
             this.assertConnected().then(v => {
-                this.subSocket.socket.pexpire(key, milliseconds, (err: Error, value: number) => {
+                this.pubSocket.socket.pexpire(key, milliseconds, (err: Error, value: number) => {
                     if (err)
                         reject(err.message)
                     else {

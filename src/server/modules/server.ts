@@ -49,7 +49,7 @@ export class Server implements IServer {
         this.config = new Config();
         this.httpServers = new HttpServers(this.getConfig());
         this.snsps = new Cmds.Common.Helper.KeyValue();
-        this.setDatabase(new Database(this.config.socketIOServer.path));
+        this.setDatabase(new Database(this, this.config.socketIOServer.path));
         this.initSocketIOServer();
         this.initNamespaces();
         this.initEvents();       
