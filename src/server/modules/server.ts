@@ -10,8 +10,10 @@ import * as Amd from '../amd/index'
 import { ISocketUsers, SocketUsers } from './users';
 import { ISignalClient } from '../amd/signal-client';
 import { IDatabase, Database } from './database';
+import { IProject } from '../project';
 
 export interface IServer {
+    Project: IProject
     snsps: Cmds.Common.Helper.KeyValue<ISocketNamespace>
     httpServers: IHttpServers
     socketioServer: SocketIO.Server;
@@ -34,6 +36,7 @@ export interface IServer {
 
 export class Server implements IServer {
     static instance: IServer;
+    Project: IProject
     id: string
     config: IConfig
     snsps: Cmds.Common.Helper.KeyValue<ISocketNamespace>
@@ -43,7 +46,8 @@ export class Server implements IServer {
     signalClient: ISignalClient;
     database: IDatabase
 
-    constructor() {
+    constructor(project: IProject) {
+        this.Project = project;
         Server.instance = this;
         this.id = '#server:' + Helper.uuid();
         this.config = new Config();
@@ -166,28 +170,28 @@ export class Server implements IServer {
     }
 
     run() {
-        this.httpServers.servers.forEach(server => {
-            server.httpServer.listen(server.port);
-            console.log(server.listenlog || 'listen on port ' + server.port)
-        })
-
         // this.httpServers.servers.forEach(server => {
-        //     let listenError = () => {
-        //         process.off('uncaughtException', listenError);
-        //         server.httpServer.listen(() => {
-        //             console.log('listen on port ' + JSON.stringify(server.httpServer.address()))
-        //         });                
-        //     }
-        //     process.on('uncaughtException', listenError);
-        //     server.httpServer.listen(server.port, () => {
-        //         process.off('uncaughtException', listenError);
-        //         console.log(server.listenlog || 'listen on port ' + server.port)                
-        //     });                
-
-        //     // server.httpServer.listen(() => {
-        //     //     console.log('listen on port ' + JSON.stringify(server.httpServer.address()))
-        //     // });
+        //     server.httpServer.listen(server.port);
+        //     console.log(server.listenlog || 'listen on port ' + server.port)
         // })
+
+        this.httpServers.servers.forEach(server => {
+            let listenError = () => {
+                process.off('uncaughtException', listenError);
+                server.httpServer.listen(() => {
+                    console.log('listen on port ' + JSON.stringify(server.httpServer.address()))
+                });                
+            }
+            process.on('uncaughtException', listenError);
+            server.httpServer.listen(server.port, () => {
+                process.off('uncaughtException', listenError);
+                console.log(server.listenlog || 'listen on port ' + server.port)                
+            });                
+
+            // server.httpServer.listen(() => {
+            //     console.log('listen on port ' + JSON.stringify(server.httpServer.address()))
+            // });
+        })
     }
     close() {
         this.socketioServer.close();

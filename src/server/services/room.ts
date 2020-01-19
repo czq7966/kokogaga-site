@@ -8,51 +8,56 @@ import { ServiceUsers } from "./users";
 
 export class ServiceRoom {
     static async get(roomid: string, sckUser: Modules.ISocketUser): Promise<Dts.IRoom> {
-        return await ServiceUser.getDatabaseNamespace(sckUser).getRoom(roomid);
+        return await sckUser.getDataNamespace().getRoom(roomid);
     }
     static async create(roomid: string, sckUser: Modules.ISocketUser): Promise<Dts.IRoom> {
-        let uroom = await ServiceUser.getDatabaseNamespace(sckUser).createRoom(roomid)
+        let uroom = await sckUser.getDataNamespace().createRoom(roomid)
         ServiceUsers.addRoom(sckUser.users, uroom);
         return uroom;
     }
     static async exist(roomid: string, sckUser: Modules.ISocketUser): Promise<boolean> {
-        return await ServiceUser.getDatabaseNamespace(sckUser).existRoom(roomid);
+        return await sckUser.getDataNamespace().existRoom(roomid);
     }
     static async open(roomid: string, sckUser: Modules.ISocketUser, isOwner: boolean = true): Promise<any> {
-        let room = await ServiceUser.getDatabaseNamespace(sckUser).openRoom(roomid);
-        await ServiceUser.getDatabaseNamespace(sckUser).joinRoom(roomid, sckUser.user);
+        let room = await sckUser.getDataNamespace().openRoom(roomid);
+        await sckUser.getDataNamespace().joinRoom(roomid, sckUser.user);
         await this.joinSocketRoom(room, sckUser);
         ServiceUsers.addRoom(sckUser.users, room, true);
         isOwner && ServiceUser.addRoom(sckUser, room);
     }
     static async close(roomid: string, sckUser: Modules.ISocketUser): Promise<any> {
-        let room = await ServiceUser.getDatabaseNamespace(sckUser).closeRoom(roomid);
+        let room = await sckUser.getDataNamespace().closeRoom(roomid);
         room && await this.closeSocketRoom(room, sckUser)
         ServiceUsers.delRoom(sckUser.users, roomid, true);
         ServiceUser.delRoom(sckUser, roomid, true);
     }    
    
     static async join(roomid: string, sckUser: Modules.ISocketUser):  Promise<any> {
-        let room = await ServiceUser.getDatabaseNamespace(sckUser).getRoom(roomid);
-        await ServiceUser.getDatabaseNamespace(sckUser).joinRoom(roomid, sckUser.user);  
+        let room = await sckUser.getDataNamespace().getRoom(roomid);
+        await sckUser.getDataNamespace().joinRoom(roomid, sckUser.user);  
         if (room) {
             await this.joinSocketRoom(room, sckUser); 
             ServiceUsers.addRoom(sckUser.users, room, true);
         }
-       
-
     }
     static async leave(roomid: string, sckUser: Modules.ISocketUser): Promise<any> {
-        let room = await ServiceUser.getDatabaseNamespace(sckUser).getRoom(roomid);
-        await ServiceUser.getDatabaseNamespace(sckUser).leaveRoom(roomid, sckUser.user);  
+        let room = await sckUser.getDataNamespace().getRoom(roomid);
+        await sckUser.getDataNamespace().leaveRoom(roomid, sckUser.user);  
         room = room || sckUser.users.rooms.get(roomid);
         if (room) {
             this.leaveSocketRoom(room, sckUser);
             this.delSocketRoomWhileNoUser(room, sckUser);
         }
     }   
+    static async joinOrCreate(roomid: string, sckUser: Modules.ISocketUser): Promise<any> {
+        let room = await sckUser.getDataNamespace().getRoom(roomid);
+        if (!room) room = await this.create(roomid, sckUser);
+        if (room) {
+            this.join(roomid, sckUser)
+        }
+    }    
     static async joinOrOpen(roomid: string, sckUser: Modules.ISocketUser): Promise<any> {
-        let room = await ServiceUser.getDatabaseNamespace(sckUser).getRoom(roomid);
+        let room = await sckUser.getDataNamespace().getRoom(roomid);
         if (room)
             await this.join(roomid, sckUser)
         else 
@@ -60,10 +65,8 @@ export class ServiceRoom {
     }
     static async leaveOrClose(roomid: string, sckUser: Modules.ISocketUser): Promise<any> {
         await this.leave(roomid, sckUser);
-        let count = await ServiceUser.getDatabaseNamespace(sckUser).getRoomUsersCount(roomid);
+        let count = await sckUser.getDataNamespace().getRoomUsersCount(roomid);
         if (!count) await this.close(roomid, sckUser);
-
-
     }    
     static async changeId(oldId: string, newId: string, sckUser: Modules.ISocketUser): Promise<any> {
         let uroom = await this.get(oldId, sckUser);
@@ -138,9 +141,15 @@ export class ServiceRoom {
             ServiceUsers.delRoom(sckUser.users, room.id)
         }        
     }
-    static deleteR
     static async onDeliverCommand(namespace: Modules.ISocketNamespace, roomid: string, sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf: boolean) {
         let _sckUser = sckUser || await ServiceNamespace.getLocalRoomFirstUser(namespace, roomid);
         _sckUser && _sckUser.dispatcher.sendCommand(cmd, _sckUser, includeSelf);
+        if (!sckUser && _sckUser) {
+            switch(cmd.cmdId) {
+                case Dts.ECommandId.room_close:
+                    this.close(roomid, _sckUser);
+                    break;
+            }
+        }
     }
 }

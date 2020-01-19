@@ -2,6 +2,7 @@ import { SocketUser, ISocketUser } from "./user";
 import * as Dts from "../dts";
 import * as Cmds from "../cmds/index";
 import { ISocketNamespace } from "./namespace";
+import { IDataNamespace } from "./database";
 
 
 export interface ISocketUsers extends Cmds.Common.IBase {
@@ -11,6 +12,7 @@ export interface ISocketUsers extends Cmds.Common.IBase {
     shortUsers: Cmds.Common.Helper.KeyValue<ISocketUser>;
     rooms:  Cmds.Common.Helper.KeyValue<Dts.IRoom>;
     onConnect: (socket: SocketIO.Socket) => any;
+    getDataNamespace(): IDataNamespace
 }
 
 export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
@@ -88,5 +90,8 @@ export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
             })
         }
         return destroy();
+    }
+    getDataNamespace(): IDataNamespace {
+        return this.snsp.server.getDatabase().getNamespace(this.snsp.options.name);
     }
 }

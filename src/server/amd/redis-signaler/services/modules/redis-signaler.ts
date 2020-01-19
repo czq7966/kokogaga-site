@@ -83,15 +83,17 @@ export class RedisSignaler {
     
             signaler.conneciton.dispatcher.onCommand(resp);
         },
-        on_signal_center_deliver(signaler: Modules.IRedisSignaler, data: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>) {
+        async on_signal_center_deliver(signaler: Modules.IRedisSignaler, data: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>) {
+            data.from = data.from ||  { type: 'server', id: signaler.server.getId() };     
+
             let extra = data.extra as ADHOCCAST.Dts.ICommandData<Dts.ICommandDeliverDataExtraProps>
             if (extra.to.type == 'server') 
                 extra.to.id = extra.to.id || signaler.server.getId();
 
+            data.to = data.to || extra.to;
             if (data.to.type == 'server' && !data.to.id) {
                 data.to =  extra.to;
-            }
-                
+            }                
         }
     }
 
@@ -106,28 +108,4 @@ export class RedisSignaler {
     static async on_after_network_disconnect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         await signaler.tryLogin();
     }    
-
-
-    static OnDeliverCommand = {
-        async onDevilerCommand(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>) {
-            let result: boolean = false;
-            result == result || await this.onBeforeCommand(cmd);
-            result == result || await this.onCommand(cmd);
-            result == result || await this.onAfterCommand(cmd);
-            return result
-        },
-    
-        async onCommand(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>) {
-            return true;
-    
-        },
-    
-        async onBeforeCommand(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>) {
-            return false;
-    
-        },
-        async onAfterCommand(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>) {
-            return false
-        }          
-    }
 }

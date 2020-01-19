@@ -3,6 +3,7 @@ import * as Dts from "../dts";
 import * as Cmds from "../cmds/index";
 import * as Services from '../services/index'
 import { ISocketIONamespace } from "./namespace";
+import { IDataNamespace } from "./database";
 
 
 export interface IUserSocket extends SocketIO.Socket {
@@ -17,6 +18,7 @@ export interface ISocketUser extends Cmds.Common.IBase {
     openRooms: Cmds.Common.Helper.KeyValue<Dts.IRoom>;    
     onCommand: (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => void
     sendCommand: (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => void
+    getDataNamespace(): IDataNamespace 
 }
 
 export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
@@ -76,5 +78,8 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
     }
     sendCommand = async (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => {
         await Services.ServiceUser.sendCommand(this, cmd, includeSelf);
+    }
+    getDataNamespace(): IDataNamespace {
+        return this.users.getDataNamespace()
     }
 }

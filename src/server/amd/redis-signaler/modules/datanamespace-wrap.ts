@@ -1,5 +1,5 @@
 import { ADHOCCAST } from '../libex'
-import { IDataNamespace, IDatabase } from '../../../modules/database';
+import { IDataNamespace, IDatabase, IDataUsers } from '../../../modules/database';
 import { IDatabaseWrap } from './database-wrap';
 import { IRedisSignaler } from './redis-signaler';
 
@@ -10,13 +10,6 @@ export interface IDataNamespaceWrap extends IDataNamespace {
     getUserChannel(id: string): string
     getShortChannel(id: string): string 
     getSocketChannel(id: string): string     
-    
-    redisAddUser(user:  ADHOCCAST.Dts.IUser): Promise<boolean>
-    redisDelUser(user:  ADHOCCAST.Dts.IUser): Promise<boolean>
-    redisAddRoomUser(roomid, user: ADHOCCAST.Dts.IUser): Promise<boolean>
-    redisDelRoomUser(roomid, user: ADHOCCAST.Dts.IUser): Promise<boolean>
-    redisAddRoom(room: ADHOCCAST.Dts.IRoom): Promise<boolean>
-    redisDelRoom(room: ADHOCCAST.Dts.IRoom): Promise<boolean>
 }
 export class DataNamespaceWrap implements IDataNamespaceWrap {
     databasewrap: IDatabaseWrap;
@@ -33,14 +26,26 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
     }
     initEvents() {
         let namespace = this.namespace;
-        // namespace.users.on('add', this.redis_onUserAdd)
-        // namespace.users.on('del', this.redis_onUserDel)
-        // namespace.shortUsers.on('add', this.redis_onShortUserAdd)
-        // namespace.shortUsers.on('del', this.redis_onShortUserDel)
-        // namespace.rooms.on('add', this.redis_onRoomAdd)
-        // namespace.rooms.on('del', this.redis_onRoomDel)                        
-        // namespace.roomUsers.on('add', this.redis_onRoomUsersAdd)
-        // namespace.roomUsers.on('del', this.redis_onRoomUsersDel)    
+        namespace.onNewUserShortID = this.newUserShortID.bind(this);
+        namespace.onGetUser = this.getUser.bind(this);
+        namespace.onExistUser = this.existUser.bind(this);
+        namespace.onGetRoom = this.getRoom.bind(this);
+        namespace.onExistRoom = this.existRoom.bind(this);
+        namespace.getRoomUsersCount = this.getRoomUsersCount.bind(this);
+
+
+        namespace.users.on('add', this.redis_onUserAdd)
+        namespace.users.on('del', this.redis_onUserDel)
+        namespace.shortUsers.on('add', this.redis_onShortUserAdd)
+        namespace.shortUsers.on('del', this.redis_onShortUserDel)
+        namespace.rooms.on('add', this.redis_onRoomAdd)
+        namespace.rooms.on('del', this.redis_onRoomDel)                        
+        namespace.roomUsers.on('add', this.redis_onRoomUsersAdd)
+        namespace.roomUsers.on('del', this.redis_onRoomUsersDel)
+        namespace.roomUsers.values().forEach(users => {
+            users.on('add', this.redis_onRoomUserAdd)
+            users.on('del', this.redis_onRoomUserDel)
+        })    
 
         let sckNamespace = namespace.getDatabase().getServer().getNamespace(namespace.getName());
         sckNamespace.users.sockets.on('add', this.redis_onSocketConnect)
@@ -50,6 +55,26 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
     }
     unInitEvents() {
         let namespace = this.namespace;
+        namespace.onNewUserShortID = null;
+        namespace.onGetUser = null;
+        namespace.onExistUser = null;
+        namespace.onGetRoom = null;
+        namespace.onExistRoom = null;
+        namespace.getRoomUsersCount = null;
+
+
+        namespace.users.off('add', this.redis_onUserAdd)
+        namespace.users.off('del', this.redis_onUserDel)
+        namespace.shortUsers.off('add', this.redis_onShortUserAdd)
+        namespace.shortUsers.off('del', this.redis_onShortUserDel)
+        namespace.rooms.off('add', this.redis_onRoomAdd)
+        namespace.rooms.off('del', this.redis_onRoomDel)                        
+        namespace.roomUsers.off('add', this.redis_onRoomUsersAdd)
+        namespace.roomUsers.off('del', this.redis_onRoomUsersDel)   
+        namespace.roomUsers.values().forEach(users => {
+            users.off('add', this.redis_onRoomUserAdd)
+            users.off('del', this.redis_onRoomUserDel)
+        })            
 
         let sckNamespace = namespace.getDatabase().getServer().getNamespace(namespace.getName());
         sckNamespace.users.sockets.off('add', this.redis_onSocketConnect)
@@ -73,8 +98,15 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         return this.namespace.getName();
     }
     //User
-    newUserShortID(len?: number): Promise<string> {
-        return this.namespace.newUserShortID(len);
+    async newUserShortID(len?: number): Promise<string> {
+        len = len || 6;
+        let sid = ADHOCCAST.Cmds.Common.Helper.uuid(len, 10)
+        let existUser = await this.existUser({id: null, sid: sid});
+        if (existUser) {
+            return this.newUserShortID()
+        } else {
+            return sid
+        }    
     }
     async getUser(user: ADHOCCAST.Dts.IUser): Promise<ADHOCCAST.Dts.IUser> {
         let nspUser: ADHOCCAST.Dts.IUser;
@@ -92,6 +124,7 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         return nspUser; 
     }
     async existUser(user: ADHOCCAST.Dts.IUser): Promise<boolean> {
+
         let exist = await this.getUser(user);
         return !!exist;   
     }
@@ -135,49 +168,16 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         return this.namespace.leaveRoom(roomid, user);
     }
     async joinOrCreateRoom(roomid: string, user: ADHOCCAST.Dts.IUser): Promise<boolean> {
-        return this.joinOrCreateRoom(roomid, user);   
+        return this.namespace.joinOrCreateRoom(roomid, user);   
     }
     async leaveOrCloseRoom(roomid: string, user: ADHOCCAST.Dts.IUser): Promise<boolean> {
-        return this.leaveOrCloseRoom(roomid, user);
+        return this.namespace.leaveOrCloseRoom(roomid, user);
     }    
     async getRoomUsersCount(roomid: string): Promise<number> {
         let channel = this.getRoomUsersChannel(roomid);
         return this.getSignaler().hlen(channel);
     }
-    
-    async redisAddUser(user:  ADHOCCAST.Dts.IUser): Promise<boolean> {
-        let strUser =  JSON.stringify(user);
-        user.id && await this.getSignaler().set(this.getUserChannel(user.id), strUser);
-        user.sid && await this.getSignaler().set(this.getShortChannel(user.sid), strUser);
-        user.socketId && await this.getSignaler().set(this.getSocketChannel(user.socketId), strUser);
-        return true;   
-    }
-    async redisDelUser(user:  ADHOCCAST.Dts.IUser): Promise<boolean> {
-        user.id && await this.getSignaler().del(this.getUserChannel(user.id));
-        user.sid && await this.getSignaler().del(this.getShortChannel(user.sid));
-        user.socketId && await this.getSignaler().del(this.getSocketChannel(user.socketId));
-        return true;   
-    }    
-    async redisAddRoomUser(roomid, user: ADHOCCAST.Dts.IUser): Promise<boolean> {
-        let strUser =  JSON.stringify(user);    
-        roomid && user && user.id && await this.getSignaler().hset(this.getRoomUsersChannel(roomid), user.id, strUser);    
-        return true;  
-    }  
-    async redisDelRoomUser(roomid, user: ADHOCCAST.Dts.IUser): Promise<boolean> {
-        roomid && user && user.id && await this.getSignaler().hdel(this.getRoomUsersChannel(roomid), user.id);    
-        return true;  
-    }    
-    async redisAddRoom(room: ADHOCCAST.Dts.IRoom): Promise<boolean> {
-        let strRoom =  JSON.stringify(room);
-        room.id && await this.getSignaler().set(this.getRoomChannel(room.id), strRoom);
-        return true;         
-    }
-    async redisDelRoom(room: ADHOCCAST.Dts.IRoom): Promise<boolean>  {
-        room.id && await this.getSignaler().del(this.getRoomChannel(room.id));
-        return true; 
-    }
-
-
+    //Data Events
     redis_onSocketConnect = (id: string) => {
         let channel = this.getSocketChannel(id);
         this.getSignaler().subscribe(channel);       
@@ -185,5 +185,71 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
     redis_onSocketDisconnect = (id: string) => {
         let channel = this.getSocketChannel(id);
         this.getSignaler().unsubscribe(channel);
+    }    
+    redis_onUserAdd = (id: string, user: ADHOCCAST.Dts.IUser) => { 
+        let channel = this.getUserChannel(id);
+        let strUser = JSON.stringify(user);
+        this.getSignaler().set(channel, strUser);
+        this.getSignaler().subscribe(channel);
+    }
+    redis_onUserDel = (id: string, user: ADHOCCAST.Dts.IUser) => { 
+        if (user) {
+            let channel = this.getUserChannel(id);
+            this.getSignaler().del(channel);
+            this.getSignaler().unsubscribe(channel);
+        }
+    }
+    redis_onShortUserAdd = (id: string, user: ADHOCCAST.Dts.IUser) => { 
+        let channel = this.getShortChannel(id);
+        let strUser = JSON.stringify(user);
+        this.getSignaler().set(channel, strUser);
+        this.getSignaler().subscribe(channel);
+    }
+    redis_onShortUserDel =(id: string, user: ADHOCCAST.Dts.IUser) => { 
+        if (user) {
+            let channel = this.getShortChannel(id);
+            this.getSignaler().del(channel);
+            this.getSignaler().unsubscribe(channel);
+        }
+    }      
+    redis_onRoomAdd = (id: string, room: ADHOCCAST.Dts.IRoom) => { 
+        let channel = this.getRoomChannel(id);
+        let strRoom = JSON.stringify(room);
+        this.getSignaler().set(channel, strRoom);
+    }
+    redis_onRoomDel =(id: string, room: ADHOCCAST.Dts.IRoom) => { 
+        if (room) {
+            let channel = this.getRoomChannel(id);
+            this.getSignaler().del(channel);        
+        }
+    }
+    redis_onRoomUsersAdd = (id: string, users: IDataUsers) => { 
+        let channel = this.getRoomChannel(id);
+        this.getSignaler().subscribe(channel);   
+        users.on('add', this.redis_onRoomUserAdd)       
+        users.on('del', this.redis_onRoomUserDel)
+    }           
+    redis_onRoomUsersDel = (id: string, users: IDataUsers) => { 
+        if (users) {
+            let channel = this.getRoomChannel(id);
+            this.getSignaler().unsubscribe(channel);             
+            users.off('add', this.redis_onRoomUserAdd)       
+            users.off('del', this.redis_onRoomUserDel)       
+        }
+    }  
+    redis_onRoomUserAdd = (id: string, user: ADHOCCAST.Dts.IUser, users: IDataUsers) => { 
+        let room = users.extra as ADHOCCAST.Dts.IRoom;
+        let roomUsersChannel = this.getRoomUsersChannel(room.id);
+        let userChannel = this.getUserChannel(user.id);
+        let strUser = JSON.stringify(user);
+        this.getSignaler().hset(roomUsersChannel, userChannel, strUser);
+    }
+    redis_onRoomUserDel = (id: string, user: ADHOCCAST.Dts.IUser, users: IDataUsers) => { 
+        if (user) {
+            let room = users.extra as ADHOCCAST.Dts.IRoom;
+            let roomUsersChannel = this.getRoomUsersChannel(room.id);
+            let userChannel = this.getUserChannel(user.id);
+            this.getSignaler().hdel(roomUsersChannel, userChannel);
+        }
     }    
 }

@@ -353,48 +353,11 @@ export class SocketClient implements ISocketClient {
         }
 
     }
-    // getCmdNamespace(cmd: ADHOCCAST.Cmds.ICommandData<any>): string {
-    //     return cmd.extra && cmd.extra.props && cmd.extra.props.namespace || '';      
-    // }
     getCmdChannel(cmd: ADHOCCAST.Cmds.ICommandData<any>, namespace?: string): string {
         if (this.onGetCmdChannel)
             return this.onGetCmdChannel(cmd, namespace);
         return;
-        // namespace = namespace || this.getCmdNamespace(cmd) || '';
-        // let channel: string;
-        // switch (cmd.to.type) {
-        //     case 'server':
-        //         channel = this.getServerChannel(cmd.to.id);
-        //         break;
-        //     case 'room': 
-        //         channel = this.getRoomChannel(namespace, cmd.to.id);
-        //         break;
-        //     case 'user':
-        //         channel = this.getUserChannel(namespace, cmd.to.id);
-        //         break;
-        //     case 'socket':
-        //         channel = this.getSocketChannel(namespace, cmd.to.id);
-        //         break;
-        // }  
-        // return channel;      
     }
-
-    // getServerChannel(id: string): string {
-    //     return this.pubSocket.getServerChannel(id)
-    // }
-    // getRoomChannel(namespace: string, id: string): string {
-    //     return this.pubSocket.getRoomChannel(namespace, id);
-    // }
-    // getUserChannel(namespace: string, id: string): string {
-    //     return this.pubSocket.getUserChannel(namespace, id);
-    // }
-    // getShortChannel(namespace: string, id: string): string {
-    //     return this.pubSocket.getShortChannel(namespace, id);
-    // }    
-    // getSocketChannel(namespace: string, id: string): string {
-    //     return this.pubSocket.getSocketChannel(namespace, id);
-    // }
-
 }
 
 ADHOCCAST.Network.SignalerFactory.register(SocketClient.SignalerName, SocketClient);

@@ -30,7 +30,7 @@ export class ServiceUser extends Cmds.Common.Base {
             user.room = room;
             sckUser.user = user;   
             await ServiceUsers.addSocketUser(sckUser.users, sckUser)     
-            await ServiceRoom.joinOrOpen(room.id, sckUser)
+            await ServiceRoom.joinOrCreate(room.id, sckUser)
         } else {
             return room.id
         }
@@ -52,16 +52,18 @@ export class ServiceUser extends Cmds.Common.Base {
             data.to = {type: 'room', id: sckUser.user.room.id};
             await sckUser.sendCommand(data, includeSelf);
 
+            await ServiceRoom.leaveOrClose(data.props.user.room.id, sckUser)
             await ServiceUsers.delSocketUser(sckUser.users, sckUser);
             delete sckUser.user;
-            await ServiceRoom.leaveOrClose(data.props.user.room.id, sckUser)
         }    
         disconnect && sckUser.socket.connected && sckUser.socket.disconnect();
     }
     static async closeOpenRooms(sckUser: Modules.ISocketUser) {
+        let promises = [];
         sckUser.openRooms.keys().forEach(key => {
-            ServiceRoomClose.close(key, sckUser)
+            promises.push(ServiceRoomClose.close(key, sckUser));
         })
+        return Promise.all(promises);
     }    
     static async onCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>)  {   
         let useSignalCenter = sckUser.users.snsp.options.useSignalCenter;
@@ -113,7 +115,7 @@ export class ServiceUser extends Cmds.Common.Base {
     }
     static async deliverCommand(signalClient: ISignalClient, sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean) {
         if (signalClient) {
-            return await signalClient.deliverUserCommand(sckUser, cmd, includeSelf);
+            return signalClient.deliverUserCommand(sckUser, cmd, includeSelf);
         } else {
             throw "signal client is not loaded yet!"
         }

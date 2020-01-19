@@ -229,9 +229,17 @@ export class DataNamespace implements IDataNamespace {
     async closeRoom(roomid: string): Promise<Dts.IRoom> {
         if (this.onCloseRoom) return this.onCloseRoom(roomid);
         //        
-        let users = await this.roomUsers.del(roomid);
-        users && users.destroy();
-        return await this.rooms.del(roomid);        
+        let users = this.roomUsers.get(roomid);
+        if (users) {
+            let promises = [];            
+            users.values().forEach(user => {
+                promises.push(this.leaveRoom(roomid, user))
+            })
+            await Promise.all(promises);            
+        }
+
+        this.roomUsers.del(roomid)
+        return this.rooms.del(roomid);        
     }
     async changeRoomId(roomOldId: string, roomNewId: string): Promise<boolean> {
         if (this.onChangeRoomId) return this.onChangeRoomId(roomOldId, roomNewId);
@@ -257,7 +265,7 @@ export class DataNamespace implements IDataNamespace {
         //        
         let room = await this.getRoom(roomid);
         if (room) {
-            let users = await this.roomUsers.get(room.id)
+            let users = this.roomUsers.get(room.id)
             if (!users) {
                 users = new DataUsers(true, room);
                 this.roomUsers.add(room.id, users);
@@ -272,9 +280,12 @@ export class DataNamespace implements IDataNamespace {
     async leaveRoom(roomid: string, user: Dts.IUser): Promise<boolean> {
         if (this.onLeaveRoom) return this.onLeaveRoom(roomid, user);
         //        
-        let users = await this.roomUsers.get(roomid);
+        let users = this.roomUsers.get(roomid);
         if (users && user) {
-            users.del(user.id)
+            users.del(user.id);
+            if (users.count() <=0) {
+                this.roomUsers.del(roomid);
+            }
         }
         return true;
     }

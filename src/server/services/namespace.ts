@@ -39,11 +39,13 @@ export class ServiceNamespace  {
                 ServiceRoom.onDeliverCommand(namespace, extra.to.id, fromSckUser, data, !fromSckUser || includeSelf);
                 break;
             case 'server':       
-                console.log('server_onDeliverCommand', data.cmdId )  
-                if (fromSckUser) {
-                    fromSckUser.dispatcher.onCommand(data, fromSckUser);       
-                } else {
-                    this.onDeliverCommand_toServer(namespace, cmd)
+                if (extra.to.id == namespace.server.getId()) {
+                    console.log('server_onDeliverCommand', data.cmdId )  
+                    if (fromSckUser) {
+                        fromSckUser.dispatcher.onCommand(data, fromSckUser);       
+                    } else {
+                        this.onDeliverCommand_toServer(namespace, cmd)
+                    }
                 }
                 break;
         }
@@ -66,7 +68,7 @@ export class ServiceNamespace  {
         let users = namespace.users;  
         let adapter = namespace.nsp.adapter;
         let uroom = users.rooms.get(roomid);
-        let sim = uroom && uroom.sim || '';
+        let sim = uroom && (uroom.sim || uroom.id);
         let room = adapter.rooms[sim];
         if (room) {
             Object.keys(room.sockets).some(key => {

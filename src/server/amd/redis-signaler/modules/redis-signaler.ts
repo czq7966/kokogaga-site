@@ -90,6 +90,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         this.conneciton.dispatcher.eventRooter.onAfterRoot.add(this.onAfterRoot)
     }
     unInitEvents() {
+        this.stopHandshake();
         this.conneciton.dispatcher.eventRooter.onAfterRoot.remove(this.onAfterRoot)
         this.conneciton.dispatcher.sendFilter.onAfterRoot.remove(this.sendFilter_onAfterRoot);
         this.conneciton.dispatcher.recvFilter.onAfterRoot.remove(this.recvFilter_onAfterRoot)
@@ -100,11 +101,6 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     }
     sendFilter_onAfterRoot = (cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>): any => {
         switch(cmd.cmdId) {
-            // case Dts.ECommandId.signal_center_deliver:
-            // case Dts.ECommandId.signal_center_users_refresh:
-            // case Dts.ECommandId.signal_center_users_remove:
-            // case Dts.ECommandId.signal_center_users_update:                
-            //     break;
             default:
                 return Services.Modules.RedisSignaler.SendFilter.onAfterRoot(this, cmd);
                 
@@ -148,6 +144,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     async onDeliverCommand(cmd: ADHOCCAST.Cmds.Common.ICommandData<any>): Promise<any> {
         return Services.Cmds.SignalCenterDeliver.onReq(this, cmd);
     }
+    //Override
     async sendCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>) {
         if (this.isReady()) {
             let cmd = new ADHOCCAST.Cmds.CommandReq({instanceId: this.conneciton.instanceId});
@@ -161,7 +158,18 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
             throw "signal client no ready"
         }        
     }
-
+    //Override
+    async deliverCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, dataExtra: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>) {
+        let cmd: ADHOCCAST.Cmds.Common.ICommandData<any> = {
+            cmdId: Dts.ECommandId.signal_center_deliver,
+            props: data,
+            extra: dataExtra
+        }
+        Services.Modules.RedisSignaler.SendFilter.on_signal_center_deliver(this, cmd);
+        let result = await this.sendCommand(cmd);
+        await this.server.onDeliverCommand(cmd);
+        return result;
+    }
     getCmdNamespace = (cmd: ADHOCCAST.Cmds.ICommandData<any>): string  => {    
         let namespace =  cmd.extra && cmd.extra.props && cmd.extra.props.namespace;
         return namespace || this.options.name;
@@ -233,8 +241,9 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     //Hand shake
     startHandshake() {
         this.stopHandshake();
-        setInterval(() => {
-            let serverExsitChannel = this.getServerExistChannel();
+        let serverExsitChannel = this.getServerExistChannel();
+        this.getSocketClient().pexpire(serverExsitChannel, this.config.signalRedis.handshakeTimeout);
+        setInterval(() => {            
             this.getSocketClient().pexpire(serverExsitChannel, this.config.signalRedis.handshakeTimeout);
 
         }, this.config.signalRedis.handshakeInterval)
