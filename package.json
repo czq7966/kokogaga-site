@@ -57,7 +57,11 @@
 		"sdp-probe:clean": "rimraf ./dist/web/sdp-probe",
 		"sdp-probe:compile": "npm run sdp-probe:clean && cross-env NODE_MODULE=sdp-probe webpack --env.umd",
 		"sdp-probe:dev": "npm run sdp-probe:clean && cross-env NODE_MODULE=sdp-probe webpack --env.umd --env.nodevtool --progress --watch",
-		"sdp-probe:build": "npm run sdp-probe:clean && cross-env NODE_MODULE=sdp-probe webpack --env.umd --env.production --progress"
+		"sdp-probe:build": "npm run sdp-probe:clean && cross-env NODE_MODULE=sdp-probe webpack --env.umd --env.production --progress",
+		"web-test:clean": "rimraf ./dist/web/test",
+		"web-test:compile": "npm run web-test:clean && cross-env NODE_MODULE=web-test webpack --env.umd",
+		"web-test:dev": "npm run web-test:clean && cross-env NODE_MODULE=web-test webpack --env.umd --env.nodevtool --progress --watch",
+		"web-test:build": "npm run web-test:clean && cross-env NODE_MODULE=web-test webpack --env.umd --env.production --progress"		
 	},
 	"author": "",
 	"license": "ISC",

@@ -18,3 +18,5 @@ else if (process.env.NODE_MODULE === 'mdm-server')
     module.exports = require('./webpack/webpack.config.mdm.server.js');
 else if (process.env.NODE_MODULE === 'sdp-probe') 
     module.exports = require('./webpack/webpack.config.sdp-probe.js');  
+else if (process.env.NODE_MODULE === 'web-test') 
+    module.exports = require('./webpack/webpack.config.web-test.js');     
