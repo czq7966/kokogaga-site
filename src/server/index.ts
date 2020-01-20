@@ -3,7 +3,7 @@ import * as Modules from './modules/index'
 import * as Services from './services/index'
 import { IProject } from './project';
 
-let server: Modules.IServer;
+
 let project: IProject = {
     Services: Services
 }

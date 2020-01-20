@@ -55,7 +55,7 @@ export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
         this.snsp.nsp.off('connect', this.onConnect)
     }
     onConnect = (socket: SocketIO.Socket) => {
-        console.log('ServerEvent', 'connect', socket.id)
+        Logging.log('ServerEvent', 'connect', socket.id)
         let sckUser = new SocketUser(socket);
         socket.once(Dts.EServerSocketEvents.disconnecting, () => {
             sckUser.onCommand({cmdId: Dts.ECommandId.network_disconnecting});
@@ -70,24 +70,21 @@ export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
             }
         });
     }       
-    async delayDestroyUser(sckUser: ISocketUser, timeout?: number, maxCount?: number): Promise<boolean> {
+    async delayDestroyUser(sckUser: ISocketUser, timeout?: number, maxCount?: number, rightNow?: boolean) {
         timeout = timeout || 100;
         maxCount = maxCount || 30;
 
-        let destroy = (): Promise<true> => {
-            return new Promise((resolve, reject) => {
-                maxCount--;                
-                setTimeout(() => {
-                    if (!sckUser.user || maxCount <=0) {
-                        sckUser.destroy();
-                        resolve(true);
-                    } else {
-                        destroy()
-                        .then(v => resolve(true))
-                        .catch(e => resolve(true))
-                    }
-                }, timeout);                
-            })
+        let destroy = () => {
+            maxCount = maxCount - 1;                
+            setTimeout(() => {
+                if (!sckUser.isLogin() || maxCount <=0) {
+                    setTimeout(() => {
+                        sckUser.destroy();     
+                    }, 10 * 1000);
+                } else {
+                    destroy()
+                }
+            }, timeout);                
         }
         return destroy();
     }

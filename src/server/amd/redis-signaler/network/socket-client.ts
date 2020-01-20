@@ -109,7 +109,7 @@ export class SocketClient implements ISocketClient {
         });           
         this.subSocket.eventEmitter.on('message', (channel: string, message: string) => {
             let data: ADHOCCAST.Cmds.ICommandData<any> = JSON.parse(message);
-            console.log('/message', channel, data)            
+            Logging.log('/message', channel, data)            
             this.eventEmitter.emit(ADHOCCAST.Dts.CommandID, data);            
         });
     }    
@@ -130,7 +130,7 @@ export class SocketClient implements ISocketClient {
                     if (err)
                         reject(err.message);
                     else {
-                        console.log('/subscribe', channel);                        
+                        Logging.log('/subscribe', channel);                        
                         resolve(result)    
                     }
                 })
@@ -147,7 +147,7 @@ export class SocketClient implements ISocketClient {
                     if (err)
                         reject(err.message);
                     else {
-                        console.log('/unsubscribe', channel);    
+                        Logging.log('/unsubscribe', channel);    
                         resolve(result)    
                     }
                 })
@@ -163,7 +163,7 @@ export class SocketClient implements ISocketClient {
         }
         return new Promise((resolve, reject) => {
             if (this.connected()) {
-                console.log('/publish', channel, cmd);
+                Logging.log('/publish', channel, cmd);
                 let msg = JSON.stringify(cmd);                
                 this.pubSocket.socket.publish(channel, msg, (err: Error, recvCount: number) => {
                     if (err)

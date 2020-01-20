@@ -18,14 +18,15 @@ export class ServiceKickoff extends Cmds.Common.Base {
         await this.kickoff(sckUser, reqData.props.user);
     } 
     static async kickoff(sckUser: Modules.ISocketUser, user: Dts.IUser): Promise<any> {
-        if (user) {
-            let sckLoginUser = await ServiceUsers.getSocketUser(sckUser.users, user);
+        if (user && ServiceUser.connected(sckUser)) {
+            let sckUsers = sckUser.users;
+            let sckLoginUser = await ServiceUsers.getSocketUser(sckUsers, user);
             if (sckLoginUser) {
                 await ServiceUser.logout(sckLoginUser as Modules.ISocketUser, null, true, true);
             }
             else {
-                let nspUser = await ServiceUsers.getDatabaseNamespace(sckUser.users).getUser(user);
-                if (nspUser && nspUser.serverId && nspUser.serverId != sckUser.users.snsp.server.getId()) {
+                let nspUser = await sckUsers.getDataNamespace().getUser(user);
+                if (nspUser && nspUser.serverId && nspUser.serverId != sckUsers.snsp.server.getId()) {
                     let cmd: Dts.ICommandData<Dts.ICommandReqDataProps> = {
                         props: {
                             user: nspUser

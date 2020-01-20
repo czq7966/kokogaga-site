@@ -10,25 +10,32 @@ import { ISignalClient } from "../amd/signal-client";
 
 export class ServiceUser extends Cmds.Common.Base {
     static getDatabaseNamespace(sckUser: Modules.ISocketUser): Modules.IDataNamespace {
-        return sckUser.users.snsp.server.getDatabase().getNamespace(sckUser.users.snsp.options.name)
+        return sckUser.notDestroyed && sckUser.users.snsp.server.getDatabase().getNamespace(sckUser.users.snsp.options.name)
     }    
-    static async isLogin(sckUser: Modules.ISocketUser): Promise<boolean> {        
-        return !!(sckUser.user && await ServiceUsers.existSocketUser(sckUser.users, sckUser.user))
+    static connected(sckUser: Modules.ISocketUser): boolean {        
+        return sckUser && sckUser.connected()
+    }    
+    static async isLogin(sckUser: Modules.ISocketUser): Promise<boolean> {   
+        return sckUser.isLogin()
     }
-
     static async login(sckUser: Modules.ISocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
-        if (sckUser.users.snsp.nsp.name === Dts.AdminNamespacename) 
-            return await Admin.Admin.login(sckUser, data)
-        else 
-            return await this.userLogin(sckUser, data)
+        if (sckUser.connected()) {
+            if (sckUser.users.snsp.nsp.name === Dts.AdminNamespacename) 
+                return await Admin.Admin.login(sckUser, data)
+            else 
+                return await this.userLogin(sckUser, data)
+        } else {
+            throw 'User is disconnected.'
+        }
     }
     static async userLogin(sckUser: Modules.ISocketUser, data: Dts.ICommandData<Dts.ICommandLoginReqDataProps>): Promise<any> {
         let room = data.props.user.room;
-        let isLogin = await ServiceUser.isLogin(sckUser) 
+        let isLogin = sckUser.isLogin();
         if (!isLogin) {
             let user = Object.assign({}, data.props.user) as Dts.IUser;  
             user.room = room;
             sckUser.user = user;   
+            sckUser.setLogin(true);
             await ServiceUsers.addSocketUser(sckUser.users, sckUser)     
             await ServiceRoom.joinOrCreate(room.id, sckUser)
         } else {
@@ -39,7 +46,8 @@ export class ServiceUser extends Cmds.Common.Base {
     static async logout(sckUser: Modules.ISocketUser, 
                     data?: Dts.ICommandData<Dts.ICommandLogoutReqDataProps>, 
                     includeSelf?: boolean, disconnect?: boolean): Promise<any> {
-        let isLogin = await this.isLogin(sckUser);
+        // let isLogin = await this.isLogin(sckUser);
+        let isLogin = sckUser.isLogin();
         if (isLogin) {
             await this.closeOpenRooms(sckUser);
 
@@ -54,7 +62,8 @@ export class ServiceUser extends Cmds.Common.Base {
 
             await ServiceRoom.leaveOrClose(data.props.user.room.id, sckUser)
             await ServiceUsers.delSocketUser(sckUser.users, sckUser);
-            delete sckUser.user;
+            // delete sckUser.user;
+            sckUser.setLogin(false);
         }    
         disconnect && sckUser.socket.connected && sckUser.socket.disconnect();
     }

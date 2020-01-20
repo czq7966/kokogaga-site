@@ -152,12 +152,14 @@ export class DataNamespace implements IDataNamespace {
         if (this.onGetUser) return this.onGetUser(user);
         //        
         let nspUser: Dts.IUser;
-        if (user.id)
-            nspUser = this.users.get(user.id);
-        if (!nspUser && user.sid)
-            nspUser = this.shortUsers.get(user.sid)
-        if (!nspUser && user.socketId)
-            nspUser = this.socketUsers.get(user.socketId)            
+        if (user) {        
+            if (user.id)
+                nspUser = this.users.get(user.id);
+            if (!nspUser && user.sid)
+                nspUser = this.shortUsers.get(user.sid)
+            if (!nspUser && user.socketId)
+                nspUser = this.socketUsers.get(user.socketId)      
+        }
         return nspUser;        
     }
     async existUser(user: Dts.IUser): Promise<boolean> {

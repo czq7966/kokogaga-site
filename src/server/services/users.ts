@@ -4,16 +4,13 @@ import * as Modules from '../modules'
 
 
 export class ServiceUsers  {
-    static getDatabaseNamespace(sckUsers: Modules.ISocketUsers): Modules.IDataNamespace {
-        return sckUsers.snsp.server.getDatabase().getNamespace(sckUsers.snsp.options.name)
-    }
     static async newShortID(sckUsers: Modules.ISocketUsers): Promise<string> {
-        return this.getDatabaseNamespace(sckUsers).newUserShortID();
+        return sckUsers.getDataNamespace().newUserShortID();
     }  
 
     static async getSocketUser(sckUsers: Modules.ISocketUsers, user: Dts.IUser): Promise<Modules.ISocketUser> {
         let sckUser: Modules.ISocketUser;
-        let nspUser = await this.getDatabaseNamespace(sckUsers).getUser(user);
+        let nspUser = await sckUsers.getDataNamespace().getUser(user);
         if (nspUser) {
             if (!sckUser && nspUser.id)
                 sckUser = sckUsers.users.get(nspUser.id);
@@ -29,24 +26,30 @@ export class ServiceUsers  {
         return !!exist;
     }
     static async addSocketUser(sckUsers: Modules.ISocketUsers, sckUser: Modules.ISocketUser): Promise<boolean> {
-        let existUser = await this.existSocketUser(sckUsers, sckUser.user)
-        if (!existUser) {
-            await this.getDatabaseNamespace(sckUsers).addUser(sckUser.user);
-            sckUsers.users.add(sckUser.user.id, sckUser)
-            sckUsers.sockets.add(sckUser.socket.id, sckUser);
-            sckUsers.shortUsers.add(sckUser.user.sid, sckUser)
-            return true;
+        let user = sckUser.user;
+        if (user) {
+            let existUser = await this.existSocketUser(sckUsers, user)
+            if (!existUser) {
+                await sckUsers.getDataNamespace().addUser(user);
+                sckUsers.users.add(user.id, sckUser)
+                sckUsers.sockets.add(user.socketId, sckUser);
+                sckUsers.shortUsers.add(user.sid, sckUser)
+                return true;
+            }
         }
         return false
     }
     static async delSocketUser(sckUsers: Modules.ISocketUsers, sckUser: Modules.ISocketUser): Promise<boolean> {
-        let exist = await this.existSocketUser(sckUsers, sckUser.user);
-        if (exist) {
-            await this.getDatabaseNamespace(sckUsers).delUser(sckUser.user);
-            sckUsers.users.del(sckUser.user.id)
-            sckUsers.sockets.del(sckUser.socket.id);
-            sckUsers.shortUsers.del(sckUser.user.sid);
-            return true;
+        let user = sckUser.user;
+        if (user) {
+            // let exist = await this.existSocketUser(sckUsers, user);
+            // if (exist) {
+                await sckUsers.getDataNamespace().delUser(user);
+                sckUsers.users.del(user.id)
+                sckUsers.sockets.del(user.socketId);
+                sckUsers.shortUsers.del(user.sid);
+                return true;
+            // }
         }
         return false
     }   

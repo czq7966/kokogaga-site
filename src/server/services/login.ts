@@ -28,22 +28,11 @@ export class ServiceLogin extends Cmds.Common.Base {
     static async onReq(sckUser: Modules.SocketUser, reqData: Dts.ICommandData<Dts.ICommandLoginReqDataProps>) {
         let _kickoff = async (user: Dts.IUser): Promise<any> => {
             await ServiceKickoff.kickoff(sckUser, user)
-            // return new Promise(async (resolve, reject) => {
-            //     if (user) {
-            //         let sckLoginUser = await ServiceUsers.getSocketUser(sckUser.users, user);
-            //         if (sckLoginUser && sckLoginUser.socket.id != sckUser.socket.id) 
-            //             ServiceUser.logout(sckLoginUser as Modules.SocketUser, null, true, true)
-            //             .then(v => resolve())
-            //             .catch(e => resolve());
-            //         else 
-            //             resolve(sckLoginUser);
-            //     } else 
-            //         resolve();
-            // })
         }
 
         let _doLogin = async () => {
-            let isLogin: boolean = await ServiceUser.isLogin(sckUser);
+            // let isLogin: boolean = await ServiceUser.isLogin(sckUser);
+            let isLogin: boolean = sckUser.isLogin();
             if (isLogin) {
                 let sckLoginUser = await ServiceUsers.getSocketUser(sckUser.users, sckUser.user);
                 reqData.extra = sckLoginUser.user;
@@ -51,10 +40,16 @@ export class ServiceLogin extends Cmds.Common.Base {
             } else 
                 await this.doLogin(sckUser, reqData);
         }
+        let _checkConnect = async () => {
+            if (!sckUser.connected() && sckUser.isLogin() ) {                
+                await ServiceUser.logout(sckUser);        
+            }
+        }
 
         await _kickoff(reqData.props.user);
         await _kickoff(sckUser.user);
         await _doLogin();
+        await _checkConnect();
     }    
 
 

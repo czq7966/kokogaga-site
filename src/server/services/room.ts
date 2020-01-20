@@ -143,7 +143,7 @@ export class ServiceRoom {
     }
     static async onDeliverCommand(namespace: Modules.ISocketNamespace, roomid: string, sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf: boolean) {
         let _sckUser = sckUser || await ServiceNamespace.getLocalRoomFirstUser(namespace, roomid);
-        _sckUser && _sckUser.dispatcher.sendCommand(cmd, _sckUser, includeSelf);
+        _sckUser && _sckUser.notDestroyed && _sckUser.dispatcher.sendCommand(cmd, _sckUser, includeSelf);
         if (!sckUser && _sckUser) {
             switch(cmd.cmdId) {
                 case Dts.ECommandId.room_close:

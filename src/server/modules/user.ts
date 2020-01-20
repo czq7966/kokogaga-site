@@ -19,6 +19,9 @@ export interface ISocketUser extends Cmds.Common.IBase {
     onCommand: (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => void
     sendCommand: (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => void
     getDataNamespace(): IDataNamespace 
+    isLogin(): boolean
+    setLogin(login: boolean)
+    connected(): boolean
 }
 
 export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
@@ -27,6 +30,7 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
     socket: IUserSocket;
     dispatcher: Services.Dispatcher;
     openRooms: Cmds.Common.Helper.KeyValue<Dts.IRoom>;
+    _isLogin: boolean;
     constructor(socket: IUserSocket) {
         super()
         this.dispatcher = Services.Dispatcher.getInstance(Dts.dispatcherInstanceName);
@@ -58,7 +62,7 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
             Object.keys(events).forEach(key => {
                 let value = events[key];
                 this.socket.addListener(value, (...args: any[]) => {
-                    console.log('ServerEvent', value, ...args ? args[0]: '')
+                    Logging.log('ServerEvent', value, ...args ? args[0]: '')
                 })
             })
         })
@@ -80,6 +84,15 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
         await Services.ServiceUser.sendCommand(this, cmd, includeSelf);
     }
     getDataNamespace(): IDataNamespace {
-        return this.users.getDataNamespace()
+        return this.users && this.users.getDataNamespace()
+    }
+    isLogin(): boolean {
+        return this._isLogin && !!this.user;
+    }
+    setLogin(login: boolean)  {
+        this._isLogin = login
+    } 
+    connected(): boolean {
+        return this.socket && this.socket.connected
     }
 }
