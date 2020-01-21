@@ -65,7 +65,7 @@ export class ServiceUser extends Cmds.Common.Base {
             // delete sckUser.user;
             sckUser.setLogin(false);
         }    
-        disconnect && sckUser.socket.connected && sckUser.socket.disconnect();
+        disconnect && sckUser.notDestroyed && sckUser.socket && sckUser.socket.connected && sckUser.socket.disconnect();
     }
     static async closeOpenRooms(sckUser: Modules.ISocketUser) {
         let promises = [];

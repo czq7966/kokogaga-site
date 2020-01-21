@@ -25,10 +25,8 @@ export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabas
         this.database = database;
         this.namespaces = new DataNamespacesWrap(this);
         this.wrapDataNamespaces();
-        // this.initEvents();
     }
     destroy() {
-        // this.unInitEvents();
         this.namespaces.destroy();
         delete this.namespaces;
         super.destroy()
@@ -38,86 +36,12 @@ export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabas
             this.getNamespace(namespace);
         })
     }
-    initEvents() {
-        this.initServerEvents();
-    }
-    unInitEvents() {
-        this.unInitServerEvents();
-    }
-    initServerEvents() {
-        this.signaler.server.snsps.keys().forEach(key => {
-            let snsp = this.signaler.server.snsps.get(key);
-            this.initNamespaceEvents(snsp)
-        })
-    }
-    initNamespaceEvents(snsp: Modules_Namespace.ISocketNamespace) {
-        this.initUsersEvents(snsp.users);                
-    }    
-    unInitServerEvents() {
-        this.signaler.server.snsps.keys().forEach(key => {
-            let snsp = this.signaler.server.snsps.get(key);
-            this.unInitNamespaceEvents(snsp)
-        })
-    }
-    unInitNamespaceEvents(snsp: Modules_Namespace.ISocketNamespace) {
-        this.unInitUsersEvents(snsp.users)        
-    }        
-    initUsersEvents(users: ISocketUsers) {
-        if (users) {
-            users.users.on('add', this.users_onUserAdd)
-            users.users.on('del', this.users_onUserDel)
-            users.shortUsers.on('add', this.users_onShortAdd)
-            users.shortUsers.on('del', this.users_onShortDel)        
-            users.sockets.on('add', this.users_onSocketAdd)
-            users.sockets.on('del', this.users_onSocketDel)
-            users.rooms.on('add', this.users_onRoomAdd)
-            users.rooms.on('del', this.users_onRoomDel)    
-        }
-    }
-    unInitUsersEvents(users: ISocketUsers) {
-        if (users) {
-            users.users.off('add', this.users_onUserAdd)
-            users.users.off('del', this.users_onUserDel)
-            users.shortUsers.off('add', this.users_onShortAdd)
-            users.shortUsers.off('del', this.users_onShortDel)        
-            users.sockets.off('add', this.users_onSocketAdd)
-            users.sockets.off('del', this.users_onSocketDel)
-            users.rooms.off('add', this.users_onRoomAdd)
-            users.rooms.off('del', this.users_onRoomDel) 
-        }
-    }
-    users_onUserAdd = (id: string, user: ISocketUser, kvUsers: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        // Services.Modules.Database.users_onUserAdd(this, id, user, kvUsers);
-    }
-    users_onUserDel = (id: string, user: ISocketUser, kvUsers: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        // Services.Modules.Database.users_onUserDel(this, id, user, kvUsers);
-    }
-    users_onShortAdd = (id: string, user: ISocketUser, kvShortUsers: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        // Services.Modules.Database.users_onShortAdd(this, id, user, kvShortUsers);
-    }
-    users_onShortDel = (id: string, user: ISocketUser, kvShortUsers: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        // Services.Modules.Database.users_onShortDel(this, id, user, kvShortUsers);
-    }
-    users_onSocketAdd = (id: string, user: ISocketUser, kvSockets: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        // Services.Modules.Database.users_onSocketAdd(this, id, user, kvSockets);
-    }
-    users_onSocketDel = (id: string, user: ISocketUser, kvSockets: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        // Services.Modules.Database.users_onSocketDel(this, id, user, kvSockets);
-    }
-    users_onRoomAdd = (id: string, room: ADHOCCAST.Dts.IRoom, kvRooms: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        // Services.Modules.Database.users_onRoomAdd(this, id, room, kvRooms);
-    }
-    users_onRoomDel = (id: string, room: ADHOCCAST.Dts.IRoom, kvRooms: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) => { 
-        // Services.Modules.Database.users_onRoomDel(this, id, room, kvRooms);
-    }
     getSignaler(): IRedisSignaler {
         return this.signaler;
     }
     getDatabase(): IDatabase {
         return this.database;
-    }     
-
-
+    }
     getPath(): string {
         return this.getDatabase().getPath()
     }
@@ -142,8 +66,15 @@ export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabas
         let nspWrap = this.namespaces.get(namespace); 
         if (!nspWrap) {
             let nsp = this.database.getNamespace(namespace);
-            if (nsp)
-                nspWrap = this.createNamespace(namespace)
+            let useSignalCenter = this.getServer().getNamespace(namespace).options.useSignalCenter
+            if (nsp) {
+                if (useSignalCenter) {
+                    nspWrap = this.createNamespace(namespace)
+                }
+                else {
+                    this.namespaces.add(namespace, nsp);
+                }
+            }
         }
         return nspWrap;
     }

@@ -106,6 +106,6 @@ export class RedisSignaler {
         }                
     }
     static async on_after_network_disconnect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
-        await signaler.tryLogin();
+        signaler.stopHandshake();        
     }    
 }

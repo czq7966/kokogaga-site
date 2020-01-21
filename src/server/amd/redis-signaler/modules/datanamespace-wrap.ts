@@ -188,14 +188,18 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
     }    
     redis_onUserAdd = (id: string, user: ADHOCCAST.Dts.IUser) => { 
         let channel = this.getUserChannel(id);
+        let serverUsersChannel = this.getSignaler().getServerUsersChannel();
         let strUser = JSON.stringify(user);
+        this.getSignaler().hset(serverUsersChannel, channel, strUser);
         this.getSignaler().set(channel, strUser);
         this.getSignaler().subscribe(channel);
     }
     redis_onUserDel = (id: string, user: ADHOCCAST.Dts.IUser) => { 
         if (user) {
             let channel = this.getUserChannel(id);
+            let serverUsersChannel = this.getSignaler().getServerUsersChannel();
             this.getSignaler().del(channel);
+            this.getSignaler().hdel(serverUsersChannel, channel);
             this.getSignaler().unsubscribe(channel);
         }
     }

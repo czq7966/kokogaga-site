@@ -1,4 +1,5 @@
 
+import * as Redis from 'redis'
 import { EventEmitter } from 'events';
 import { ADHOCCAST } from '../libex'
 import { IClientSocket, ClientSocket } from './client-socket';
@@ -24,18 +25,11 @@ export interface IRedisClient {
 export interface ISocketClient extends ADHOCCAST.Network.ISignaler, IRedisClient  {
     subSocket: IClientSocket
     pubSocket: IClientSocket
-    // getCmdNamespace(cmd: ADHOCCAST.Cmds.ICommandData<any>): string
-    getCmdChannel(cmd: ADHOCCAST.Cmds.ICommandData<any>, namespace?: string): string
-    onGetCmdChannel: (cmd: ADHOCCAST.Cmds.ICommandData<any>, namespace?: string) => string;    
-    // getServerChannel(id: string): string
-    // getRoomChannel(namespace: string, id: string): string
-    // getUserChannel(namespace: string, id: string): string
-    // getShortChannel(namespace: string, id: string): string
-    // getSocketChannel(namespace: string, id: string): string    
+    getCmdChannel(cmd: ADHOCCAST.Cmds.ICommandData<any>, namespace?: string): string    
     sendCommand(cmd: any, channel?: string): Promise<any>
     delaySendCommand(cmd: any, channel?: string, delayTime?: number): Promise<any>
-
-
+    onGetCmdChannel: (cmd: ADHOCCAST.Cmds.ICommandData<any>, namespace?: string) => string
+    onGetSocketOptions: (clientSocket: IClientSocket) => Redis.ClientOpts
 }
 
 export class SocketClient implements ISocketClient {
@@ -44,11 +38,12 @@ export class SocketClient implements ISocketClient {
     subSocket: IClientSocket
     pubSocket: IClientSocket
     onGetCmdChannel: (cmd: ADHOCCAST.Cmds.ICommandData<any>, namespace?: string) => string;
+    onGetSocketOptions: (clientSocket: IClientSocket) => Redis.ClientOpts
 
-    constructor(url?: string, path?: string) {
+    constructor(url?: string) {
         this.eventEmitter = new EventEmitter();
-        this.subSocket = new ClientSocket(url, path);
-        this.pubSocket = new ClientSocket(url, path);       
+        this.subSocket = new ClientSocket(url);
+        this.pubSocket = new ClientSocket(url);       
         this.initEvents();         
     }
     destroy() {
@@ -70,13 +65,20 @@ export class SocketClient implements ISocketClient {
         this.subSocket.setUrl(value, path);
         this.pubSocket.setUrl(value, path);
     }
-    // getPath(): string {
-    //     return this.subSocket.getPath();
-    // }
-    // setPath(value: string) {
-    //     this.subSocket.setPath(value);
-    //     this.pubSocket.setPath(value);
-    // }    
+    getSocketOptions(clientSocket: IClientSocket): Redis.ClientOpts {
+        if (this.onGetSocketOptions) return this.onGetSocketOptions(clientSocket)
+        //
+        let url = this.getUrl() || "";
+        url = url[url.length - 1] !== '/' ? url : url.substr(0, url.length - 1);  
+
+        let options: Redis.ClientOpts  = {
+            url: url,
+            retry_strategy: (options: Redis.RetryStrategyOptions) => {
+                return 1000;
+            }
+        }
+        return options;        
+    }  
 
     connected(): boolean {
         return this.subSocket.connected() && this.pubSocket.connected();
@@ -84,9 +86,9 @@ export class SocketClient implements ISocketClient {
     connecting(): boolean {
         return this.subSocket.connecting() || this.pubSocket.connecting();
     }
-    async assertConnected() {
+    async assertConnected(label: string) {
         if (!this.connected()) {
-            throw 'redis server not connected';
+            throw label + ':assertConnected: redis server not connected';
         }
     }
     connect(url?: string, path?: string): Promise<any> {
@@ -95,27 +97,61 @@ export class SocketClient implements ISocketClient {
         return Promise.all([subConnect, pubConnect]);
     }
     initEvents() {
-        this.subSocket.eventEmitter.on(ADHOCCAST.Dts.EClientSocketEvents.connect, (...args) => {
-            this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.connect, ...args)
+        this.subSocket.onGetOptions = this.getSocketOptions.bind(this);
+        this.pubSocket.onGetOptions = this.getSocketOptions.bind(this);
+
+        //Pub Events
+        let connectEventEmitted = false;
+        let disconnectEventEmitted = false;
+        this.pubSocket.eventEmitter.on(ADHOCCAST.Dts.EClientSocketEvents.connect, (...args) => {
+            if (this.subSocket.connected()) {
+                if (!connectEventEmitted) {
+                    this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.connect, ...args)
+                    connectEventEmitted = true;
+                    disconnectEventEmitted = false;
+                }
+            }
         });
+        this.pubSocket.eventEmitter.on(ADHOCCAST.Dts.EClientSocketEvents.disconnect, (...args) => {
+            if (!disconnectEventEmitted) {
+                this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.disconnect, ...args);
+                disconnectEventEmitted = true;
+                connectEventEmitted = false;
+            }         
+        })        
+        this.pubSocket.eventEmitter.on(ADHOCCAST.Dts.EClientSocketEvents.message_error, (...args) => {
+            this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.message_error, ...args)
+        })   
+
+        //Sub Events
+        this.subSocket.eventEmitter.on(ADHOCCAST.Dts.EClientSocketEvents.connect, (...args) => {
+            if (this.pubSocket.connected()) {
+                if (!connectEventEmitted) {
+                    this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.connect, ...args)
+                    connectEventEmitted = true;
+                    disconnectEventEmitted = false;
+                }              
+            }
+        });        
         this.subSocket.eventEmitter.on(ADHOCCAST.Dts.EClientSocketEvents.disconnect, (...args) => {
-            this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.disconnect, ...args)
-        })        
-        this.subSocket.eventEmitter.on(ADHOCCAST.Dts.EClientSocketEvents.message_error, (...args) => {
-            this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.message_error, ...args)
-        })        
-        this.subSocket.eventEmitter.on(ADHOCCAST.Dts.EClientSocketEvents.message_error, (...args) => {
-            this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.message_error, ...args)
-        });           
+            if (!disconnectEventEmitted) {
+                this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.disconnect, ...args);
+                disconnectEventEmitted = true;
+                connectEventEmitted = false;
+            }
+        });                
         this.subSocket.eventEmitter.on('message', (channel: string, message: string) => {
             let data: ADHOCCAST.Cmds.ICommandData<any> = JSON.parse(message);
             Logging.log('/message', channel, data)            
             this.eventEmitter.emit(ADHOCCAST.Dts.CommandID, data);            
         });
     }    
-    unInitEvents() {
+    unInitEvents() {        
         this.subSocket.eventEmitter.removeAllListeners();
         this.pubSocket.eventEmitter.removeAllListeners();
+
+        this.subSocket.onGetOptions = null;
+        this.pubSocket.onGetOptions = null;
     }   
 
     disconnect() {
@@ -136,7 +172,7 @@ export class SocketClient implements ISocketClient {
                 })
     
             } else {
-                reject('redis server not connected')
+                reject('/subscribe:' + channel + ': redis server not connected ')
             }    
         });
     }
@@ -153,7 +189,7 @@ export class SocketClient implements ISocketClient {
                 })
     
             } else {
-                reject('redis server not connected')
+                reject('/unsubscribe' + channel + ': : redis server not connected')
             }    
         });        
     }
@@ -174,13 +210,13 @@ export class SocketClient implements ISocketClient {
                 })
     
             } else {
-                reject('redis server not connected')
+                reject('/publish:' + channel + ':  redis server not connected')
             }    
         });
     }
     get(key: string): Promise<string> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected().then(v => {
+            this.assertConnected('get').then(v => {
                 this.pubSocket.socket.get(key,  (err: Error, value: string) => {
                     if (err)
                         reject(err.message);
@@ -193,7 +229,7 @@ export class SocketClient implements ISocketClient {
     }
     set(key: string, value: string): Promise<boolean> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected().then(v => {
+            this.assertConnected('set').then(v => {
                 this.pubSocket.socket.set(key, value, (err: Error, value: string) => {
                     if (err)
                         reject(err.message);
@@ -206,7 +242,7 @@ export class SocketClient implements ISocketClient {
     }
     del(key: string): Promise<boolean> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected().then(v => {
+            this.assertConnected('del').then(v => {
                 this.pubSocket.socket.del(key, (err: Error, value: number) => {
                     if (err)
                         reject(err.message);
@@ -219,7 +255,7 @@ export class SocketClient implements ISocketClient {
     }
     exists(key: string): Promise<boolean> {        
         return new Promise((resolve, reject) => {            
-            this.assertConnected().then(v => {
+            this.assertConnected('exists').then(v => {
                 this.pubSocket.socket.exists(key, (err: Error, value: number) => {
                     if (err)
                         resolve(false)
@@ -232,7 +268,7 @@ export class SocketClient implements ISocketClient {
     }
     hget(key: string, field: string): Promise<string> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected().then(v => {
+            this.assertConnected('hget').then(v => {
                 this.pubSocket.socket.hget(key, field,  (err: Error, value: string) => {
                     if (err)
                         reject(err.message);
@@ -245,7 +281,7 @@ export class SocketClient implements ISocketClient {
     }
     hset(key: string, field: string, value: string): Promise<boolean> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected().then(v => {
+            this.assertConnected('hset').then(v => {
                 this.pubSocket.socket.hset(key, field, value, (err: Error, value: number) => {
                     if (err)
                         reject(err.message);
@@ -258,7 +294,7 @@ export class SocketClient implements ISocketClient {
     }
     hdel(key: string, field: string): Promise<boolean> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected().then(v => {
+            this.assertConnected('hdel').then(v => {
                 this.pubSocket.socket.hdel(key, field,  (err: Error, value: number) => {
                     if (err)
                         reject(err.message);
@@ -271,7 +307,7 @@ export class SocketClient implements ISocketClient {
     }
     hlen(key: string): Promise<number> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected().then(v => {
+            this.assertConnected('hlen').then(v => {
                 this.pubSocket.socket.hlen(key,  (err: Error, value: number) => {
                     if (err)
                         reject(err.message);
@@ -284,7 +320,7 @@ export class SocketClient implements ISocketClient {
     }
     hexists(key: string, field: string): Promise<boolean> {  
         return new Promise((resolve, reject) => {            
-            this.assertConnected().then(v => {
+            this.assertConnected('hexists').then(v => {
                 this.pubSocket.socket.hexists(key, field, (err: Error, value: number) => {
                     if (err)
                         resolve(false)
@@ -297,7 +333,7 @@ export class SocketClient implements ISocketClient {
     }    
     persist(key: string): Promise<boolean> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected().then(v => {
+            this.assertConnected('persist').then(v => {
                 this.pubSocket.socket.persist(key, (err: Error, value: number) => {
                     if (err)
                         reject(err.message)
@@ -310,7 +346,7 @@ export class SocketClient implements ISocketClient {
     }
     expire(key: string, seconds: number): Promise<boolean>  {
         return new Promise((resolve, reject) => {            
-            this.assertConnected().then(v => {
+            this.assertConnected('expire').then(v => {
                 this.pubSocket.socket.expire(key, seconds, (err: Error, value: number) => {
                     if (err)
                         reject(err.message)
@@ -323,7 +359,7 @@ export class SocketClient implements ISocketClient {
     }
     pexpire(key: string, milliseconds: number): Promise<boolean> {        
         return new Promise((resolve, reject) => {            
-            this.assertConnected().then(v => {
+            this.assertConnected('pexpire').then(v => {
                 this.pubSocket.socket.pexpire(key, milliseconds, (err: Error, value: number) => {
                     if (err)
                         reject(err.message)
@@ -333,6 +369,9 @@ export class SocketClient implements ISocketClient {
                 })
             }).catch(e => {reject(e)})
         });         
+    }
+    eval() {
+        this.pubSocket.socket.eval()
     }
     sendCommand(cmd: ADHOCCAST.Cmds.ICommandData<any>, channel?: string): Promise<any> {
         channel = channel || this.getCmdChannel(cmd);      

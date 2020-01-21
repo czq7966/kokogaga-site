@@ -1,10 +1,11 @@
+import * as Redis from 'redis'
 import * as Dts from '../dts'
 import * as Network from '../network'
 import * as Services from '../services'
 import * as Modules_Namespace from '../../../modules/namespace'
 import { ADHOCCAST } from '../libex'
 import { IServer } from '../../../modules/server';
-import { SocketClient, ISocketClient, IRedisClient } from '../network/socket-client';
+import { SocketClient, ISocketClient, IRedisClient,IClientSocket } from '../network';
 import { ISignalClientBase, SignalClientBase } from '../../signal-client/signal-client-base'
 import { ISignalClient } from '../../signal-client/signal-client'
 import { IDatabaseWrap, DatabaseWrap } from './database-wrap'
@@ -49,7 +50,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         super(nsp, server, options);
         this.init();
         this.initEvents();
-        this.tryLogin();
+        this.tryConnect();
     }
     destroy() {
         this.unInitEvents();
@@ -76,15 +77,17 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         delete this._isReady;        
     }
     initDatabase() {
-        this.unInitDatabase();
-        this.database = new DatabaseWrap(this, this.server.getDatabase());
+        if (!this.database)
+            this.database = new DatabaseWrap(this, this.server.getDatabase());
     }   
     unInitDatabase() {
         this.database && this.database.destroy();
         delete this.database;
     } 
     initEvents() {
-        (this.conneciton.signaler as Network.ISocketClient).onGetCmdChannel = this.getCmdChannel
+        (this.conneciton.signaler as Network.ISocketClient).onGetCmdChannel = this.getCmdChannel;
+        (this.conneciton.signaler as Network.ISocketClient).onGetSocketOptions = this.getSocketOptions
+        
         this.conneciton.dispatcher.recvFilter.onAfterRoot.add(this.recvFilter_onAfterRoot);
         this.conneciton.dispatcher.sendFilter.onAfterRoot.add(this.sendFilter_onAfterRoot);
         this.conneciton.dispatcher.eventRooter.onAfterRoot.add(this.onAfterRoot)
@@ -94,7 +97,9 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         this.conneciton.dispatcher.eventRooter.onAfterRoot.remove(this.onAfterRoot)
         this.conneciton.dispatcher.sendFilter.onAfterRoot.remove(this.sendFilter_onAfterRoot);
         this.conneciton.dispatcher.recvFilter.onAfterRoot.remove(this.recvFilter_onAfterRoot)
+
         (this.conneciton.signaler as Network.ISocketClient).onGetCmdChannel = null;
+        (this.conneciton.signaler as Network.ISocketClient).onGetSocketOptions = null;
     }       
     recvFilter_onAfterRoot = (cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>): any => {
         return Services.Modules.RedisSignaler.RecvFilter.onAfterRoot(this, cmd);
@@ -109,25 +114,32 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     onAfterRoot = (cmd: ADHOCCAST.Cmds.Common.ICommand): any => {
         switch(cmd.data.cmdId) {
             case ADHOCCAST.Cmds.ECommandId.adhoc_login:
+                console.log('adhoc_login')
                 this.initDatabase();
                 this._isReady = this.conneciton.isLogin(); 
                 break;
             case ADHOCCAST.Cmds.ECommandId.adhoc_logout:
                 this._isReady = this.conneciton.isLogin(); 
                 break;
+            case ADHOCCAST.Cmds.ECommandId.network_connect:
+                console.log('network_connect')
+                this.tryLogin();
+                break;
             case ADHOCCAST.Cmds.ECommandId.network_disconnect:
-                this.unInitDatabase();
+                console.log('network_disconnect')
                 this._isReady = this.conneciton.isLogin();                
                 break;
         }   
 
         return Services.Modules.RedisSignaler.onAfterRoot(this, cmd);
     }
+    async tryConnect() {
+        await this.conneciton.signaler.connect();
+    }
     async tryLogin() {
         let signalRedis = this.config.signalRedis;
         if (signalRedis && signalRedis.enabled ) {
             try {
-                await this.conneciton.signaler.connect();
                 await this.conneciton.retryLogin(null, null, null, 5 * 1000, 12);        
             } catch(e) {
                 return await this.tryLogin()
@@ -193,6 +205,18 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         }  
         return channel;  
     }    
+    getSocketOptions = (clientSocket: IClientSocket) => {
+        let url = clientSocket.getUrl() || "";
+        url = url[url.length - 1] !== '/' ? url : url.substr(0, url.length - 1);  
+
+        let options: Redis.ClientOpts  = {
+            url: url,
+            retry_strategy: (options: Redis.RetryStrategyOptions) => {
+                return 5000;
+            }
+        }
+        return options;
+    }
     getPath(): string {
         return this.server.getConfig().socketIOServer.path;
     }
@@ -243,10 +267,9 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         this.stopHandshake();
         let serverExsitChannel = this.getServerExistChannel();
         this.getSocketClient().pexpire(serverExsitChannel, this.config.signalRedis.handshakeTimeout);
-        setInterval(() => {            
+        this._handshakeHandler = setInterval(() => {            
             this.getSocketClient().pexpire(serverExsitChannel, this.config.signalRedis.handshakeTimeout);
-
-        }, this.config.signalRedis.handshakeInterval)
+        }, this.config.signalRedis.handshakeInterval) as any;
 
     }
     stopHandshake() {
