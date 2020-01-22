@@ -22,6 +22,7 @@ export interface IServer {
     getId(): string            
     getConfig(): IConfig
     getDatabase(): IDatabase
+    setDatabase(database: IDatabase)
     newConfig(): IConfig
     newSocketUsers(snsp: ISocketNamespace): ISocketUsers
     initNamespaces(): Promise<any>

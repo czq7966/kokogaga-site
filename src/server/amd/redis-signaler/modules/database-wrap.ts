@@ -48,6 +48,9 @@ export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabas
     getServer(): IServer {
         return this.getDatabase().getServer();
     }
+    isReady(): boolean {
+        return this.getDatabase().isReady() && this.getSignaler().isReady()
+    }
     createNamespace(namespace: string): IDataNamespace {        
         let nspWrap = this.namespaces.get(namespace);
         if (!nspWrap) {

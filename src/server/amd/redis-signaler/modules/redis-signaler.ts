@@ -28,6 +28,8 @@ export interface IRedisSignaler extends ISignalClient, IRedisClient {
     getNamespaceRoomChannel(id: string, namespace?: string): string
     getNamespaceRoomUsersChannel(id: string, namespace?: string): string 
     getNamespaceUserChannel(id: string, namespace?: string): string
+    getNamespaceUserStreamRoomChannel(userid: string, roomid: string, namespace?: string): string
+    getNamespaceUserStreamRoomUsersChannel(userid: string, roomid: string, namespace?: string): string
     getNamespaceShortChannel(id: string, namespace?: string): string 
     getNamespaceSocketChannel(id: string, namespace?: string): string    
     
@@ -77,8 +79,10 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         delete this._isReady;        
     }
     initDatabase() {
-        if (!this.database)
+        if (!this.database) {
             this.database = new DatabaseWrap(this, this.server.getDatabase());
+            this.server.setDatabase(this.database);
+        }
     }   
     unInitDatabase() {
         this.database && this.database.destroy();
@@ -221,41 +225,49 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         return this.server.getConfig().socketIOServer.path;
     }
     getPathChannel(id?: string): string {
-        return '/path:' + (id || this.getPath());
+        return Dts.ChannelKeys.Path + (id || this.getPath());
     }
     //Server channels
     getServersChannel(id?: string): string {
-        return this.getNamespaceChannel() + '/servers:' + (id || '');
+        return this.getNamespaceChannel() +  Dts.ChannelKeys.Servers + (id || '');
     }
     getServerChannel(id?: string): string {
         id = id || this.server.getId();
-        return this.getNamespaceChannel() + '/server:' + id;
+        return this.getNamespaceChannel() +  Dts.ChannelKeys.Server + id;
     }
     getServerExistChannel(id?: string): string {
-        return this.getServerChannel(id) + '/exist:'
+        return this.getServerChannel(id) +  Dts.ChannelKeys.Exist
     }
     getServerUsersChannel(id?: string): string {
-        return this.getServerChannel(id) + '/users:'
+        return this.getServerChannel(id) +  Dts.ChannelKeys.Users
     }
 
     //Namespace channels
     getNamespaceChannel(id?: string): string {
-        return this.getPathChannel() + '/namespace:' + (id || this.options.name);
+        return this.getPathChannel() +  Dts.ChannelKeys.Namespace + (id || this.options.name);
     }    
     getNamespaceRoomChannel(id: string, namespace?: string): string {
-        return this.getNamespaceChannel(namespace) + '/room:' + id;
+        return this.getNamespaceChannel(namespace) +  Dts.ChannelKeys.Room + id;
     }
     getNamespaceRoomUsersChannel(id: string, namespace?: string): string {
-        return this.getNamespaceRoomChannel(id, namespace) + '/users:';
+        return this.getNamespaceRoomChannel(id, namespace) +  Dts.ChannelKeys.Users;
     }    
     getNamespaceUserChannel(id: string, namespace?: string): string {
-        return this.getNamespaceChannel(namespace) + '/user:' + id;
+        return this.getNamespaceChannel(namespace) +  Dts.ChannelKeys.User + id;
     }
+    getNamespaceUserStreamRoomChannel(userid: string, roomid: string, namespace?: string): string {
+        return this.getNamespaceRoomChannel(roomid, namespace) + Dts.ChannelKeys.UserStreamRoomPrefix + userid;
+
+    }
+    getNamespaceUserStreamRoomUsersChannel(userid: string, roomid: string, namespace?: string): string {
+        return this.getNamespaceUserStreamRoomChannel(userid, roomid, namespace) + Dts.ChannelKeys.Users
+    }
+
     getNamespaceShortChannel(id: string, namespace?: string): string {
-        return this.getNamespaceChannel(namespace) + '/short:' + id;
+        return this.getNamespaceChannel(namespace) +  Dts.ChannelKeys.Short + id;
     }    
     getNamespaceSocketChannel( id: string, namespace?: string): string {
-        return this.getNamespaceChannel(namespace) + '/socket:' + id;
+        return this.getNamespaceChannel(namespace) +  Dts.ChannelKeys.Socket + id;
     }
 
     getSocketClient(): ISocketClient {

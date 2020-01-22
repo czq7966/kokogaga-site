@@ -26,6 +26,11 @@ export class ServiceLogin extends Cmds.Common.Base {
 
     // logical business
     static async onReq(sckUser: Modules.SocketUser, reqData: Dts.ICommandData<Dts.ICommandLoginReqDataProps>) {
+        if (!sckUser.getDataNamespace().isReady()) {
+            this.doLogin_failed(sckUser, reqData, 'Server Database Not Ready!');
+            return;
+        }
+
         let _kickoff = async (user: Dts.IUser): Promise<any> => {
             await ServiceKickoff.kickoff(sckUser, user)
         }

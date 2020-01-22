@@ -22,6 +22,7 @@ export interface IDataNamespace {
     getDatabase(): IDatabase;
     getPath(): string
     getName(): string      
+    isReady(): boolean
     //User
     newUserShortID(len?: number): Promise<string>
     getUser(user: Dts.IUser): Promise<Dts.IUser>
@@ -69,6 +70,7 @@ export interface IDatabase {
     destroy()
     getPath(): string
     getServer(): IServer
+    isReady(): boolean
     createNamespace(namespace: string): IDataNamespace 
     destroyNamespace(namespace: string)
     getNamespace(namespace: string): IDataNamespace
@@ -136,6 +138,9 @@ export class DataNamespace implements IDataNamespace {
     getName(): string {
         return this.name;
     }      
+    isReady(): boolean {
+        return this.database.isReady()
+    }
     //User
     async newUserShortID(len?: number): Promise<string> {
         if (this.onNewUserShortID) return this.onNewUserShortID(len);
@@ -171,26 +176,18 @@ export class DataNamespace implements IDataNamespace {
     async addUser(user: Dts.IUser): Promise<boolean> {
         if (this.onAddUser) return this.onAddUser(user);
         //        
-        let existUser = await this.existUser(user)
-        if (!existUser) {
-            user.id && this.users.add(user.id, user)
-            user.sid && this.shortUsers.add(user.sid, user);
-            user.socketId && this.socketUsers.add(user.socketId, user);
-            return true;
-        }
-        return false        
+        user.id && this.users.add(user.id, user)
+        user.sid && this.shortUsers.add(user.sid, user);
+        user.socketId && this.socketUsers.add(user.socketId, user);
+        return true;
     }
     async delUser(user: Dts.IUser): Promise<boolean> {
         if (this.onDelUser) return this.onDelUser(user);
         //  
-        let existUser = await this.getUser(user);
-        if (existUser) {
-            this.users.del(existUser.id)
-            this.shortUsers.del(existUser.sid)
-            this.socketUsers.del(existUser.socketId);
-            return true;
-        }
-        return false        
+        this.users.del(user.id)
+        this.shortUsers.del(user.sid)
+        this.socketUsers.del(user.socketId);
+        return true;
     }
     //Room
     async getRoom(roomid: string): Promise<Dts.IRoom> {
@@ -352,6 +349,9 @@ export class Database implements IDatabase {
     getServer(): IServer {
         return this.server;
     }   
+    isReady(): boolean {
+        return true;
+    }
     createNamespace(namespace: string): IDataNamespace {
         let nsp = this.namespaces.get(namespace)
         if (!nsp) {

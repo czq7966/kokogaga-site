@@ -80,14 +80,18 @@ export class SocketClient implements ISocketClient {
         return options;        
     }  
 
-    connected(): boolean {
-        return this.subSocket.connected() && this.pubSocket.connected();
+    connected(label?: string): boolean {
+        let result = this.subSocket.connected() && this.pubSocket.connected();
+        if (!result) {
+            Logging.error('assertConnected: redis server not connected: ' + label)
+        }
+        return result;
     }
     connecting(): boolean {
         return this.subSocket.connecting() || this.pubSocket.connecting();
     }
     async assertConnected(label: string) {
-        if (!this.connected()) {
+        if (!this.connected(label)) {
             throw label + ':assertConnected: redis server not connected';
         }
     }
@@ -161,10 +165,12 @@ export class SocketClient implements ISocketClient {
 
     subscribe(channel: string): Promise<any> {
         return new Promise((resolve, reject) => {
-            if (this.connected()) {
+            if (this.connected('subscribe')) {
                 this.subSocket.socket.subscribe(channel,  (err: Error, result: string) => {
-                    if (err)
-                        reject(err.message);
+                    if (err) {                        
+                        Logging.error(err.message);
+                        resolve(err.message);
+                    }
                     else {
                         Logging.log('/subscribe', channel);                        
                         resolve(result)    
@@ -172,16 +178,20 @@ export class SocketClient implements ISocketClient {
                 })
     
             } else {
-                reject('/subscribe:' + channel + ': redis server not connected ')
+                let err = '/subscribe:' + channel + ': redis server not connected ';
+                Logging.error(err);
+                resolve(err)
             }    
         });
     }
     unsubscribe(channel: string): Promise<any> {
         return new Promise((resolve, reject) => {
-            if (this.connected()) {
+            if (this.connected('unsubscribe')) {
                 this.subSocket.socket.unsubscribe(channel,  (err: Error, result: string) => {
-                    if (err)
-                        reject(err.message);
+                    if (err) {                        
+                        Logging.error(err.message);
+                        resolve(err.message);
+                    }
                     else {
                         Logging.log('/unsubscribe', channel);    
                         resolve(result)    
@@ -189,7 +199,9 @@ export class SocketClient implements ISocketClient {
                 })
     
             } else {
-                reject('/unsubscribe' + channel + ': : redis server not connected')
+                let err = '/unsubscribe:' + channel + ': redis server not connected ';
+                Logging.error(err);
+                resolve(err)                
             }    
         });        
     }
@@ -198,176 +210,215 @@ export class SocketClient implements ISocketClient {
             return Promise.reject("/publish: channel is null ")
         }
         return new Promise((resolve, reject) => {
-            if (this.connected()) {
+            if (this.connected('publish')) {
                 Logging.log('/publish', channel, cmd);
                 let msg = JSON.stringify(cmd);                
                 this.pubSocket.socket.publish(channel, msg, (err: Error, recvCount: number) => {
-                    if (err)
-                        reject(err.message);
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve(err.message);
+                    }
                     else {
                         resolve(recvCount)    
                     }
-                })
-    
+                })    
             } else {
-                reject('/publish:' + channel + ':  redis server not connected')
+                let err = '/publish:' + channel + ': redis server not connected ';
+                Logging.error(err);
+                resolve(err)    
             }    
         });
     }
     get(key: string): Promise<string> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected('get').then(v => {
+            if (!this.connected('get')) resolve()
+            else {
                 this.pubSocket.socket.get(key,  (err: Error, value: string) => {
-                    if (err)
-                        reject(err.message);
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve();
+                    }
                     else {
                         resolve(value)    
                     }
                 })
-            }).catch(e => {reject(e)})
+            }
         }); 
     }
     set(key: string, value: string): Promise<boolean> {
-        return new Promise((resolve, reject) => {            
-            this.assertConnected('set').then(v => {
+        return new Promise((resolve, reject) => {         
+            if (!this.connected('set')) resolve(false)
+            else {
                 this.pubSocket.socket.set(key, value, (err: Error, value: string) => {
-                    if (err)
-                        reject(err.message);
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve(false);
+                    }
                     else {
                         resolve(true)    
                     }
                 })
-            }).catch(e => {reject(e)})
+            }
         }); 
     }
     del(key: string): Promise<boolean> {
-        return new Promise((resolve, reject) => {            
-            this.assertConnected('del').then(v => {
+        return new Promise((resolve, reject) => {   
+            if (!this.connected('del')) resolve(false)
+            else {
                 this.pubSocket.socket.del(key, (err: Error, value: number) => {
-                    if (err)
-                        reject(err.message);
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve(false);
+                    }
                     else {
                         resolve(true)    
                     }
                 })
-            }).catch(e => {reject(e)})
+            }                     
         }); 
     }
     exists(key: string): Promise<boolean> {        
         return new Promise((resolve, reject) => {            
-            this.assertConnected('exists').then(v => {
+            if (!this.connected('exists')) resolve(false)
+            else {
                 this.pubSocket.socket.exists(key, (err: Error, value: number) => {
-                    if (err)
+                    if (err) {
+                        Logging.error(err.message);
                         resolve(false)
+                    }
                     else {
                         resolve(value > 0)    
                     }
                 })
-            }).catch(e => {reject(e)})
+            }
         }); 
     }
     hget(key: string, field: string): Promise<string> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected('hget').then(v => {
+            if (!this.connected('hget')) resolve()
+            else {
                 this.pubSocket.socket.hget(key, field,  (err: Error, value: string) => {
-                    if (err)
-                        reject(err.message);
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve();
+                    }
                     else {
                         resolve(value)    
                     }
                 })
-            }).catch(e => {reject(e)})
+            }
         }); 
     }
     hset(key: string, field: string, value: string): Promise<boolean> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected('hset').then(v => {
+            if (!this.connected('hset')) resolve()
+            else {
                 this.pubSocket.socket.hset(key, field, value, (err: Error, value: number) => {
-                    if (err)
-                        reject(err.message);
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve(false);
+                    }
                     else {
                         resolve(true)    
                     }
                 })
-            }).catch(e => {reject(e)})
+            };
         }); 
     }
     hdel(key: string, field: string): Promise<boolean> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected('hdel').then(v => {
+            if (!this.connected('hdel')) resolve()
+            else {
                 this.pubSocket.socket.hdel(key, field,  (err: Error, value: number) => {
-                    if (err)
-                        reject(err.message);
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve(false);
+                    }
                     else {
                         resolve(true)    
-                    }
+                    }                    
                 })
-            }).catch(e => {reject(e)})
+            }
         });         
     }
     hlen(key: string): Promise<number> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected('hlen').then(v => {
+            if (!this.connected('hlen')) resolve()
+            else {
                 this.pubSocket.socket.hlen(key,  (err: Error, value: number) => {
-                    if (err)
-                        reject(err.message);
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve();
+                    }
                     else {
                         resolve(value)    
                     }
                 })
-            }).catch(e => {reject(e)})
+            }
         }); 
     }
     hexists(key: string, field: string): Promise<boolean> {  
         return new Promise((resolve, reject) => {            
-            this.assertConnected('hexists').then(v => {
+            if (!this.connected('hexists')) resolve()
+            else {
                 this.pubSocket.socket.hexists(key, field, (err: Error, value: number) => {
-                    if (err)
+                    if (err) {
+                        Logging.error(err.message);
                         resolve(false)
+                    }
                     else {
                         resolve(value > 0)    
                     }
                 })
-            }).catch(e => {reject(e)})
+            }
         }); 
     }    
     persist(key: string): Promise<boolean> {
         return new Promise((resolve, reject) => {            
-            this.assertConnected('persist').then(v => {
+            if (!this.connected('persist')) resolve()
+            else {
                 this.pubSocket.socket.persist(key, (err: Error, value: number) => {
-                    if (err)
-                        reject(err.message)
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve(false)
+                    }
                     else {
-                        resolve(true)    
+                        resolve(value > 0)    
                     }
                 })
-            }).catch(e => {reject(e)})
+            }
         }); 
     }
     expire(key: string, seconds: number): Promise<boolean>  {
         return new Promise((resolve, reject) => {            
-            this.assertConnected('expire').then(v => {
+            if (!this.connected('expire')) resolve()
+            else {
                 this.pubSocket.socket.expire(key, seconds, (err: Error, value: number) => {
-                    if (err)
-                        reject(err.message)
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve(false)
+                    }
                     else {
-                        resolve(true)    
+                        resolve(value > 0)    
                     }
                 })
-            }).catch(e => {reject(e)})
+            }
         });   
     }
     pexpire(key: string, milliseconds: number): Promise<boolean> {        
         return new Promise((resolve, reject) => {            
-            this.assertConnected('pexpire').then(v => {
+            if (!this.connected('expire')) resolve()
+            else {
                 this.pubSocket.socket.pexpire(key, milliseconds, (err: Error, value: number) => {
-                    if (err)
-                        reject(err.message)
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve(false)
+                    }
                     else {
-                        resolve(true)    
+                        resolve(value > 0)    
                     }
                 })
-            }).catch(e => {reject(e)})
+            }
         });         
     }
     eval() {

@@ -10,6 +10,8 @@ export interface IDataNamespaceWrap extends IDataNamespace {
     getUserChannel(id: string): string
     getShortChannel(id: string): string 
     getSocketChannel(id: string): string     
+    getUserStreamRoomChannel(id: string, namespace?: string): string
+    getUserStreamRoomUsersChannel(id: string, namespace?: string): string    
 }
 export class DataNamespaceWrap implements IDataNamespaceWrap {
     databasewrap: IDatabaseWrap;
@@ -87,6 +89,12 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
     getUserChannel(id: string): string { return this.getSignaler().getNamespaceUserChannel(id, this.getName()) }
     getShortChannel(id: string): string { return this.getSignaler().getNamespaceShortChannel(id, this.getName()) }
     getSocketChannel(id: string): string { return this.getSignaler().getNamespaceSocketChannel(id, this.getName()) }    
+    getUserStreamRoomChannel(userid: string, roomid: string, namespace?: string): string { 
+        return this.getSignaler().getNamespaceUserStreamRoomChannel(userid, roomid, this.getName()) 
+    }   
+    getUserStreamRoomUsersChannel(userid: string, roomid: string, namespace?: string): string  { 
+        return this.getSignaler().getNamespaceUserStreamRoomUsersChannel(userid, roomid, this.getName()) 
+    }     
     //Props
     getDatabase(): IDatabase {
         return this.namespace.getDatabase();
@@ -97,6 +105,10 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
     getName(): string {
         return this.namespace.getName();
     }
+    isReady(): boolean {
+        return this.databasewrap.isReady()
+    }
+
     //User
     async newUserShortID(len?: number): Promise<string> {
         len = len || 6;
@@ -193,6 +205,8 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         this.getSignaler().hset(serverUsersChannel, channel, strUser);
         this.getSignaler().set(channel, strUser);
         this.getSignaler().subscribe(channel);
+        this.getSignaler().del(this.getUserStreamRoomChannel(id, user.room.id))
+        this.getSignaler().del(this.getUserStreamRoomUsersChannel(id, user.room.id))
     }
     redis_onUserDel = (id: string, user: ADHOCCAST.Dts.IUser) => { 
         if (user) {

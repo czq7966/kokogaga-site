@@ -4,6 +4,7 @@ import * as Dts from "../dts";
 import { ICommandDeliverDataExtraProps } from '../amd/signal-client/dts';
 import { ServiceUser } from './user';
 import { ServiceRoom } from './room';
+import { ServiceKickoff } from './kickoff';
 
 export class ServiceNamespace  {
     static async onDeliverCommand(namespace: Modules.ISocketNamespace, cmd: Dts.ICommandData<any>) {
@@ -57,7 +58,7 @@ export class ServiceNamespace  {
         let extra = dlvCmd.extra as  Dts.ICommandData<ICommandDeliverDataExtraProps>;
         switch (data.cmdId) {
             case Dts.ECommandId.adhoc_kickoff:
-                
+                ServiceKickoff.onDeliverCommand_kickoff(namespace.users, data.props.user)
                 break;
         }
     

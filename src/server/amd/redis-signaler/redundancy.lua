@@ -27,11 +27,11 @@ local function delRoomUser(roomId, userChannel)
     delRoomChannelUser(roomChannel, userChannel)
 end
 
-local function delUserChannel(serverChannel,userChannel)
+local function delUserChannel(serverChannel, userChannel, serverUser)
 	local userStr = redis.call('get', userChannel)
-	if (userStr ~= nil) then
+    if (userStr ~= nil) then        
         local user = cjson.decode(userStr)
-        if (string.find(serverChannel, user.serverId) ~= nil) then
+        if ((user.room.id == serverUser.room.id) and (string.find(serverChannel, user.serverId) ~= nil)) then
             local namespacePrefix = getNamespacePrefixByUserChannel(userChannel)
             local roomChannel = namespacePrefix + RoomChannelKey + user.room.id
             local userStreamRoomChannel = roomChannel + UserStreamRoomKey + user.id
@@ -41,7 +41,8 @@ local function delUserChannel(serverChannel,userChannel)
             delRoomChannelUser(roomChannel, userChannel)
             redis.call('del', userChannel)
         end
-	end	
+    end	
+    
 end
 
 
@@ -49,10 +50,12 @@ local function delServerChannel(serverChannel)
     local serverExistChannel = serverChannel + ServerChannelExistKey;
     local serverUsersChannel = serverChannel + ServerChannelUsersKey;
 
-    local users = redis.call('keys', serverUsersChannel)
+    local users = redis.call('hkeys', serverUsersChannel)
     if (users ~= nill) then
         for userChannel, v in ipairs(users) do
-            delUserChannel(serverChannel, userChannel)                                    
+            local userStr = redis.call('hget', serverUsersChannel, userChannel)
+            local user = cjson.decode(userStr)
+            delUserChannel(serverChannel, userChannel, user)
         end
     end
     redis.call('del', serverExistChannel)

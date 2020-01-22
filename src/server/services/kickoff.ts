@@ -22,8 +22,9 @@ export class ServiceKickoff extends Cmds.Common.Base {
             let sckUsers = sckUser.users;
             let sckLoginUser = await ServiceUsers.getSocketUser(sckUsers, user);
             if (sckLoginUser) {
-                if (sckLoginUser.socket.id != sckUser.socket.id)
-                    // await ServiceUser.logout(sckLoginUser as Modules.ISocketUser, null, true, true);
+                if (sckLoginUser.socket.id != sckUser.socket.id) {
+                    await ServiceUser.logout(sckLoginUser as Modules.ISocketUser, null, true, true);
+                }
             }
             else {
                 let nspUser = await sckUsers.getDataNamespace().getUser(user);

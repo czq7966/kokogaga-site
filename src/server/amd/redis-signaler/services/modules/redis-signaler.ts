@@ -1,7 +1,7 @@
 import * as Dts from '../../dts'
 import * as Modules from '../../modules'
-import * as Network from '../../network'
 import { ADHOCCAST } from '../../libex'
+import { NetworkException } from '../cmds/network-exception';
 
 export class RedisSignaler {
     // onRecvFilter
@@ -106,6 +106,7 @@ export class RedisSignaler {
         }                
     }
     static async on_after_network_disconnect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
-        signaler.stopHandshake();        
+        signaler.stopHandshake();       
+        NetworkException.req(signaler);
     }    
 }

@@ -90,7 +90,7 @@ export class Dispatcher extends Cmds.Common.Base implements IDispatcher {
                 sckUser.socket.emit(Dts.CommandID, cmd);
                 break;
         }
-        // console.log(sckUser.users.snsp.nsp.name, 'SendCommand', cmd.cmdId, cmd.to)
+        Logging.log(sckUser.users.snsp.nsp.name, 'SendCommand', cmd.cmdId, cmd.to)
         return ;
     }    
 }
