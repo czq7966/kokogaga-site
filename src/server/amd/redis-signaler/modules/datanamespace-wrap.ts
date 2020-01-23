@@ -12,6 +12,7 @@ export interface IDataNamespaceWrap extends IDataNamespace {
     getSocketChannel(id: string): string     
     getUserStreamRoomChannel(id: string, namespace?: string): string
     getUserStreamRoomUsersChannel(id: string, namespace?: string): string    
+    syncData(): boolean
 }
 export class DataNamespaceWrap implements IDataNamespaceWrap {
     databasewrap: IDatabaseWrap;
@@ -136,7 +137,6 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         return nspUser; 
     }
     async existUser(user: ADHOCCAST.Dts.IUser): Promise<boolean> {
-
         let exist = await this.getUser(user);
         return !!exist;   
     }
@@ -174,7 +174,6 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
     //Room Users 
     async joinRoom(roomid: string, user: ADHOCCAST.Dts.IUser):  Promise<boolean>  {
         return this.namespace.joinRoom(roomid, user);
-
     }
     async leaveRoom(roomid: string, user: ADHOCCAST.Dts.IUser): Promise<boolean> {
         return this.namespace.leaveRoom(roomid, user);
@@ -270,4 +269,24 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
             this.getSignaler().hdel(roomUsersChannel, userChannel);
         }
     }    
+    redis_sync() {
+        this.redis_sync_keyvalue(this.namespace.users);
+        this.redis_sync_keyvalue(this.namespace.shortUsers);
+        this.redis_sync_keyvalue(this.namespace.rooms);
+        this.redis_sync_keyvalue(this.namespace.roomUsers);
+        this.namespace.roomUsers.values().forEach(users => {
+            this.redis_sync_keyvalue(users);
+        })           
+    }
+    redis_sync_keyvalue(keyValue: ADHOCCAST.Cmds.Common.Helper.IKeyValue<any>) {
+        keyValue.keys().forEach(key => {
+            let value = keyValue.get(key);
+            keyValue.add(key, value);
+        });
+    }
+    //Data sync
+    syncData(): boolean {
+        this.redis_sync();
+        return true;
+    }
 }

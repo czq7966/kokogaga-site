@@ -23,6 +23,7 @@ export interface IDataNamespace {
     getPath(): string
     getName(): string      
     isReady(): boolean
+    syncData(): boolean 
     //User
     newUserShortID(len?: number): Promise<string>
     getUser(user: Dts.IUser): Promise<Dts.IUser>
@@ -75,6 +76,7 @@ export interface IDatabase {
     destroyNamespace(namespace: string)
     getNamespace(namespace: string): IDataNamespace
     getNamespaces(): IDataNamespaces
+    syncData(): boolean
 }
 export class DataUsers extends Cmds.Common.Helper.KeyValue<Dts.IUser> implements IDataUsers {}
 export class DataSocketUsers extends DataUsers implements IDataSocketUsers {}
@@ -140,6 +142,9 @@ export class DataNamespace implements IDataNamespace {
     }      
     isReady(): boolean {
         return this.database.isReady()
+    }
+    syncData(): boolean {
+        return true;
     }
     //User
     async newUserShortID(len?: number): Promise<string> {
@@ -352,6 +357,13 @@ export class Database implements IDatabase {
     isReady(): boolean {
         return true;
     }
+    syncData(): boolean {
+        this.namespaces.keys().forEach(key => {
+            let namespace = this.namespaces.get(key);
+            namespace.syncData();
+        })
+        return true;
+    }    
     createNamespace(namespace: string): IDataNamespace {
         let nsp = this.namespaces.get(namespace)
         if (!nsp) {

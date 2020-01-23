@@ -12,6 +12,7 @@ import { IDataNamespacesWrap, DataNamespacesWrap } from './datanamespaces-wrap';
 export interface IDatabaseWrap extends IDatabase {
     getSignaler(): IRedisSignaler
     getDatabase(): IDatabase    
+    syncData(): boolean    
 }
 
 export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabaseWrap {
@@ -76,6 +77,7 @@ export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabas
                 }
                 else {
                     this.namespaces.add(namespace, nsp);
+                    nspWrap = this.namespaces.get(namespace); 
                 }
             }
         }
@@ -83,5 +85,12 @@ export class DatabaseWrap extends ADHOCCAST.Cmds.Common.Base implements IDatabas
     }
     getNamespaces(): IDataNamespaces {
         return this.namespaces;
+    }    
+    syncData(): boolean {
+        this.namespaces.keys().forEach(key => {
+            let namespace = this.namespaces.get(key);
+            namespace.syncData();
+        })
+        return true;
     }    
 }

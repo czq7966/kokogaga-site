@@ -100,11 +100,17 @@ export class RedisSignaler {
     // onAfterRoot
     static onAfterRoot(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         switch(cmd.data.cmdId) {
+            case ADHOCCAST.Cmds.ECommandId.adhoc_login:
+                this.on_after_adhoc_login(signaler, cmd);
+                break;            
             case ADHOCCAST.Cmds.ECommandId.network_disconnect:
                 this.on_after_network_disconnect(signaler, cmd);
                 break;
         }                
     }
+    static async on_after_adhoc_login(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
+        signaler.database.syncData();
+    }      
     static async on_after_network_disconnect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         signaler.stopHandshake();       
         NetworkException.req(signaler);
