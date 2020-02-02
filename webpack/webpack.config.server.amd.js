@@ -28,7 +28,12 @@ module.exports = env => {
     optimization['minimizer'] = minimizer;  
 
     plugins.push(
-      
+        new CopyWebpackPlugin([
+            {
+                from: path.resolve(srcDir, 'redis-signaler' , 'redundancy.lua'),
+                to: path.resolve(distDir, 'redis-signaler' , 'redundancy.lua'),
+            }              
+        ]),        
     )
 
     if (env.production) { //生产模式

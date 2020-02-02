@@ -11,9 +11,9 @@ export class Test {
         let connParams: ADHOCCAST.IConnectionConstructorParams = {
             instanceId: ADHOCCAST.Cmds.Common.Helper.uuid(),
             // factorySignaler: null,
-            signalerBase: "http://192.168.252.89:2770",
+            signalerBase: "http://192.168.252.89:55888",
             namespace: "promethean",
-            // path: 'socket.io',
+            path: '/socket.io',
             notInitDispatcherFilters: true,
             parent: this
         }        
@@ -30,7 +30,7 @@ export class Test {
         await this.tryLogin();
         setTimeout(() => {
             this.connnection.disconnect();
-        }, 5000);              
+        }, Math.random() * 10 * 1000);              
     }
 
     initEvents() {
@@ -44,7 +44,14 @@ export class Test {
         try {
             // await this.connnection.signaler.connect();            
             console.log('111111111')   
-            await this.connnection.retryLogin(null, null, null, 5 * 1000, 12);                    
+            let user: ADHOCCAST.Dts.IUser = {
+                id: null,
+                // room: {
+                //     id: ADHOCCAST.Cmds.Common.Helper.uuid()
+                // }
+
+            }
+            await this.connnection.retryLogin(user, null, null, 5 * 1000, 12);                    
         } catch(e) {
             return await this.tryLogin()
         }            

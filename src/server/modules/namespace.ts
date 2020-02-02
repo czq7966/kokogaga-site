@@ -24,6 +24,7 @@ export interface ISocketNamespaceOptions {
     type: ESocketNamespaceType
     disabled?: boolean
     useSignalCenter?: boolean
+    extra?: any
 }
 
 export interface ISocketNamespace extends Cmds_Common.IBase {

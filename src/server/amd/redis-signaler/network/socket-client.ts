@@ -20,6 +20,7 @@ export interface IRedisClient {
     persist(key: string): Promise<boolean> ;
     expire(key: string, seconds: number): Promise<boolean>     
     pexpire(key: string, milliseconds: number): Promise<boolean>     
+    eval(...args: (string | number)[]): Promise<any>
 }
 
 export interface ISocketClient extends ADHOCCAST.Network.ISignaler, IRedisClient  {
@@ -421,8 +422,18 @@ export class SocketClient implements ISocketClient {
             }
         });         
     }
-    eval() {
-        this.pubSocket.socket.eval()
+    eval(...args: (string | number)[]): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.pubSocket.socket.eval(...args, (err: Error, value: any) => {
+                if (err) {
+                    Logging.error(err.message);
+                    resolve(err.message)
+                }
+                else {
+                    resolve(value)    
+                }
+            })
+        })
     }
     sendCommand(cmd: ADHOCCAST.Cmds.ICommandData<any>, channel?: string): Promise<any> {
         channel = channel || this.getCmdChannel(cmd);      

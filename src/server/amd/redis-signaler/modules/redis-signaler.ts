@@ -126,8 +126,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
                 this._isReady = this.conneciton.isLogin(); 
                 break;
             case ADHOCCAST.Cmds.ECommandId.network_connect:
-                console.log('network_connect')
-                this.tryLogin();
+                console.log('network_connect')                
                 break;
             case ADHOCCAST.Cmds.ECommandId.network_disconnect:
                 console.log('network_disconnect')
@@ -335,7 +334,10 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     }
     async pexpire(key: string, milliseconds: number): Promise<boolean> {
         return this.getSocketClient().expire(key, milliseconds); 
-    }      
+    }     
+    async eval(...args: (string | number)[]): Promise<any> {
+        return this.getSocketClient().eval(...args)
+    } 
 }
 
 

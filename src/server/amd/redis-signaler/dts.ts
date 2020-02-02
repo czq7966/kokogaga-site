@@ -13,3 +13,6 @@ export enum ChannelKeys {
     Exist = '/exist:',
     UserStreamRoomPrefix = '/stream#'
 }
+export interface IOptionsExtra {
+    redundanceScript?: string
+}

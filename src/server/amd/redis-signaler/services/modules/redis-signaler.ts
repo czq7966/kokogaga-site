@@ -2,16 +2,17 @@ import * as Dts from '../../dts'
 import * as Modules from '../../modules'
 import { ADHOCCAST } from '../../libex'
 import { NetworkException } from '../cmds/network-exception';
+import { Redundance } from './redundance';
 
 export class RedisSignaler {
     // onRecvFilter
     static RecvFilter = {
         onAfterRoot(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>): any {
             switch(cmd.cmdId) {
-                case ADHOCCAST.Dts.ECommandId.adhoc_login:
-                    this.on_after_adhoc_login(signaler, cmd);
-                    return ADHOCCAST.Cmds.Common.EEventEmitterEmit2Result.preventRoot;
-                    break;
+                // case ADHOCCAST.Dts.ECommandId.adhoc_login:
+                //     this.on_after_adhoc_login(signaler, cmd);
+                //     return ADHOCCAST.Cmds.Common.EEventEmitterEmit2Result.preventRoot;
+                //     break;
                 case Dts.ECommandId.signal_center_deliver:
                     this.on_signal_center_deliver(signaler, cmd);
                     return ADHOCCAST.Cmds.Common.EEventEmitterEmit2Result.preventRoot;
@@ -102,14 +103,30 @@ export class RedisSignaler {
         switch(cmd.data.cmdId) {
             case ADHOCCAST.Cmds.ECommandId.adhoc_login:
                 this.on_after_adhoc_login(signaler, cmd);
-                break;            
+                break;      
+            case ADHOCCAST.Cmds.ECommandId.network_connect:
+                this.on_after_network_connect(signaler, cmd);
+                break;                        
             case ADHOCCAST.Cmds.ECommandId.network_disconnect:
                 this.on_after_network_disconnect(signaler, cmd);
                 break;
         }                
     }
     static async on_after_adhoc_login(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
-        signaler.database.syncData();
+        // signaler.database.syncData();
+    }      
+    static async on_after_network_connect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
+        let serversChannel = signaler.getServersChannel();
+        let serverChannel = signaler.getServerChannel();
+        let serverExsitChannel = signaler.getServerExistChannel()        
+        await signaler.subscribe(serversChannel);
+        await signaler.subscribe(serverChannel);
+        await signaler.hset(serversChannel, serverChannel, 'true');
+        await signaler.set(serverExsitChannel, 'true');
+        signaler.startHandshake();
+
+        await Redundance.req(signaler);
+        // signaler.tryLogin();
     }      
     static async on_after_network_disconnect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         signaler.stopHandshake();       

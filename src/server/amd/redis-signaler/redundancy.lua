@@ -5,6 +5,7 @@ local RoomUsersChannelKey = '/users:'
 local ServerChannelKey = '/server:'
 local ServerChannelExistKey = '/exist:'
 local ServerChannelUsersKey = '/users:'
+local RedundanceRoomChannels = {}
 local function getNamespacePrefixByUserChannel(userChannel)
     local idx = string.find(userChannel, UserChannelKey)
     if (idx ~= nil) then
@@ -18,6 +19,9 @@ local function delRoomChannelUser(roomChannel, userChannel)
     local count = redis.call('hlen', roomUsersChannel)
     if (count == 0) then
         redis.call('del', roomChannel)
+        RedundanceRoomChannels[roomChannel] = nil
+    else
+        RedundanceRoomChannels[roomChannel] = true
     end
 end
 
@@ -45,37 +49,36 @@ local function delUserChannel(serverChannel, userChannel, serverUser)
     
 end
 
-
 local function delServerChannel(serverChannel)
-    local serverExistChannel = serverChannel + ServerChannelExistKey;
-    local serverUsersChannel = serverChannel + ServerChannelUsersKey;
+    local serverExistChannel = serverChannel..ServerChannelExistKey;
+    local serverUsersChannel = serverChannel..ServerChannelUsersKey;
 
     local users = redis.call('hkeys', serverUsersChannel)
-    if (users ~= nill) then
-        for userChannel, v in ipairs(users) do
-            local userStr = redis.call('hget', serverUsersChannel, userChannel)
-            local user = cjson.decode(userStr)
-            delUserChannel(serverChannel, userChannel, user)
-        end
+    for idx, userChannel in ipairs(users) do
+        local userStr = redis.call('hget', serverUsersChannel, userChannel)
+        local user = cjson.decode(userStr)
+        -- delUserChannel(serverChannel, userChannel, user)
     end
+
     redis.call('del', serverExistChannel)
     redis.call('del', serverUsersChannel)    
 end
 
 local function delServersChannel(serversChannel)
-    local servers = redis.call('hget', serversChannel)
-    local delServers = {}
-    if (servers ~= nil) then
-        for serverChannel, v in ipairs(servers) do
-            local serverExistChannel = serverChannel + ServerChannelExistKey
-            local serverExist = redis.call('get', serverExistChannel)
-            if (serverExist == nil) then                
-                delServerChannel(serverChannel)                                    
-                delServers[serverChannel] = 'deleted'
-            end
-        end        
-    end
-    return delServers
+    local servers = redis.call('hkeys', serversChannel)
+    local delServers = {}    
+
+    for idx, serverChannel in ipairs(servers) do
+        local serverExistChannel =  serverChannel..ServerChannelExistKey
+        local serverExist = redis.call('get', serverExistChannel)
+        if (serverExist == false) then                                
+            delServerChannel(serverChannel)
+            redis.call('hdel', serversChannel, serverChannel)
+            delServers[serverChannel] = 'deleted'
+        end
+    end        
+
+    return cjson.encode(RedundanceRoomChannels)
 end
 
 return delServersChannel(KEYS[1])

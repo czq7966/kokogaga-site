@@ -43,7 +43,10 @@
 		},		
 		"signalRedis": {
 			"url": "amd/redis-signaler/index.js",
-			"type": "signalRedis"
+			"type": "signalRedis",
+			"extra": {
+				"redundanceScript": "amd/redis-signaler/redundancy.lua"
+			}
 		}
 	},
 	"websites": {
