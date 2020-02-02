@@ -3,6 +3,8 @@ import * as Common from '../../common'
 export enum ECommandId {
     //signal-center
     signal_center_deliver = "signal_center_deliver",
+    signal_center_pmessage = 'signal_center_pmessage',
+    signal_center_keyspace_events = 'signal_center_keyspace_events',
     signal_center_users_remove = "signal_center_users_remove",
     signal_center_users_update = "signal_center_users_update",
     signal_center_users_refresh = "signal_center_users_refresh",

@@ -16,3 +16,8 @@ export enum ChannelKeys {
 export interface IOptionsExtra {
     redundanceScript?: string
 }
+export interface IKeyspaceEvents {
+    pattern: string,
+    channel: string,
+    message: string
+}

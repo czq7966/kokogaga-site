@@ -9,30 +9,19 @@ export class RedisSignaler {
     static RecvFilter = {
         onAfterRoot(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>): any {
             switch(cmd.cmdId) {
-                // case ADHOCCAST.Dts.ECommandId.adhoc_login:
-                //     this.on_after_adhoc_login(signaler, cmd);
-                //     return ADHOCCAST.Cmds.Common.EEventEmitterEmit2Result.preventRoot;
-                //     break;
                 case Dts.ECommandId.signal_center_deliver:
                     this.on_signal_center_deliver(signaler, cmd);
+                    return ADHOCCAST.Cmds.Common.EEventEmitterEmit2Result.preventRoot;
+                    break;
+                case Dts.ECommandId.signal_center_pmessage:
+                    this.on_signal_center_pmessage(signaler, cmd);
                     return ADHOCCAST.Cmds.Common.EEventEmitterEmit2Result.preventRoot;
                     break;
             }                
         },
         
-        async on_after_adhoc_login(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>) {
-            if (cmd.respResult && cmd.type == ADHOCCAST.Cmds.ECommandType.resp) {
-                let serversChannel = signaler.getServersChannel();
-                let serverChannel = signaler.getServerChannel();
-                let serverExsitChannel = signaler.getServerExistChannel()
-                
-                await signaler.subscribe(serversChannel);
-                await signaler.subscribe(serverChannel);
-                await signaler.hset(serversChannel, serverChannel, 'true');
-                await signaler.set(serverExsitChannel, 'true');
-                signaler.startHandshake();
-            }            
-            ADHOCCAST.Cmds.Common.EDCoder.onCommand(cmd, signaler.conneciton.dispatcher);
+        async on_signal_center_pmessage(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<Dts.IKeyspaceEvents>) {
+            console.log('3333333333333333333', cmd)
         },
 
         async on_signal_center_deliver(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>) {
@@ -110,6 +99,9 @@ export class RedisSignaler {
             case ADHOCCAST.Cmds.ECommandId.network_disconnect:
                 this.on_after_network_disconnect(signaler, cmd);
                 break;
+            case Dts.ECommandId.signal_center_pmessage:
+                this.on_after_signal_center_pmessage(signaler, cmd);
+                break;
         }                
     }
     static async on_after_adhoc_login(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
@@ -118,7 +110,9 @@ export class RedisSignaler {
     static async on_after_network_connect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         let serversChannel = signaler.getServersChannel();
         let serverChannel = signaler.getServerChannel();
-        let serverExsitChannel = signaler.getServerExistChannel()        
+        let serverExsitChannel = signaler.getServerExistChannel();
+        await this.subscribeServerKeyspace(signaler);
+        await signaler.subscribe(serversChannel); 
         await signaler.subscribe(serversChannel);
         await signaler.subscribe(serverChannel);
         await signaler.hset(serversChannel, serverChannel, 'true');
@@ -131,5 +125,28 @@ export class RedisSignaler {
     static async on_after_network_disconnect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         signaler.stopHandshake();       
         NetworkException.req(signaler);
-    }    
+    }
+    static async on_after_signal_center_pmessage(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
+
+    }
+    static async subscribeServerKeyspace(signaler: Modules.IRedisSignaler) {
+        // open notify-keyspace-events
+        let notifyKeyspaceEvents = 'notify-keyspace-events';
+        let kKey = 'K';
+        let xKey = 'x';
+        let configKeys: string[] = await signaler.redisconfig('get', notifyKeyspaceEvents);
+        let keys = configKeys ? configKeys[1] : '';        
+        let kIndex = keys.indexOf(kKey);
+        let xIndex = keys.indexOf(xKey);
+        if ( kIndex < 0 || xIndex < 0) {
+            if (kIndex < 0) keys = kKey + keys;
+            if (xIndex < 0) keys = keys + xKey;
+            await signaler.redisconfig('set', notifyKeyspaceEvents, keys);
+            console.log('55555555555555555', configKeys, keys)
+        }
+
+        //
+        let serverKeyspacePChannel = signaler.getServerKeyspacePChannel();
+        await signaler.psubscribe(serverKeyspacePChannel);
+    }  
 }

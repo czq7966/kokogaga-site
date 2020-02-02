@@ -61,7 +61,7 @@
 		"web-test:clean": "rimraf ./dist/web/test",
 		"web-test:compile": "npm run web-test:clean && cross-env NODE_MODULE=web-test webpack --env.umd",
 		"web-test:dev": "npm run web-test:clean && cross-env NODE_MODULE=web-test webpack --env.umd --env.nodevtool --progress --watch",
-		"web-test:build": "npm run web-test:clean && cross-env NODE_MODULE=web-test webpack --env.umd --env.production --progress"		
+		"web-test:build": "npm run web-test:clean && cross-env NODE_MODULE=web-test webpack --env.umd --env.production --progress"
 	},
 	"author": "",
 	"license": "ISC",

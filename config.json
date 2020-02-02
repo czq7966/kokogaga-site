@@ -115,7 +115,7 @@
 	},
 	"signalRedis": {
 		"enabled": true,
-		"url": "redis://192.168.252.88:6379",
+		"url": "redis://127.0.0.1:6379",
 		"handshakeInterval": 3000,
 		"handshakeTimeout":  22000
 	}	

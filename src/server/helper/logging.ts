@@ -13,7 +13,7 @@ export class Debug {
         this.enabled && console.trace(...args);
     }
     public static error(...args: any[]) {
-        this.enabled && console.error(...args)
+        console.error(...args)
     }
     
 }

@@ -23,6 +23,7 @@ export interface IRedisSignaler extends ISignalClient, IRedisClient {
     getServerChannel(id?: string): string
     getServerExistChannel(id?: string): string
     getServerUsersChannel(id?: string): string
+    getServerKeyspacePChannel(id?: string): string
     //Namespace channels
     getNamespaceChannel(id: string): string
     getNamespaceRoomChannel(id: string, namespace?: string): string
@@ -231,7 +232,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         return this.getNamespaceChannel() +  Dts.ChannelKeys.Servers + (id || '');
     }
     getServerChannel(id?: string): string {
-        id = id || this.server.getId();
+        id = id || (id === '' ? id : this.server.getId());
         return this.getNamespaceChannel() +  Dts.ChannelKeys.Server + id;
     }
     getServerExistChannel(id?: string): string {
@@ -240,7 +241,10 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     getServerUsersChannel(id?: string): string {
         return this.getServerChannel(id) +  Dts.ChannelKeys.Users
     }
-
+    getServerKeyspacePChannel(id?: string): string {
+        id = id || '*';
+        return '__keyspace@*__:' + this.getServerChannel(id)
+    }
     //Namespace channels
     getNamespaceChannel(id?: string): string {
         return this.getPathChannel() +  Dts.ChannelKeys.Namespace + (id || this.options.name);
@@ -293,6 +297,9 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     async subscribe(channel: string): Promise<any> {
         return this.getSocketClient().subscribe(channel);
     }
+    async psubscribe(pchannel: string): Promise<any> {
+        return this.getSocketClient().psubscribe(pchannel);
+    }
     async unsubscribe(channel: string): Promise<any> {
         return this.getSocketClient().unsubscribe(channel);
     }
@@ -323,6 +330,9 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     async hlen(key: string): Promise<number> {
         return this.getSocketClient().hlen(key);
     }
+    async hkeys(key: string): Promise<string[]> {
+        return this.getSocketClient().hkeys(key);
+    }
     async hexists(key: string, field: string): Promise<boolean>  {
         return this.getSocketClient().hexists(key, field);                
     }
@@ -338,6 +348,9 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     async eval(...args: (string | number)[]): Promise<any> {
         return this.getSocketClient().eval(...args)
     } 
+    async redisconfig(...args: string[]): Promise<any> {
+        return this.getSocketClient().redisconfig(...args)
+    }
 }
 
 

@@ -1,11 +1,13 @@
 
 import * as Redis from 'redis'
+import * as Dts from '../dts'
 import { EventEmitter } from 'events';
 import { ADHOCCAST } from '../libex'
 import { IClientSocket, ClientSocket } from './client-socket';
 
 export interface IRedisClient {
     subscribe(channel: string): Promise<any>
+    psubscribe(pchannel: string): Promise<any>
     unsubscribe(channel: string): Promise<any>
     publish(channel: string, cmd: ADHOCCAST.Cmds.ICommandData<any>): Promise<any>
     get(key: string): Promise<string>
@@ -16,11 +18,13 @@ export interface IRedisClient {
     hset(key: string, field: string, value: string): Promise<boolean>
     hdel(key: string, field: string): Promise<boolean>
     hlen(key: string): Promise<number>
+    hkeys(key: string): Promise<string[]>
     hexists(key: string, field: string): Promise<boolean>    
     persist(key: string): Promise<boolean> ;
     expire(key: string, seconds: number): Promise<boolean>     
     pexpire(key: string, milliseconds: number): Promise<boolean>     
     eval(...args: (string | number)[]): Promise<any>
+    redisconfig(...args: string[]): Promise<any>
 }
 
 export interface ISocketClient extends ADHOCCAST.Network.ISignaler, IRedisClient  {
@@ -150,6 +154,18 @@ export class SocketClient implements ISocketClient {
             Logging.log('/message', channel, data)            
             this.eventEmitter.emit(ADHOCCAST.Dts.CommandID, data);            
         });
+        this.subSocket.eventEmitter.on('pmessage', (pattern: string, channel: string, message: string) => {
+            let data: ADHOCCAST.Cmds.ICommandData<Dts.IKeyspaceEvents> = {
+                cmdId: Dts.ECommandId.signal_center_pmessage,
+                props: {
+                    pattern: pattern,
+                    channel: channel,
+                    message: message
+                }
+            };
+            Logging.log('/pmessage', channel, data)            
+            this.eventEmitter.emit(ADHOCCAST.Dts.CommandID, data);            
+        });
     }    
     unInitEvents() {        
         this.subSocket.eventEmitter.removeAllListeners();
@@ -183,6 +199,24 @@ export class SocketClient implements ISocketClient {
                 Logging.error(err);
                 resolve(err)
             }    
+        });
+    }
+    psubscribe(pchannel: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            if (!this.connected('psubscribe')) resolve()
+            else {
+                this.subSocket.socket.psubscribe(pchannel,  (err: Error, result: string) => {
+                    if (err) {                        
+                        Logging.error(err.message);
+                        resolve(err.message);
+                    }
+                    else {
+                        Logging.log('/psubscribe', pchannel);                        
+                        resolve(result)    
+                    }
+                })
+    
+            }   
         });
     }
     unsubscribe(channel: string): Promise<any> {
@@ -358,6 +392,22 @@ export class SocketClient implements ISocketClient {
             }
         }); 
     }
+    hkeys(key: string): Promise<string[]> {
+        return new Promise((resolve, reject) => {            
+            if (!this.connected('hkeys')) resolve()
+            else {
+                this.pubSocket.socket.hkeys(key,  (err: Error, value: string[]) => {
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve();
+                    }
+                    else {
+                        resolve(value)    
+                    }
+                })
+            }
+        });       
+    }
     hexists(key: string, field: string): Promise<boolean> {  
         return new Promise((resolve, reject) => {            
             if (!this.connected('hexists')) resolve()
@@ -408,7 +458,7 @@ export class SocketClient implements ISocketClient {
     }
     pexpire(key: string, milliseconds: number): Promise<boolean> {        
         return new Promise((resolve, reject) => {            
-            if (!this.connected('expire')) resolve()
+            if (!this.connected('pexpire')) resolve()
             else {
                 this.pubSocket.socket.pexpire(key, milliseconds, (err: Error, value: number) => {
                     if (err) {
@@ -424,17 +474,36 @@ export class SocketClient implements ISocketClient {
     }
     eval(...args: (string | number)[]): Promise<any> {
         return new Promise((resolve, reject) => {
-            this.pubSocket.socket.eval(...args, (err: Error, value: any) => {
-                if (err) {
-                    Logging.error(err.message);
-                    resolve(err.message)
-                }
-                else {
-                    resolve(value)    
-                }
-            })
+            if (!this.connected('eval')) resolve()
+            else {
+                this.pubSocket.socket.eval(...args, (err: Error, value: any) => {
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve(err.message)
+                    }
+                    else {
+                        resolve(value)    
+                    }
+                })
+            }
         })
     }
+    redisconfig(...args: string[]): Promise<any> {
+        return new Promise((resolve, reject) => {
+            if (!this.connected('redisconfig')) resolve()
+            else {
+                this.pubSocket.socket.config(...args, (err: Error, value: any) => {
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve(err.message)
+                    }
+                    else {
+                        resolve(value)    
+                    }
+                })
+            }
+        })
+    }   
     sendCommand(cmd: ADHOCCAST.Cmds.ICommandData<any>, channel?: string): Promise<any> {
         channel = channel || this.getCmdChannel(cmd);      
         return this.publish(channel, cmd);

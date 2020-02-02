@@ -1,4 +1,5 @@
 local UserChannelKey = '/user:'
+local UserShortChannelKey = '/short:'
 local UserStreamRoomKey = '/stream#'
 local RoomChannelKey = '/room:'
 local RoomUsersChannelKey = '/users:'
@@ -7,19 +8,19 @@ local ServerChannelExistKey = '/exist:'
 local ServerChannelUsersKey = '/users:'
 local RedundanceRoomChannels = {}
 local function getNamespacePrefixByUserChannel(userChannel)
-    local idx = string.find(userChannel, UserChannelKey)
+    local idx = string.find(userChannel, UserChannelKey, 1, true)
     if (idx ~= nil) then
         return string.sub(userChannel, 1, idx - 1)
     end
 end
 
 local function delRoomChannelUser(roomChannel, userChannel)
-    local roomUsersChannel = roomChannel + RoomUsersChannelKey;
+    local roomUsersChannel = roomChannel..RoomUsersChannelKey;
     redis.call('hdel', roomUsersChannel, userChannel)
     local count = redis.call('hlen', roomUsersChannel)
     if (count == 0) then
         redis.call('del', roomChannel)
-        RedundanceRoomChannels[roomChannel] = nil
+        RedundanceRoomChannels[roomChannel] = false
     else
         RedundanceRoomChannels[roomChannel] = true
     end
@@ -33,16 +34,19 @@ end
 
 local function delUserChannel(serverChannel, userChannel, serverUser)
 	local userStr = redis.call('get', userChannel)
-    if (userStr ~= nil) then        
+    if (userStr ~= false) then        
         local user = cjson.decode(userStr)
-        if ((user.room.id == serverUser.room.id) and (string.find(serverChannel, user.serverId) ~= nil)) then
+        local isServerUser = string.find(serverChannel, user.serverId, 1, true) ~= nil
+        if ((user.room.id == serverUser.room.id) and (isServerUser == true)) then
             local namespacePrefix = getNamespacePrefixByUserChannel(userChannel)
-            local roomChannel = namespacePrefix + RoomChannelKey + user.room.id
-            local userStreamRoomChannel = roomChannel + UserStreamRoomKey + user.id
-            local userStreamRoomUsersChannel = userStreamRoomChannel + RoomUsersChannelKey
+            local roomChannel = namespacePrefix..RoomChannelKey..user.room.id
+            local userShortChannel = namespacePrefix..UserShortChannelKey..user.sid
+            local userStreamRoomChannel = roomChannel..UserStreamRoomKey..user.id
+            local userStreamRoomUsersChannel = userStreamRoomChannel..RoomUsersChannelKey
             redis.call('del', userStreamRoomChannel)
             redis.call('del', userStreamRoomUsersChannel)            
             delRoomChannelUser(roomChannel, userChannel)
+            redis.call('del', userShortChannel)
             redis.call('del', userChannel)
         end
     end	
@@ -57,7 +61,7 @@ local function delServerChannel(serverChannel)
     for idx, userChannel in ipairs(users) do
         local userStr = redis.call('hget', serverUsersChannel, userChannel)
         local user = cjson.decode(userStr)
-        -- delUserChannel(serverChannel, userChannel, user)
+        delUserChannel(serverChannel, userChannel, user)
     end
 
     redis.call('del', serverExistChannel)

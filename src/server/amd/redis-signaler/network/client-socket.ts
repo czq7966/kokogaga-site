@@ -95,6 +95,9 @@ export class ClientSocket implements IClientSocket {
         })    
         socket.on('message', (channel: string, message: string) => {
             this.eventEmitter.emit('message', channel, message);            
+        })  
+        socket.on('pmessage', (pattern: string, channel: string, message: string) => {
+            this.eventEmitter.emit('pmessage', pattern, channel, message);            
         })    
     }    
     unInitEvents(socket: Redis.RedisClient) {
