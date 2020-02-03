@@ -6,12 +6,62 @@ local RoomUsersChannelKey = '/users:'
 local ServerChannelKey = '/server:'
 local ServerChannelExistKey = '/exist:'
 local ServerChannelUsersKey = '/users:'
+local NamespaceChannelKey = '/namespace:'
 local RedundanceRoomChannels = {}
 local function getNamespacePrefixByUserChannel(userChannel)
     local idx = string.find(userChannel, UserChannelKey, 1, true)
     if (idx ~= nil) then
         return string.sub(userChannel, 1, idx - 1)
     end
+end
+
+local function getNamespaceByChannel(channel)
+    local idx1, idx2 = string.find(channel, NamespaceChannelKey, 1, true)
+    if (idx2 ~= nil) then
+        local namespace = string.sub(channel, idx2 + 1)
+        local idx = string.find(namespace, '/', 1, true)
+        if (idx ~= nil) then
+            namespace = string.sub(namespace, 1, idx - 1)
+        end
+        return namespace
+    end
+end
+
+local function getRoomidByRoomChannel(channel)
+    local idx1, idx2 = string.find(channel, RoomChannelKey, 1, true)
+    if (idx2 ~= nil) then
+        local roomid = string.sub(channel, idx2 + 1)
+        return roomid
+    end
+end
+
+local function publishCommand(channel, cmdStr)
+    redis.call('publish', channel, cmdStr)
+end
+
+local function publishNetworkException(roomChannel)
+    local namespace = getNamespaceByChannel(roomChannel)
+    local roomid = getRoomidByRoomChannel(roomChannel)
+    local data = {
+        cmdId = 'network_exception',
+        props = {},            
+        from = { type = 'server', id = '' },
+        to = { type = 'room', id = roomid }       
+    }
+    local extra = {
+        props = {namespace = namespace, includeSelf = true },
+        from = { type = 'server', id = 'redis' },
+        to = { type = 'room', id = roomid }        
+    }
+    local cmd = {
+        cmdId = 'signal_center_deliver',
+        props = data,
+        extra = extra,
+        from = { type = 'server', id = 'redis' },
+        to = { type = 'room', id = roomid }
+    }
+    local cmdStr = cjson.encode(cmd)
+    publishCommand(channel, cmdStr)
 end
 
 local function delRoomChannelUser(roomChannel, userChannel)
@@ -68,6 +118,14 @@ local function delServerChannel(serverChannel)
     redis.call('del', serverUsersChannel)    
 end
 
+local function publishRedundanceRoomChannels(roomChannels)
+    for roomChannel, result in pairs(roomChannels) do
+        if (result == true) then
+            publishNetworkException(roomChannel)
+        end
+    end    
+end
+
 local function delServersChannel(serversChannel)
     local servers = redis.call('hkeys', serversChannel)
     local delServers = {}    
@@ -80,7 +138,9 @@ local function delServersChannel(serversChannel)
             redis.call('hdel', serversChannel, serverChannel)
             delServers[serverChannel] = 'deleted'
         end
-    end        
+    end       
+    publishRedundanceRoomChannels(RedundanceRoomChannels)
+    -- RedundanceRoomChannels = {}
 
     return cjson.encode(RedundanceRoomChannels)
 end

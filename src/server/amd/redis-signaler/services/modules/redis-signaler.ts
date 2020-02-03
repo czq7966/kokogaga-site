@@ -21,7 +21,6 @@ export class RedisSignaler {
         },
         
         async on_signal_center_pmessage(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<Dts.IKeyspaceEvents>) {
-            console.log('3333333333333333333', cmd)
             switch(cmd.props.message) {
                 case 'expired':
                     await RedisSignaler.registServer(signaler);
@@ -109,6 +108,10 @@ export class RedisSignaler {
     }
     static async on_after_adhoc_login(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         // signaler.database.syncData();
+        setTimeout(() => {
+            Redundance.req(signaler);
+            
+        }, 20 * 1000);
     }      
     static async on_after_network_connect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         let serverExsitChannel = signaler.getServerExistChannel();

@@ -12,9 +12,12 @@ export class Redundance {
         let script: string
         if (fs.existsSync(file)) {
             script = fs.readFileSync(file, 'utf8');
-            let roomChannels = await signaler.eval(script, 1, signaler.getServersChannel());            
-            if (roomChannels) {
-                console.error('111111111111', roomChannels)
+            let result = await signaler.eval(script, 1, signaler.getServersChannel());  
+            let roomChannels = {}          
+            if (result) {
+                if (typeof(result) == 'string') {
+                    roomChannels = JSON.parse(result);
+                }
                 await NetworkException.reqRoomChannels(signaler, Object.keys(roomChannels))
             }
         }

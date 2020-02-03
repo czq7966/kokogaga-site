@@ -176,7 +176,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
             return result;
 
         } else {
-            throw "signal client no ready"
+            throw "signal client no ready: " + data.cmdId
         }        
     }
     //Override
