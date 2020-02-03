@@ -7,13 +7,13 @@ import { ServiceNamespace } from './namespace';
 
 export class ServiceServer  {
     static openNamespace(server: Modules.IServer, name: string): Promise<any> {
-        let config = new Modules.Config()
+        let config = new Modules.Config();
+        let options = config.getNamespace(name);
         return new Promise((resolve, reject)=>{
             let snsp = server.snsps.get(name);            
             let nsp = server.socketioServer.nsps['/' + name];
             let _openNamespace = (_snsp?: Modules.ISocketNamespace) => {
-                snsp = _snsp || new Modules.SocketNamespace(nsp, server);
-                snsp.options = config.getNamespace(name);
+                snsp = _snsp || new Modules.SocketNamespace(nsp, server, options);
                 server.snsps.add(name, snsp);     
                 server.getDatabase().createNamespace(name);
                 !_snsp && console.log('Open default namespace : ', name);                                               
@@ -31,7 +31,7 @@ export class ServiceServer  {
                         .then((modules: any) => {
                             let SNSP = modules.SocketNamespace;
                             if (SNSP){
-                                snsp = new SNSP(nsp, server)
+                                snsp = new SNSP(nsp, server, options)
                                 console.log('Open Namespace Success(' + name +'): ', url);
                                 _openNamespace(snsp)
                             }

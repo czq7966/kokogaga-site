@@ -18,13 +18,13 @@ export enum ESocketNamespaceType {
     signalRedis = "signalRedis"
 }
 
-export interface ISocketNamespaceOptions {
+export interface ISocketNamespaceOptions<T> {
     name: string,
     url: string,
     type: ESocketNamespaceType
     disabled?: boolean
     useSignalCenter?: boolean
-    extra?: any
+    extra?: T
 }
 
 export interface ISocketNamespace extends Cmds_Common.IBase {
@@ -32,7 +32,7 @@ export interface ISocketNamespace extends Cmds_Common.IBase {
     users?: ISocketUsers
     server?: IServer
     config: IConfig   
-    options: ISocketNamespaceOptions
+    options: ISocketNamespaceOptions<any>
 }
 
 export class SocketNamespace  extends Cmds_Common.Base implements ISocketNamespace {
@@ -40,9 +40,9 @@ export class SocketNamespace  extends Cmds_Common.Base implements ISocketNamespa
     users?: ISocketUsers
     server?: IServer
     config: IConfig   
-    options: ISocketNamespaceOptions
+    options: ISocketNamespaceOptions<any>
 
-    constructor(nsp: ISocketIONamespace, server?: IServer, options?: ISocketNamespaceOptions) {
+    constructor(nsp: ISocketIONamespace, server?: IServer, options?: ISocketNamespaceOptions<any>) {
         super({instanceId: Helper.uuid() })
         this.nsp = nsp;        
         this.options = options || {

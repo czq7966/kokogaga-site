@@ -22,6 +22,12 @@ export class RedisSignaler {
         
         async on_signal_center_pmessage(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<Dts.IKeyspaceEvents>) {
             console.log('3333333333333333333', cmd)
+            switch(cmd.props.message) {
+                case 'expired':
+                    await RedisSignaler.registServer(signaler);
+                    await Redundance.req(signaler);
+                    break;
+            }
         },
 
         async on_signal_center_deliver(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>) {
@@ -61,7 +67,7 @@ export class RedisSignaler {
             user.id = user.id || signaler.server.getId()
             user.sid = user.sid || signaler.conneciton.signaler.id()
             user.room = user.room || {} as any;
-            user.room.id = user.room.id || "#server:" + 'servers';
+            user.room.id = user.room.id || 'servers';
     
             props.user = user;
             let resp = Object.assign({}, data) as ADHOCCAST.Dts.ICommandData<any>;
@@ -99,35 +105,37 @@ export class RedisSignaler {
             case ADHOCCAST.Cmds.ECommandId.network_disconnect:
                 this.on_after_network_disconnect(signaler, cmd);
                 break;
-            case Dts.ECommandId.signal_center_pmessage:
-                this.on_after_signal_center_pmessage(signaler, cmd);
-                break;
         }                
     }
     static async on_after_adhoc_login(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         // signaler.database.syncData();
     }      
     static async on_after_network_connect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
-        let serversChannel = signaler.getServersChannel();
-        let serverChannel = signaler.getServerChannel();
         let serverExsitChannel = signaler.getServerExistChannel();
-        await this.subscribeServerKeyspace(signaler);
-        await signaler.subscribe(serversChannel); 
-        await signaler.subscribe(serversChannel);
-        await signaler.subscribe(serverChannel);
-        await signaler.hset(serversChannel, serverChannel, 'true');
-        await signaler.set(serverExsitChannel, 'true');
-        signaler.startHandshake();
 
+        //redundancy after connect
+        await this.subscribeServerKeyspace(signaler);
+        await signaler.del(serverExsitChannel);
         await Redundance.req(signaler);
-        // signaler.tryLogin();
+
+        //subscribe server channels
+        await this.registServer(signaler);
+
+        signaler.tryLogin();
     }      
     static async on_after_network_disconnect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         signaler.stopHandshake();       
         NetworkException.req(signaler);
     }
-    static async on_after_signal_center_pmessage(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
-
+    static async registServer(signaler:  Modules.IRedisSignaler) {
+        let serversChannel = signaler.getServersChannel();
+        let serverChannel = signaler.getServerChannel();
+        let serverExsitChannel = signaler.getServerExistChannel();
+        await signaler.subscribe(serversChannel);
+        await signaler.subscribe(serverChannel);
+        await signaler.hset(serversChannel, serverChannel, 'true');
+        await signaler.set(serverExsitChannel, 'true');
+        signaler.startHandshake();
     }
     static async subscribeServerKeyspace(signaler: Modules.IRedisSignaler) {
         // open notify-keyspace-events
@@ -145,7 +153,7 @@ export class RedisSignaler {
             console.log('55555555555555555', configKeys, keys)
         }
 
-        //
+        // subscribe server channel expired event
         let serverKeyspacePChannel = signaler.getServerKeyspacePChannel();
         await signaler.psubscribe(serverKeyspacePChannel);
     }  

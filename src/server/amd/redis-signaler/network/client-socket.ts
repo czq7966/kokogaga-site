@@ -59,7 +59,7 @@ export class ClientSocket implements IClientSocket {
             delete this.socket;
             let options = this.getOptions();
             this.socket = Redis.createClient(options.url,options);
-            this.socket.id = '#server-socket:' + ADHOCCAST.Cmds.Common.Helper.uuid();
+            this.socket.id = ADHOCCAST.Cmds.Common.Helper.uuid();
             this.socket.once(ADHOCCAST.Dts.EClientSocketEvents.connect, () => {
  
             })

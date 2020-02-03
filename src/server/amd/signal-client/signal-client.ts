@@ -11,7 +11,7 @@ export interface ISignalClient extends ISignalClientBase {
 export class SocketNamespace extends SignalClientBase implements ISignalClient {
     conneciton: ADHOCCAST.IConnection
     _isReady: boolean;
-    constructor(nsp: Modules_Namespace.ISocketIONamespace, server?: IServer, options?: Modules_Namespace.ISocketNamespaceOptions) {
+    constructor(nsp: Modules_Namespace.ISocketIONamespace, server?: IServer, options?: Modules_Namespace.ISocketNamespaceOptions<any>) {
         super(nsp, server, options);
         this.init();
         this.initEvents();

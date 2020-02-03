@@ -11,9 +11,14 @@ export enum ChannelKeys {
     Short = '/short:',
     Socket = '/socket:',
     Exist = '/exist:',
-    UserStreamRoomPrefix = '/stream#'
+    UserStreamRoomPrefix = '/stream#',
+    Keyspace = '__keyspace@*__:'
 }
 export interface IOptionsExtra {
+    enabled?: boolean,
+    url?: string,
+    handshakeInterval?: number,
+    handshakeTimeout?:  number,
     redundanceScript?: string
 }
 export interface IKeyspaceEvents {

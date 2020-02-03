@@ -51,13 +51,12 @@ export interface IConfig {
     updateUrl: string
     configUrl: string
     autoUpdateConfig: boolean
-    namespaces: {[name:string]: string} | {[name:string]: ISocketNamespaceOptions}
+    namespaces: {[name:string]: string} | {[name:string]: ISocketNamespaceOptions<any>}
     websites: {[name:string]: string}
     clientConfig: IClientConfig
     http: Array<IHttpOption>
     https: Array<IHttpsOption2>
     signalCenter: ISignalCenter 
-    signalRedis: ISignalRedis
     socketIOServer: ISocketIOServer
     destroy()
     httpsOption2To1(option2: IHttpsOption2): IHttpsOption
@@ -68,13 +67,12 @@ export class Config extends Cmds.Common.Base implements IConfig {
     configUrl: string
     updateUrl: string
     autoUpdateConfig: boolean
-    namespaces: {[name:string]: string} | {[name:string]: ISocketNamespaceOptions}
+    namespaces: {[name:string]: string} | {[name:string]: ISocketNamespaceOptions<any>}
     websites: {[name:string]: string}
     clientConfig: IClientConfig
     http: Array<IHttpOption>
     https: Array<IHttpsOption2>
-    signalCenter: ISignalCenter   
-    signalRedis: ISignalRedis 
+    signalCenter: ISignalCenter 
     socketIOServer: ISocketIOServer
     constructor() {
         super();
@@ -85,11 +83,11 @@ export class Config extends Cmds.Common.Base implements IConfig {
         super.destroy();
     }
 
-    getNamespaces(): {[name:string]: ISocketNamespaceOptions} {
-        let namespaces: {[name:string]: ISocketNamespaceOptions} = {};
+    getNamespaces(): {[name:string]: ISocketNamespaceOptions<any>} {
+        let namespaces: {[name:string]: ISocketNamespaceOptions<any>} = {};
         Object.keys(this.namespaces).forEach(key => {
             let namespace = this.namespaces[key];
-            let options: ISocketNamespaceOptions;
+            let options: ISocketNamespaceOptions<any>;
             if (typeof(namespace) == 'string') {
                 options = {
                     name: key,
@@ -104,7 +102,7 @@ export class Config extends Cmds.Common.Base implements IConfig {
         })
         return namespaces;
     }
-    getNamespace(name: string): ISocketNamespaceOptions {    
+    getNamespace(name: string): ISocketNamespaceOptions<any> {    
         return this.getNamespaces()[name];
     }
     getNamespaceModuleUrl(nsp: string): string {

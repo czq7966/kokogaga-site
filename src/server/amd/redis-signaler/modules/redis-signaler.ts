@@ -32,7 +32,10 @@ export interface IRedisSignaler extends ISignalClient, IRedisClient {
     getNamespaceUserStreamRoomChannel(userid: string, roomid: string, namespace?: string): string
     getNamespaceUserStreamRoomUsersChannel(userid: string, roomid: string, namespace?: string): string
     getNamespaceShortChannel(id: string, namespace?: string): string 
-    getNamespaceSocketChannel(id: string, namespace?: string): string    
+    getNamespaceSocketChannel(id: string, namespace?: string): string
+    getNamespaceFromChannel(channel: string): string
+    //Room channels
+    getRoomidFromRoomChannel(channel: string): string
     
     getSocketClient(): ISocketClient    
     startHandshake()
@@ -49,8 +52,10 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     database: IDatabaseWrap
     _isReady: boolean;
     _handshakeHandler: number
-    constructor(nsp: Modules_Namespace.ISocketIONamespace, server?: IServer, options?: Modules_Namespace.ISocketNamespaceOptions) {
+    options: Modules_Namespace.ISocketNamespaceOptions<Dts.IOptionsExtra>
+    constructor(nsp: Modules_Namespace.ISocketIONamespace, server?: IServer, options?: Modules_Namespace.ISocketNamespaceOptions<any>) {
         super(nsp, server, options);
+        this.options = options;
         this.init();
         this.initEvents();
         this.tryConnect();
@@ -64,7 +69,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         let connParams: ADHOCCAST.IConnectionConstructorParams = {
             instanceId: this.instanceId,
             factorySignaler: SocketClient.SignalerName,
-            signalerBase: this.config.signalRedis.url,            
+            signalerBase: this.options.extra.url,            
             namespace: "",
             path: this.config.socketIOServer.path,
             notInitDispatcherFilters: true,
@@ -141,8 +146,8 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         await this.conneciton.signaler.connect();
     }
     async tryLogin() {
-        let signalRedis = this.config.signalRedis;
-        if (signalRedis && signalRedis.enabled ) {
+        let extra = this.options.extra;
+        if (extra && extra.enabled ) {
             try {
                 await this.conneciton.retryLogin(null, null, null, 5 * 1000, 12);        
             } catch(e) {
@@ -243,7 +248,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     }
     getServerKeyspacePChannel(id?: string): string {
         id = id || '*';
-        return '__keyspace@*__:' + this.getServerChannel(id)
+        return Dts.ChannelKeys.Keyspace + this.getServerChannel(id)
     }
     //Namespace channels
     getNamespaceChannel(id?: string): string {
@@ -272,6 +277,25 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     getNamespaceSocketChannel( id: string, namespace?: string): string {
         return this.getNamespaceChannel(namespace) +  Dts.ChannelKeys.Socket + id;
     }
+    getNamespaceFromChannel(channel: string): string {
+        let result: string
+        let idx = channel.indexOf(Dts.ChannelKeys.Namespace);
+        if (idx >= 0) {
+            result = channel.substr(idx + Dts.ChannelKeys.Namespace.length);
+            idx = result.indexOf('/');
+            if(idx > 0) result = result.substr(0, idx);
+        }
+        return result;
+    }
+    //Room channels
+    getRoomidFromRoomChannel(channel: string): string {
+        let result: string
+        let idx = channel.indexOf(Dts.ChannelKeys.Room);
+        if (idx >= 0) {
+            result = channel.substr(idx + Dts.ChannelKeys.Room.length);
+        }
+        return result;       
+    }
 
     getSocketClient(): ISocketClient {
         return this.conneciton.signaler as ISocketClient;
@@ -281,10 +305,10 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     startHandshake() {
         this.stopHandshake();
         let serverExsitChannel = this.getServerExistChannel();
-        this.getSocketClient().pexpire(serverExsitChannel, this.config.signalRedis.handshakeTimeout);
+        this.getSocketClient().pexpire(serverExsitChannel, this.options.extra.handshakeTimeout);
         this._handshakeHandler = setInterval(() => {            
-            this.getSocketClient().pexpire(serverExsitChannel, this.config.signalRedis.handshakeTimeout);
-        }, this.config.signalRedis.handshakeInterval) as any;
+            this.getSocketClient().pexpire(serverExsitChannel, this.options.extra.handshakeTimeout);
+        }, this.options.extra.handshakeInterval) as any;
 
     }
     stopHandshake() {

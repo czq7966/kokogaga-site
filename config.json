@@ -44,7 +44,11 @@
 		"signalRedis": {
 			"url": "amd/redis-signaler/index.js",
 			"type": "signalRedis",
-			"extra": {
+			"extra": {				
+				"enabled": true,
+				"url": "redis://127.0.0.1:6379",
+				"handshakeInterval": 3000,
+				"handshakeTimeout":  22000,
 				"redundanceScript": "amd/redis-signaler/redundancy.lua"
 			}
 		}
@@ -112,11 +116,5 @@
 		"enabled": false,
 		"signalerBase": "http://127.0.0.1:2770",
 		"namespace": "signalCenter"
-	},
-	"signalRedis": {
-		"enabled": true,
-		"url": "redis://127.0.0.1:6379",
-		"handshakeInterval": 3000,
-		"handshakeTimeout":  22000
-	}	
+	}
 }

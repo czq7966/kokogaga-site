@@ -9,7 +9,7 @@ export interface ICertWatcher extends Modules.ISocketNamespace  {
 }
 
 export class SocketNamespace  extends Modules.SocketNamespace implements ICertWatcher {
-    constructor(nsp: Modules.ISocketIONamespace, server?: Modules.IServer, options?: Modules.ISocketNamespaceOptions) {
+    constructor(nsp: Modules.ISocketIONamespace, server?: Modules.IServer, options?: Modules.ISocketNamespaceOptions<any>) {
         super(nsp, server, options);
         this.initEvents();
 

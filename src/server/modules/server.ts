@@ -50,7 +50,7 @@ export class Server implements IServer {
     constructor(project: IProject) {
         this.Project = project;
         Server.instance = this;
-        this.id = '#server:' + Helper.uuid();
+        this.id = Helper.uuid();
         this.config = new Config();
         this.httpServers = new HttpServers(this.getConfig());
         this.snsps = new Cmds.Common.Helper.KeyValue();

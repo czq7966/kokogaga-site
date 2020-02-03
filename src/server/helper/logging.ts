@@ -18,4 +18,4 @@ export class Debug {
     
 }
 
-global["Logging"] = Debug
+global["Logging"] = global["Logging"] || Debug
