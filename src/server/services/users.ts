@@ -39,8 +39,7 @@ export class ServiceUsers  {
         }
         return false
     }
-    static async delSocketUser(sckUsers: Modules.ISocketUsers, sckUser: Modules.ISocketUser): Promise<boolean> {
-        let user = sckUser.user;
+    static async delSocketUser(sckUsers: Modules.ISocketUsers, user: Dts.IUser): Promise<boolean> {
         if (user) {
             // let exist = await this.existSocketUser(sckUsers, user);
             // if (exist) {

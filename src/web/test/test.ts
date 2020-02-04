@@ -3,6 +3,7 @@ import { IMain } from './index';
 
 export class Test {
     main: IMain
+    isLogin: boolean;
     connnection: ADHOCCAST.IConnection;  
     eventRooter: ADHOCCAST.Cmds.Common.IEventRooter;  
     constructor(main: IMain){
@@ -11,7 +12,8 @@ export class Test {
         let connParams: ADHOCCAST.IConnectionConstructorParams = {
             instanceId: ADHOCCAST.Cmds.Common.Helper.uuid(),
             // factorySignaler: null,
-            signalerBase: "http://192.168.252.89:55888",
+            // signalerBase: "http://192.168.252.89:55888",
+            signalerBase: "http://127.0.0.1:2770",
             namespace: "promethean",
             path: '/socket.io',
             notInitDispatcherFilters: true,
@@ -51,7 +53,7 @@ export class Test {
                 // }
 
             }
-            await this.connnection.retryLogin(user, null, null, 5 * 1000, 12);                    
+            let result = await this.connnection.retryLogin(user, null, null, 5 * 1000); 
         } catch(e) {
             return await this.tryLogin()
         }            
@@ -59,12 +61,16 @@ export class Test {
     onAfterRoot = (cmd: ADHOCCAST.Cmds.Common.ICommand): any => {
         switch(cmd.data.cmdId) {
             case ADHOCCAST.Cmds.ECommandId.adhoc_login:
+                this.isLogin = true;
                 this.main.onLogin();
                 break;
             case ADHOCCAST.Cmds.ECommandId.adhoc_logout:                
                 break;
             case ADHOCCAST.Cmds.ECommandId.network_disconnect:
-                this.main.onDisconnect();
+                if (this.isLogin) {                    
+                    this.main.onDisconnect();
+                    this.isLogin = false;
+                }
                 this.start();
                 break;
         }   

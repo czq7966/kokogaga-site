@@ -124,7 +124,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     onAfterRoot = (cmd: ADHOCCAST.Cmds.Common.ICommand): any => {
         switch(cmd.data.cmdId) {
             case ADHOCCAST.Cmds.ECommandId.adhoc_login:
-                console.log('adhoc_login')
+                console.log('redis adhoc_login')
                 this.initDatabase();
                 this._isReady = this.conneciton.isLogin(); 
                 break;
@@ -132,10 +132,10 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
                 this._isReady = this.conneciton.isLogin(); 
                 break;
             case ADHOCCAST.Cmds.ECommandId.network_connect:
-                console.log('network_connect')                
+                console.log('redis network_connect')                
                 break;
             case ADHOCCAST.Cmds.ECommandId.network_disconnect:
-                console.log('network_disconnect')
+                console.log('redis network_disconnect')
                 this._isReady = this.conneciton.isLogin();                
                 break;
         }   

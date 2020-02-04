@@ -6,7 +6,7 @@ import { ServiceRoom } from './room';
 export class ServiceRoomChangeId {
 
     static onDispatched = {
-        req(cmd: Cmds.CommandRoomChangeIdReq, sckUser: Modules.SocketUser) {
+        async req(cmd: Cmds.CommandRoomChangeIdReq, sckUser: Modules.SocketUser) {
             let data = cmd.data;
             let room = data.props.user.room
             let respToUser = (result: boolean, msg: any) => {
@@ -20,7 +20,8 @@ export class ServiceRoomChangeId {
                 sckUser.sendCommand(resp);    
             }
             if (sckUser.openRooms.exist(room.id)) {
-                if (ServiceRoom.exist(room.id, sckUser)) {  
+                let roomExist = await ServiceRoom.exist(room.id, sckUser)
+                if (roomExist) {  
                     let oldId = room.id;
                     let newId = data.props.user.extra as string;
                     ServiceRoom.changeId(oldId, newId, sckUser)

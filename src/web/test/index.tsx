@@ -51,7 +51,7 @@ export class Main extends React.Component<IMainProp, IMainState> implements IMai
     }
 
     init(){
-        for (let index = 0; index < 20; index++) {
+        for (let index = 0; index < 10; index++) {
             let ms = Math.random() * 10 * 1000;
             setTimeout(() => {
                 new Test(this);            

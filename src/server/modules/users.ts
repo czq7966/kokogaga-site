@@ -72,15 +72,15 @@ export class SocketUsers extends Cmds.Common.Base implements ISocketUsers {
     }       
     async delayDestroyUser(sckUser: ISocketUser, timeout?: number, maxCount?: number, rightNow?: boolean) {
         timeout = timeout || 100;
-        maxCount = maxCount || 30;
+        maxCount = maxCount || 300;
 
         let destroy = () => {
             maxCount = maxCount - 1;                
             setTimeout(() => {
                 if (!sckUser.isLogin() || maxCount <=0) {
-                    setTimeout(() => {
+                    // setTimeout(() => {
                         sckUser.destroy();     
-                    }, 10 * 1000);
+                    // }, 10 * 1000);
                 } else {
                     destroy()
                 }

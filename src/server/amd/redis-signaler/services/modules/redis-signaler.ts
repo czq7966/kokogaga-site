@@ -107,20 +107,20 @@ export class RedisSignaler {
         }                
     }
     static async on_after_adhoc_login(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
-        // signaler.database.syncData();
-        setTimeout(() => {
-            Redundance.req(signaler);
-            
-        }, 20 * 1000);
+        signaler.database.syncData();
     }      
     static async on_after_network_connect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         let serverExsitChannel = signaler.getServerExistChannel();
 
         //redundancy after connect
+        console.log(111111111111111)
         await this.subscribeServerKeyspace(signaler);
+        console.log(22222222222222222)
         await signaler.del(serverExsitChannel);
+        console.log(333333333333333333)
         await Redundance.req(signaler);
-
+        console.log(44444444444444444)
+        
         //subscribe server channels
         await this.registServer(signaler);
 
@@ -153,7 +153,6 @@ export class RedisSignaler {
             if (kIndex < 0) keys = kKey + keys;
             if (xIndex < 0) keys = keys + xKey;
             await signaler.redisconfig('set', notifyKeyspaceEvents, keys);
-            console.log('55555555555555555', configKeys, keys)
         }
 
         // subscribe server channel expired event

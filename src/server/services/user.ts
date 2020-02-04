@@ -35,9 +35,9 @@ export class ServiceUser extends Cmds.Common.Base {
             let user = Object.assign({}, data.props.user) as Dts.IUser;  
             user.room = room;
             sckUser.user = user;   
-            sckUser.setLogin(true);
             await ServiceUsers.addSocketUser(sckUser.users, sckUser)     
             await ServiceRoom.joinOrCreate(room.id, sckUser)
+            sckUser.setLogin(true);
         } else {
             return room.id
         }
@@ -47,6 +47,7 @@ export class ServiceUser extends Cmds.Common.Base {
                     data?: Dts.ICommandData<Dts.ICommandLogoutReqDataProps>, 
                     includeSelf?: boolean, disconnect?: boolean): Promise<any> {
         // let isLogin = await this.isLogin(sckUser);
+        let user = sckUser.user;
         let isLogin = sckUser.isLogin();
         if (isLogin) {
             await this.closeOpenRooms(sckUser);
@@ -54,14 +55,14 @@ export class ServiceUser extends Cmds.Common.Base {
             data = data || {
                 cmdId: Dts.ECommandId.adhoc_logout,
                 props: {
-                    user: sckUser.user
+                    user: user
                 }
             }
             data.to = {type: 'room', id: sckUser.user.room.id};
             await sckUser.sendCommand(data, includeSelf);
 
-            await ServiceRoom.leaveOrClose(data.props.user.room.id, sckUser)
-            await ServiceUsers.delSocketUser(sckUser.users, sckUser);
+            await ServiceRoom.leaveOrClose(user.room.id, user, sckUser)
+            await ServiceUsers.delSocketUser(sckUser.users, user);
             // delete sckUser.user;
             sckUser.setLogin(false);
         }    

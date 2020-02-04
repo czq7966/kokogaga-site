@@ -40,9 +40,9 @@ export class ServiceRoom {
             ServiceUsers.addRoom(sckUser.users, room, true);
         }
     }
-    static async leave(roomid: string, sckUser: Modules.ISocketUser): Promise<any> {
+    static async leave(roomid: string, user: Dts.IUser, sckUser: Modules.ISocketUser): Promise<any> {
         let room = await sckUser.getDataNamespace().getRoom(roomid);
-        await sckUser.getDataNamespace().leaveRoom(roomid, sckUser.user);  
+        await sckUser.getDataNamespace().leaveRoom(roomid, user);  
         room = room || sckUser.users.rooms.get(roomid);
         if (room) {
             this.leaveSocketRoom(room, sckUser);
@@ -63,8 +63,8 @@ export class ServiceRoom {
         else 
             await this.open(roomid, sckUser);
     }
-    static async leaveOrClose(roomid: string, sckUser: Modules.ISocketUser): Promise<any> {
-        await this.leave(roomid, sckUser);
+    static async leaveOrClose(roomid: string, user: Dts.IUser, sckUser: Modules.ISocketUser): Promise<any> {
+        await this.leave(roomid, user, sckUser);
         let count = await sckUser.getDataNamespace().getRoomUsersCount(roomid);
         if (!count) await this.close(roomid, sckUser);
     }    

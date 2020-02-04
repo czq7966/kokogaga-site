@@ -9,6 +9,7 @@ export class ServiceRoomLeave extends Cmds.Common.Base {
         async req(cmd: Cmds.CommandRoomLeaveReq, sckUser: Modules.SocketUser) {
             let data = cmd.data;
             let room = data.props.user.room
+            let user = sckUser.user;
             let req: Dts.ICommandData<Dts.ICommandRoomLeaveReqDataProps>;
             let resp: Dts.ICommandData<Dts.ICommandRoomLeaveRespDataProps>;
             // Send to members
@@ -18,7 +19,7 @@ export class ServiceRoomLeave extends Cmds.Common.Base {
             await sckUser.sendCommand(req);
 
             // Leave room
-            ServiceRoom.leave(room.id, sckUser)
+            ServiceRoom.leave(room.id, user, sckUser)
             .then(() => {
                 resp = Object.assign({}, data, {
                     type: Dts.ECommandType.resp,

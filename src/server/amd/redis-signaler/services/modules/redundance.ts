@@ -13,7 +13,8 @@ export class Redundance {
         if (fs.existsSync(file)) {
             script = fs.readFileSync(file, 'utf8');
             let result = await signaler.eval(script, 1, signaler.getServersChannel());  
-            let roomChannels = {}          
+            console.log('Redundance.req', result)
+            let roomChannels = {} 
             if (result) {
                 if (typeof(result) == 'string') {
                     roomChannels = JSON.parse(result);

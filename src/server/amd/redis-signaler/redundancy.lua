@@ -61,7 +61,7 @@ local function publishNetworkException(roomChannel)
         to = { type = 'room', id = roomid }
     }
     local cmdStr = cjson.encode(cmd)
-    publishCommand(channel, cmdStr)
+    publishCommand(roomChannel, cmdStr)
 end
 
 local function delRoomChannelUser(roomChannel, userChannel)
@@ -70,7 +70,7 @@ local function delRoomChannelUser(roomChannel, userChannel)
     local count = redis.call('hlen', roomUsersChannel)
     if (count == 0) then
         redis.call('del', roomChannel)
-        RedundanceRoomChannels[roomChannel] = false
+        RedundanceRoomChannels[roomChannel] = nil
     else
         RedundanceRoomChannels[roomChannel] = true
     end
@@ -140,8 +140,7 @@ local function delServersChannel(serversChannel)
         end
     end       
     publishRedundanceRoomChannels(RedundanceRoomChannels)
-    -- RedundanceRoomChannels = {}
-
+    RedundanceRoomChannels = {}
     return cjson.encode(RedundanceRoomChannels)
 end
 
