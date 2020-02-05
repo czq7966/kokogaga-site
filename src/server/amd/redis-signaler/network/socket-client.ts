@@ -22,7 +22,11 @@ export interface IRedisClient {
     hexists(key: string, field: string): Promise<boolean>    
     persist(key: string): Promise<boolean> ;
     expire(key: string, seconds: number): Promise<boolean>     
-    pexpire(key: string, milliseconds: number): Promise<boolean>     
+    pexpire(key: string, milliseconds: number): Promise<boolean>   
+    submulti(args?: Array<Array<string | number>>): Redis.Multi;  
+    pubmulti(args?: Array<Array<string | number>>): Redis.Multi;
+    submultiAsync(args: Array<Array<string | number>>): Promise<any[]>;  
+    pubmultiAsync(args: Array<Array<string | number>>): Promise<any[]>;  
     eval(...args: (string | number)[]): Promise<any>
     redisconfig(...args: string[]): Promise<any>
 }
@@ -471,6 +475,50 @@ export class SocketClient implements ISocketClient {
                 })
             }
         });         
+    }
+    submulti(args?: Array<Array<string | number>>): Redis.Multi {                    
+        if (!this.connected('submulti')) return null
+        else {
+            return this.subSocket.socket.multi(args)
+        }                
+    }
+    pubmulti(args?: Array<Array<string | number>>): Redis.Multi {                    
+        if (!this.connected('pubmulti')) return null
+        else {
+            return this.pubSocket.socket.multi(args)
+        }                
+    }
+    submultiAsync(args: Array<Array<string | number>>): Promise<any[]> {
+        return new Promise((resolve, reject) => {
+            if (!this.connected('submultiAsync')) resolve()
+            else {
+                this.subSocket.socket.multi(args).exec((err, result) => {
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve()
+                    }
+                    else {
+                        resolve(result)    
+                    }
+                })       
+            }
+        })
+    } 
+    pubmultiAsync(args: Array<Array<string | number>>): Promise<any[]>{
+        return new Promise((resolve, reject) => {
+            if (!this.connected('pubmultiAsync')) resolve()
+            else {
+                this.pubSocket.socket.multi(args).exec((err, result) => {
+                    if (err) {
+                        Logging.error(err.message);
+                        resolve()
+                    }
+                    else {
+                        resolve(result)    
+                    }
+                })       
+            }
+        })
     }
     eval(...args: (string | number)[]): Promise<any> {
         return new Promise((resolve, reject) => {

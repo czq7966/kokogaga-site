@@ -28,14 +28,14 @@ export class ServiceUsers  {
     static async addSocketUser(sckUsers: Modules.ISocketUsers, sckUser: Modules.ISocketUser): Promise<boolean> {
         let user = sckUser.user;
         if (user) {
-            let existUser = await this.existSocketUser(sckUsers, user)
-            if (!existUser) {
+            // let existUser = await this.existSocketUser(sckUsers, user)
+            // if (!existUser) {
                 await sckUsers.getDataNamespace().addUser(user);
                 sckUsers.users.add(user.id, sckUser)
                 sckUsers.sockets.add(user.socketId, sckUser);
                 sckUsers.shortUsers.add(user.sid, sckUser)
                 return true;
-            }
+            // }
         }
         return false
     }

@@ -369,6 +369,18 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     async pexpire(key: string, milliseconds: number): Promise<boolean> {
         return this.getSocketClient().expire(key, milliseconds); 
     }     
+    submulti(args?: Array<Array<string | number>>): Redis.Multi {
+        return this.getSocketClient().submulti(args)
+    }
+    pubmulti(args?: Array<Array<string | number>>): Redis.Multi {
+        return this.getSocketClient().pubmulti(args)
+    }
+    submultiAsync(args: Array<Array<string | number>>): Promise<any[]> {
+        return this.getSocketClient().submultiAsync(args)
+    } 
+    pubmultiAsync(args: Array<Array<string | number>>): Promise<any[]>{
+        return this.getSocketClient().pubmultiAsync(args)
+    }
     async eval(...args: (string | number)[]): Promise<any> {
         return this.getSocketClient().eval(...args)
     } 

@@ -2,6 +2,7 @@ import { ADHOCCAST } from '../libex'
 import { IDataNamespace, IDatabase, IDataUsers } from '../../../modules/database';
 import { IDatabaseWrap } from './database-wrap';
 import { IRedisSignaler } from './redis-signaler';
+import { Dts } from '../../../../../../adhoc-cast-connection/src/main/dts';
 
 export interface IDataNamespaceWrap extends IDataNamespace {
     getSignaler(): IRedisSignaler
@@ -116,12 +117,27 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         //
         len = len || 6;
         let sid = ADHOCCAST.Cmds.Common.Helper.uuid(len, 10)
-        let existUser = await this.existUser({id: null, sid: sid});
-        if (existUser) {
-            return this.newUserShortID()
-        } else {
+        let script = `if (redis.call('get', KEYS[1]) == false) then
+            redis.call('set', KEYS[1], KEYS[2])
+            redis.call('expire', KEYS[1], 10)
+            return  KEYS[1]
+        end`;
+        let user: Dts.IUser = {
+            id: ADHOCCAST.Cmds.Common.Helper.uuid(),
+            sid: sid,
+            serverId: this.getSignaler().server.getId()
+        }
+        let userStr = JSON.stringify(user);
+
+        let shortChannel = this.getSignaler().getNamespaceShortChannel(user.sid)
+        let result = await this.getSignaler().pubmultiAsync([
+            ['eval', script, 2, shortChannel, userStr]
+        ])
+        if (result && result[0] == shortChannel) {
             return sid
-        }    
+        } else {
+            return this.newUserShortID()
+        }
     }
     async getUser(user: ADHOCCAST.Dts.IUser): Promise<ADHOCCAST.Dts.IUser> {
         if (!this.isReady()) return this.namespace.getUser(user, true);
@@ -210,42 +226,80 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         this.getSignaler().unsubscribe(channel);
     }    
     redis_onUserAdd = (id: string, user: ADHOCCAST.Dts.IUser) => { 
-        let channel = this.getUserChannel(id);
+        let userChannel = this.getUserChannel(id);
+        let shortChannel = this.getShortChannel(user.sid);
+        let userStreamRoomChannel = this.getUserStreamRoomChannel(id, user.room.id);
+        let userStreamRoomUsersChannel = this.getUserStreamRoomUsersChannel(id, user.room.id);
+        let roomUsersChannel = this.getRoomUsersChannel(user.room.id);
         let serverUsersChannel = this.getSignaler().getServerUsersChannel();
         let strUser = JSON.stringify(user);
-        this.getSignaler().hset(serverUsersChannel, channel, strUser);
-        this.getSignaler().set(channel, strUser);
-        this.getSignaler().subscribe(channel);
-        this.getSignaler().del(this.getUserStreamRoomChannel(id, user.room.id))
-        this.getSignaler().del(this.getUserStreamRoomUsersChannel(id, user.room.id))
+
+        // this.getSignaler().hset(serverUsersChannel, channel, strUser);
+        // this.getSignaler().set(channel, strUser);
+        // this.getSignaler().subscribe(channel);
+        // this.getSignaler().del(this.getUserStreamRoomChannel(id, user.room.id))
+        // this.getSignaler().del(this.getUserStreamRoomUsersChannel(id, user.room.id))
+        let pubmulti = this.getSignaler().pubmulti();
+        pubmulti && pubmulti
+        .hset(serverUsersChannel, userChannel, strUser)
+        .set(userChannel, strUser)
+        .set(shortChannel, strUser)
+        .persist(shortChannel)
+        .hset(roomUsersChannel, userChannel, strUser)
+        .del(userStreamRoomChannel)
+        .del(userStreamRoomUsersChannel)
+        .exec();
+
+        let submulti = this.getSignaler().submulti();
+        submulti && submulti
+        .subscribe(userChannel)
+        .subscribe(shortChannel)
+        .exec();
     }
     redis_onUserDel = (id: string, user: ADHOCCAST.Dts.IUser) => { 
-        if (user) {
+         if (user) {
             let userChannel = this.getUserChannel(id);
+            let shortChannel = this.getShortChannel(user.sid);
             let userStreamRoomChannel = this.getUserStreamRoomChannel(id, user.room.id);
             let userStreamRoomUsersChannel = this.getUserStreamRoomUsersChannel(id, user.room.id);
             let roomUsersChannel = this.getRoomUsersChannel(user.room.id);
             let serverUsersChannel = this.getSignaler().getServerUsersChannel();
 
-            this.getSignaler().del(userStreamRoomChannel)
-            this.getSignaler().del(userStreamRoomUsersChannel)
-            this.getSignaler().hdel(roomUsersChannel, userChannel);
-            this.getSignaler().del(userChannel);
-            this.getSignaler().hdel(serverUsersChannel, userChannel);
-            this.getSignaler().unsubscribe(userChannel);
+            // this.getSignaler().del(userStreamRoomChannel)
+            // this.getSignaler().del(userStreamRoomUsersChannel)
+            // this.getSignaler().hdel(roomUsersChannel, userChannel);
+            // this.getSignaler().del(userChannel);
+            // this.getSignaler().hdel(serverUsersChannel, userChannel);
+            // this.getSignaler().unsubscribe(userChannel);
+            // this.test(user)
+            let pubmulti = this.getSignaler().pubmulti();
+            pubmulti && pubmulti
+            .del(userStreamRoomChannel)
+            .del(userStreamRoomUsersChannel)
+            .hdel(roomUsersChannel, userChannel)
+            .del(userChannel)
+            .del(shortChannel)
+            .hdel(serverUsersChannel, userChannel)     
+            .exec();
+
+            let submulti = this.getSignaler().submulti();
+            submulti && submulti
+            .unsubscribe(userChannel)
+            .unsubscribe(shortChannel)
+            .exec();
         }
     }
     redis_onShortUserAdd = (id: string, user: ADHOCCAST.Dts.IUser) => { 
-        let channel = this.getShortChannel(id);
-        let strUser = JSON.stringify(user);
-        this.getSignaler().set(channel, strUser);
-        this.getSignaler().subscribe(channel);
+        // let channel = this.getShortChannel(id);
+        // let strUser = JSON.stringify(user);
+        // this.getSignaler().set(channel, strUser);
+        // this.getSignaler().subscribe(channel);
     }
     redis_onShortUserDel =(id: string, user: ADHOCCAST.Dts.IUser) => { 
         // if (user) {
-            let channel = this.getShortChannel(id);
-            this.getSignaler().del(channel);
-            this.getSignaler().unsubscribe(channel);
+            // let channel = this.getShortChannel(id);
+            // this.getSignaler().del(channel);
+            // this.getSignaler().unsubscribe(channel);
         // }
     }      
     redis_onRoomAdd = (id: string, room: ADHOCCAST.Dts.IRoom) => { 
@@ -255,8 +309,8 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
     }
     redis_onRoomDel =(id: string, room: ADHOCCAST.Dts.IRoom) => { 
         // if (room) {
-            let channel = this.getRoomChannel(id);
-            this.getSignaler().del(channel);        
+            // let channel = this.getRoomChannel(id);
+            // this.getSignaler().del(channel);        
         // }
     }
     redis_onRoomUsersAdd = (id: string, users: IDataUsers) => { 
@@ -281,15 +335,22 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         this.getSignaler().hset(roomUsersChannel, userChannel, strUser);
     }
     redis_onRoomUserDel = (id: string, user: ADHOCCAST.Dts.IUser, users: IDataUsers) => { 
-        // if (user) {
-            let room = users.extra as ADHOCCAST.Dts.IRoom;
-            let roomUsersChannel = this.getRoomUsersChannel(room.id);
-            let userChannel = this.getUserChannel(id);
-            this.getSignaler().hdel(roomUsersChannel, userChannel);
-        // } else {
-        //     Logging.error('Error: redis_onRoomUserDel: ' + id)
-        // }
-    }    
+        let script = 
+        `if (redis.call('hlen', KEYS[1]) == 0) then 
+            redis.call('del', KEYS[2]) 
+        end`;
+
+        let room = users.extra as ADHOCCAST.Dts.IRoom;
+        let userChannel = this.getUserChannel(id);
+        let roomChannel = this.getRoomChannel(room.id);
+        let roomUsersChannel = this.getRoomUsersChannel(room.id);
+        
+        let pubmulti = this.getSignaler().pubmulti();
+        pubmulti && pubmulti
+        .hdel(roomUsersChannel, userChannel)
+        .eval(script, 2, roomUsersChannel, roomChannel)
+        .exec();
+     }    
     redis_sync() {
         this.redis_sync_keyvalue(this.namespace.users);
         this.redis_sync_keyvalue(this.namespace.shortUsers);
@@ -309,5 +370,15 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
     syncData(): boolean {
         this.redis_sync();
         return true;
+    }
+
+    async test(user: Dts.IUser) {
+        let roomUsersCount = await this.getRoomUsersCount(user.room.id) || 0;
+        let serverUsersChannel = this.getSignaler().getServerUsersChannel()
+        let serverUsersCount = await this.getSignaler().hlen(serverUsersChannel) || 0;
+        if (roomUsersCount != serverUsersCount) {
+            Logging.error('Error: roomUsersCount: ' + roomUsersCount + ', serverUsersCount:' + serverUsersCount)
+        }
+
     }
 }
