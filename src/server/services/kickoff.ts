@@ -37,9 +37,38 @@ export class ServiceKickoff extends Cmds.Common.Base {
                         to: {type: 'server', id: nspUser.serverId}
                     }
                     await sckUser.sendCommand(cmd);
+                    await this.waitUserNotExist(sckUser, user);
                 }
             }
         }      
+    }
+    static async waitUserNotExist(sckUser: Modules.ISocketUser,user: Dts.IUser, timeout?: number, maxCount?: number): Promise<boolean> {
+        timeout = timeout || 500;
+        maxCount = maxCount || 10;
+        let _checkNotExist = (): Promise<boolean> => {
+            return new Promise(async (resolve, reject) => {
+                if (sckUser.notDestroyed) {
+                    maxCount = maxCount -1;
+                    let sckUsers = sckUser.users;
+                    let nspUser = await sckUsers.getDataNamespace().getUser(user);
+                    if (nspUser) {
+                        if (maxCount != 0 ) {
+                            setTimeout(async () => {
+                                let exist = await _checkNotExist();
+                                resolve(exist)
+                            }, timeout); 
+                        } else {
+                            resolve(true)
+                        }
+                    } else {
+                        resolve(false)
+                    }
+                } else {
+                    resolve()
+                }
+            })           
+        }  
+        return _checkNotExist();
     }
     static async onDeliverCommand_kickoff(sckUsers: Modules.ISocketUsers, user: Dts.IUser): Promise<any> {
         if (user) {
