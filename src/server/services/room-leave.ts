@@ -19,7 +19,7 @@ export class ServiceRoomLeave extends Cmds.Common.Base {
             await sckUser.sendCommand(req);
 
             // Leave room
-            ServiceRoom.leave(room.id, user, sckUser)
+            ServiceRoom.leave(room.id, user, true, sckUser)
             .then(() => {
                 resp = Object.assign({}, data, {
                     type: Dts.ECommandType.resp,

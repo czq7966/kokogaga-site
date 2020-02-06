@@ -35,6 +35,8 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         namespace.onExistUser = this.existUser.bind(this);
         namespace.onGetRoom = this.getRoom.bind(this);
         namespace.onExistRoom = this.existRoom.bind(this);
+        namespace.onCreateRoom = this.createRoom.bind(this);
+        namespace.onOpenRoom = this.openRoom.bind(this);
         namespace.onGetRoomUsersCount = this.getRoomUsersCount.bind(this);
 
 
@@ -43,7 +45,7 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         namespace.shortUsers.on('add', this.redis_onShortUserAdd)
         namespace.shortUsers.on('del', this.redis_onShortUserDel)
         namespace.rooms.on('add', this.redis_onRoomAdd)
-        namespace.rooms.on('del', this.redis_onRoomDel)                        
+        // namespace.rooms.on('del', this.redis_onRoomDel)                        
         namespace.roomUsers.on('add', this.redis_onRoomUsersAdd)
         namespace.roomUsers.on('del', this.redis_onRoomUsersDel)
         namespace.roomUsers.values().forEach(users => {
@@ -64,6 +66,8 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         namespace.onExistUser = null;
         namespace.onGetRoom = null;
         namespace.onExistRoom = null;
+        namespace.onCreateRoom = null;
+        namespace.onOpenRoom = null;
         namespace.onGetRoomUsersCount = null;
 
 
@@ -72,7 +76,7 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         namespace.shortUsers.off('add', this.redis_onShortUserAdd)
         namespace.shortUsers.off('del', this.redis_onShortUserDel)
         namespace.rooms.off('add', this.redis_onRoomAdd)
-        namespace.rooms.off('del', this.redis_onRoomDel)                        
+        // namespace.rooms.off('del', this.redis_onRoomDel)                        
         namespace.roomUsers.off('add', this.redis_onRoomUsersAdd)
         namespace.roomUsers.off('del', this.redis_onRoomUsersDel)   
         namespace.roomUsers.values().forEach(users => {
@@ -117,11 +121,12 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         //
         len = len || 6;
         let sid = ADHOCCAST.Cmds.Common.Helper.uuid(len, 10)
-        let script = `if (redis.call('get', KEYS[1]) == false) then
-            redis.call('set', KEYS[1], KEYS[2])
-            redis.call('expire', KEYS[1], 10)
-            return  KEYS[1]
-        end`;
+        let script = 
+            `if (redis.call('get', KEYS[1]) == false) then
+                redis.call('set', KEYS[1], KEYS[2])
+                redis.call('expire', KEYS[1], 10)
+                return  KEYS[1]
+            end`;
         let user: Dts.IUser = {
             id: ADHOCCAST.Cmds.Common.Helper.uuid(),
             sid: sid,
@@ -129,7 +134,7 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         }
         let userStr = JSON.stringify(user);
 
-        let shortChannel = this.getSignaler().getNamespaceShortChannel(user.sid)
+        let shortChannel = this.getShortChannel(user.sid);
         let result = await this.getSignaler().pubmultiAsync([
             ['eval', script, 2, shortChannel, userStr]
         ])
@@ -163,9 +168,13 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         return !!exist;   
     }
     async addUser(user: ADHOCCAST.Dts.IUser): Promise<boolean> {
+        if (!this.isReady()) return this.namespace.addUser(user, true);
+        //
         return this.namespace.addUser(user);
     }
     async delUser(user: ADHOCCAST.Dts.IUser): Promise<boolean> {
+        if (!this.isReady()) return this.namespace.delUser(user, true);
+        //
         return this.namespace.delUser(user); 
     }
     //Room
@@ -185,30 +194,83 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         let uroom = await this.getRoom(roomid);
         return !!uroom;        
     }
-    async createRoom(roomid: string): Promise<ADHOCCAST.Dts.IRoom> {
-        return this.namespace.createRoom(roomid);
+    async createRoom(roomid: string, room?: Dts.IRoom): Promise<ADHOCCAST.Dts.IRoom> {
+        if (!this.isReady()) return this.namespace.createRoom(roomid, room, true);
+        //
+        let script = 
+            `if (redis.call('get', KEYS[1]) == false) then
+                redis.call('set', KEYS[1], KEYS[2])
+                redis.call('expire', KEYS[1], 10)
+                return  KEYS[2]
+            else 
+                return redis.call('get', KEYS[1])
+            end`;
+        room = room || {
+            id: roomid,
+            sim: ADHOCCAST.Cmds.Common.Helper.uuid()
+        }
+        let roomStr = JSON.stringify(room);
+        let roomChannel = this.getRoomChannel(room.id);
+        let result = await this.getSignaler().pubmultiAsync([
+            ['eval', script, 2, roomChannel, roomStr]
+        ])
+        if (result) roomStr = result[0];
+
+        let uroom = JSON.parse(roomStr);
+        if (room.sim == uroom.sim) {
+            this.namespace.rooms.add(room.id, room);
+            return room;
+        } else {
+            return uroom;
+        }
     }
     async openRoom(roomid: string): Promise<ADHOCCAST.Dts.IRoom> {
-        return this.namespace.openRoom(roomid);
+        if (!this.isReady()) return this.namespace.openRoom(roomid, true);
+        //
+        let room: Dts.IRoom = {
+            id: roomid,
+            sim: ADHOCCAST.Cmds.Common.Helper.uuid()
+        }
+        let uroom = await this.createRoom(roomid, room);
+        if (room.sim == uroom.sim) {
+            return room
+        } else {
+            throw 'Room already exist!'
+        } 
     }
     async closeRoom(roomid: string): Promise<ADHOCCAST.Dts.IRoom> {
-        return this.namespace.closeRoom(roomid);
+        if (!this.isReady()) return this.namespace.closeRoom(roomid, true);
+        //
+        let room = await this.namespace.closeRoom(roomid);
+        room && this.redis_onRoomDel(roomid, room);
+        return room;
     }
     changeRoomId(roomOldId: string, roomNewId: string): Promise<boolean> {
+        if (!this.isReady()) return this.namespace.changeRoomId(roomOldId, roomNewId, true);
+        //
         return this.namespace.changeRoomId(roomOldId, roomNewId);
     }
     //Room Users 
     async joinRoom(roomid: string, user: ADHOCCAST.Dts.IUser):  Promise<boolean>  {
+        if (!this.isReady()) return this.namespace.joinRoom(roomid, user, true);
+        //
         return this.namespace.joinRoom(roomid, user);
     }
-    async leaveRoom(roomid: string, user: ADHOCCAST.Dts.IUser): Promise<boolean> {
-        return this.namespace.leaveRoom(roomid, user);
+    async leaveRoom(roomid: string, user: ADHOCCAST.Dts.IUser, closeWhileNoUser: boolean): Promise<boolean> {
+        if (!this.isReady()) return this.namespace.leaveRoom(roomid, user, closeWhileNoUser, true);
+        //
+        return this.namespace.leaveRoom(roomid, user, closeWhileNoUser);
     }
     async joinOrCreateRoom(roomid: string, user: ADHOCCAST.Dts.IUser): Promise<boolean> {
-        return this.namespace.joinOrCreateRoom(roomid, user);   
+        if (!this.isReady()) return this.namespace.joinOrCreateRoom(roomid, user, true);
+        //
+        await this.createRoom(roomid);
+        return await this.joinRoom(roomid, user);    
     }
     async leaveOrCloseRoom(roomid: string, user: ADHOCCAST.Dts.IUser): Promise<boolean> {
-        return this.namespace.leaveOrCloseRoom(roomid, user);
+        if (!this.isReady()) return this.namespace.leaveOrCloseRoom(roomid, user, true);
+        //
+        return await this.leaveRoom(roomid, user, true);
     }    
     async getRoomUsersCount(roomid: string): Promise<number> {
         if (!this.isReady()) return this.namespace.getRoomUsersCount(roomid, true);
@@ -234,11 +296,6 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         let serverUsersChannel = this.getSignaler().getServerUsersChannel();
         let strUser = JSON.stringify(user);
 
-        // this.getSignaler().hset(serverUsersChannel, channel, strUser);
-        // this.getSignaler().set(channel, strUser);
-        // this.getSignaler().subscribe(channel);
-        // this.getSignaler().del(this.getUserStreamRoomChannel(id, user.room.id))
-        // this.getSignaler().del(this.getUserStreamRoomUsersChannel(id, user.room.id))
         let pubmulti = this.getSignaler().pubmulti();
         pubmulti && pubmulti
         .hset(serverUsersChannel, userChannel, strUser)
@@ -265,13 +322,6 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
             let roomUsersChannel = this.getRoomUsersChannel(user.room.id);
             let serverUsersChannel = this.getSignaler().getServerUsersChannel();
 
-            // this.getSignaler().del(userStreamRoomChannel)
-            // this.getSignaler().del(userStreamRoomUsersChannel)
-            // this.getSignaler().hdel(roomUsersChannel, userChannel);
-            // this.getSignaler().del(userChannel);
-            // this.getSignaler().hdel(serverUsersChannel, userChannel);
-            // this.getSignaler().unsubscribe(userChannel);
-            // this.test(user)
             let pubmulti = this.getSignaler().pubmulti();
             pubmulti && pubmulti
             .del(userStreamRoomChannel)
@@ -303,26 +353,33 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         // }
     }      
     redis_onRoomAdd = (id: string, room: ADHOCCAST.Dts.IRoom) => { 
-        let channel = this.getRoomChannel(id);
+        let roomChannel = this.getRoomChannel(id);
         let strRoom = JSON.stringify(room);
-        this.getSignaler().set(channel, strRoom);
+        this.getSignaler().pubmulti()
+        .set(roomChannel, strRoom)
+        .persist(roomChannel)
+        .exec();
     }
     redis_onRoomDel =(id: string, room: ADHOCCAST.Dts.IRoom) => { 
-        // if (room) {
-            // let channel = this.getRoomChannel(id);
-            // this.getSignaler().del(channel);        
-        // }
+        if (room) {
+            let roomChannel = this.getRoomChannel(id);
+            let roomUsersChannel = this.getRoomUsersChannel(id);
+            this.getSignaler().pubmulti()
+            .del(roomChannel)
+            .del(roomUsersChannel)
+            .exec()        
+        }
     }
     redis_onRoomUsersAdd = (id: string, users: IDataUsers) => { 
-        let channel = this.getRoomChannel(id);
-        this.getSignaler().subscribe(channel);   
+        let roomChannel = this.getRoomChannel(id);
+        this.getSignaler().subscribe(roomChannel);   
         users.on('add', this.redis_onRoomUserAdd)       
         users.on('del', this.redis_onRoomUserDel)
     }           
     redis_onRoomUsersDel = (id: string, users: IDataUsers) => { 
         if (users) {
-            let channel = this.getRoomChannel(id);
-            this.getSignaler().unsubscribe(channel);             
+            let roomChannel = this.getRoomChannel(id);
+            this.getSignaler().unsubscribe(roomChannel);             
             users.off('add', this.redis_onRoomUserAdd)       
             users.off('del', this.redis_onRoomUserDel)       
         }
@@ -370,15 +427,5 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
     syncData(): boolean {
         this.redis_sync();
         return true;
-    }
-
-    async test(user: Dts.IUser) {
-        let roomUsersCount = await this.getRoomUsersCount(user.room.id) || 0;
-        let serverUsersChannel = this.getSignaler().getServerUsersChannel()
-        let serverUsersCount = await this.getSignaler().hlen(serverUsersChannel) || 0;
-        if (roomUsersCount != serverUsersCount) {
-            Logging.error('Error: roomUsersCount: ' + roomUsersCount + ', serverUsersCount:' + serverUsersCount)
-        }
-
     }
 }
