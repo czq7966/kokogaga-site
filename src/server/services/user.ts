@@ -93,22 +93,22 @@ export class ServiceUser extends Cmds.Common.Base {
             await sckUser.dispatcher.onCommand(cmd, sckUser);
         }
     }
-    static async sendCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean) {
+    static async sendCommand(sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean, forResp?: boolean) {
         let useSignalCenter = sckUser.users.snsp.options.useSignalCenter;
         if (!!useSignalCenter) {
             let signalClient = sckUser.users.snsp.server.getSignalClient();
             if (signalClient && signalClient.isReady()) {
                 try {
                     sckUser.dispatcher.polyfillCommand(cmd, sckUser);
-                    await this.deliverCommand(signalClient, sckUser, cmd, includeSelf);                    
+                    return await this.deliverCommand(signalClient, sckUser, cmd, includeSelf, forResp);                    
                 } catch(e) {
-                    await sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);                    
+                    return await sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);                    
                 }
             } else {
-                await sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);   
+                return await sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);   
             }
         } else {
-            await sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);
+            return await sckUser.dispatcher.sendCommand(cmd, sckUser, includeSelf);
         }
     }
     static async addRoom(sckUser: Modules.ISocketUser, room: Dts.IRoom, notForce?: boolean)  {   
@@ -123,9 +123,9 @@ export class ServiceUser extends Cmds.Common.Base {
             sckUser.openRooms.del(roomid)
         }
     }
-    static async deliverCommand(signalClient: ISignalClient, sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean) {
+    static async deliverCommand(signalClient: ISignalClient, sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean, forResp?: boolean) {
         if (signalClient) {
-            return signalClient.deliverUserCommand(sckUser, cmd, includeSelf);
+            return signalClient.deliverUserCommand(sckUser, cmd, includeSelf, forResp);
         } else {
             throw "signal client is not loaded yet!"
         }

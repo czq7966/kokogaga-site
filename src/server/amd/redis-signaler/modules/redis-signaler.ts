@@ -42,7 +42,9 @@ export interface IRedisSignaler extends ISignalClient, IRedisClient {
     stopHandshake()
 
     //Override
-    sendCommand(cmd: any, channel?: string): Promise<any>   
+    sendCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, forResp?: boolean): Promise<any>
+    sendCommandForResp(data: ADHOCCAST.Cmds.Common.ICommandData<any>): Promise<any>
+    deliverCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, dataExtra: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>, forResp?: boolean): Promise<any>
     onDeliverCommand(cmd: ADHOCCAST.Cmds.Common.ICommandData<any>): Promise<any>
 
 }
@@ -166,11 +168,15 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         return Services.Cmds.SignalCenterDeliver.onReq(this, cmd);
     }
     //Override
-    async sendCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>) {
+    async sendCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, forResp?: boolean) {
         if (this.isReady()) {
             let cmd = new ADHOCCAST.Cmds.CommandReq({instanceId: this.conneciton.instanceId});
             cmd.data = data;
-            let result = await cmd.sendCommand()
+            let result;
+            if (forResp)                    
+                result = await cmd.sendCommandForResp();
+            else
+                result = await cmd.sendCommand();
             cmd.destroy();
             cmd = null;
             return result;
@@ -180,14 +186,19 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         }        
     }
     //Override
-    async deliverCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, dataExtra: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>) {
+    async sendCommandForResp(data: ADHOCCAST.Cmds.Common.ICommandData<any>) {
+        return this.sendCommand(data, true)
+    }
+    //Override
+    async deliverCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, dataExtra: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>, forResp?: boolean) {
         let cmd: ADHOCCAST.Cmds.Common.ICommandData<any> = {
             cmdId: Dts.ECommandId.signal_center_deliver,
             props: data,
-            extra: dataExtra
+            extra: dataExtra,
+            respTimeout: data.respTimeout
         }
         Services.Modules.RedisSignaler.SendFilter.on_signal_center_deliver(this, cmd);
-        let result = await this.sendCommand(cmd);
+        let result = await this.sendCommand(cmd, forResp);
         await this.server.onDeliverCommand(cmd);
         return result;
     }

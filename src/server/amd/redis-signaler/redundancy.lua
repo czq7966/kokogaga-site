@@ -82,25 +82,35 @@ local function delRoomUser(roomId, userChannel)
     delRoomChannelUser(roomChannel, userChannel)
 end
 
+local function delUserShortChannel(serverChannel, userShortChannel, serverUser)
+	local userStr = redis.call('get', userShortChannel)
+    if (userStr ~= false) then        
+        local user = cjson.decode(userStr)
+        local sameServerUser = string.find(serverChannel, user.serverId, 1, true) ~= nil
+        if ((user.id == serverUser.id) and (user.room.id == serverUser.room.id) and (sameServerUser == true)) then
+            redis.call('del', userShortChannel)
+        end
+    end	    
+end
+
 local function delUserChannel(serverChannel, userChannel, serverUser)
 	local userStr = redis.call('get', userChannel)
     if (userStr ~= false) then        
         local user = cjson.decode(userStr)
-        local isServerUser = string.find(serverChannel, user.serverId, 1, true) ~= nil
-        if ((user.room.id == serverUser.room.id) and (isServerUser == true)) then
-            local namespacePrefix = getNamespacePrefixByUserChannel(userChannel)
-            local roomChannel = namespacePrefix..RoomChannelKey..user.room.id
-            local userShortChannel = namespacePrefix..UserShortChannelKey..user.sid
+        local namespacePrefix = getNamespacePrefixByUserChannel(userChannel)
+        local userShortChannel = namespacePrefix..UserShortChannelKey..user.sid
+        delUserShortChannel(serverChannel, userShortChannel, serverUser)
+        local sameServerUser = string.find(serverChannel, user.serverId, 1, true) ~= nil
+        if ((user.room.id == serverUser.room.id) and (sameServerUser == true)) then            
+            local roomChannel = namespacePrefix..RoomChannelKey..user.room.id            
             local userStreamRoomChannel = roomChannel..UserStreamRoomKey..user.id
             local userStreamRoomUsersChannel = userStreamRoomChannel..RoomUsersChannelKey
             redis.call('del', userStreamRoomChannel)
             redis.call('del', userStreamRoomUsersChannel)            
-            delRoomChannelUser(roomChannel, userChannel)
-            redis.call('del', userShortChannel)
+            delRoomChannelUser(roomChannel, userChannel)            
             redis.call('del', userChannel)
         end
-    end	
-    
+    end	    
 end
 
 local function delServerChannel(serverChannel)

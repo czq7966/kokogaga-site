@@ -34,10 +34,16 @@ export class ServiceKickoff extends Cmds.Common.Base {
                             user: nspUser
                         },
                         cmdId: Dts.ECommandId.adhoc_kickoff,
-                        to: {type: 'server', id: nspUser.serverId}
+                        to: {type: 'server', id: nspUser.serverId},
+                        respTimeout: 5 * 1000
                     }
-                    await sckUser.sendCommand(cmd);
-                    await this.waitUserNotExist(sckUser, user);
+                    try {
+                        await sckUser.sendCommandForResp(cmd);
+                    } catch (error) {
+                        
+                    }
+                   
+                    // await this.waitUserNotExist(sckUser, user);
                 }
             }
         }      
