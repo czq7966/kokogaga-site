@@ -23,11 +23,11 @@ export class GlobalExpcetion {
         process.off('unhandledRejection', this.unhandledRejection) 
     }
     uncaughtException = (error: Error) => {
-        console.log('uncaughtException:', error)
+        console.error('uncaughtException:', error)
         // this.resetNamespaces();
     }
     unhandledRejection =(reason: any, promise: Promise<any>) => {
-        console.log('unhandledRejection:', reason);
+        console.error('unhandledRejection:', reason);
         // this.resetNamespaces();
     }
     resetNamespaces(delay?: number) {
@@ -35,7 +35,7 @@ export class GlobalExpcetion {
         setTimeout(() => {
             this.server.resetNamespaces()
             .catch(err => {
-                console.log('ResetNamespaces Error:', err)
+                console.error('ResetNamespaces Error:', err)
             })        
         }, delay);
     }

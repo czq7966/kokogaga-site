@@ -92,7 +92,7 @@ export class SocketClient implements ISocketClient {
     connected(label?: string): boolean {
         let result = this.subSocket.connected() && this.pubSocket.connected();
         if (!result) {
-            Logging.error('assertConnected: redis server not connected: ' + label)
+            Logging.warn('assertConnected: redis server not connected: ' + label)
         }
         return result;
     }
