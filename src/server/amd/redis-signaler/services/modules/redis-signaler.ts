@@ -10,8 +10,7 @@ export class RedisSignaler {
         onAfterRoot(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>): any {
             switch(cmd.cmdId) {
                 case Dts.ECommandId.signal_center_deliver:
-                    this.on_signal_center_deliver(signaler, cmd);
-                    return ADHOCCAST.Cmds.Common.EEventEmitterEmit2Result.preventRoot;
+                    return this.on_signal_center_deliver(signaler, cmd);                    
                     break;
                 case Dts.ECommandId.signal_center_pmessage:
                     this.on_signal_center_pmessage(signaler, cmd);
@@ -29,8 +28,15 @@ export class RedisSignaler {
             }
         },
 
-        async on_signal_center_deliver(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>) {
-            signaler.onDeliverCommand(cmd)
+        on_signal_center_deliver(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>) {
+            let data = cmd.props as ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Cmds.ICommandDataProps>;
+            if (data.cmdId == ADHOCCAST.Cmds.ECommandId.adhoc_kickoff && 
+                data.type == ADHOCCAST.Cmds.ECommandType.resp) {
+
+            } else {
+                signaler.onDeliverCommand(cmd)
+                return ADHOCCAST.Cmds.Common.EEventEmitterEmit2Result.preventRoot;
+            }
         }
     }
 
@@ -113,13 +119,9 @@ export class RedisSignaler {
         let serverExsitChannel = signaler.getServerExistChannel();
 
         //redundancy after connect
-        console.log(111111111111111)
         await this.subscribeServerKeyspace(signaler);
-        console.log(22222222222222222)
         await signaler.del(serverExsitChannel);
-        console.log(333333333333333333)
         await Redundance.req(signaler);
-        console.log(44444444444444444)
         
         //subscribe server channels
         await this.registServer(signaler);

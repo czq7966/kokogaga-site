@@ -173,7 +173,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
             let cmd = new ADHOCCAST.Cmds.CommandReq({instanceId: this.conneciton.instanceId});
             cmd.data = data;
             let result;
-            if (forResp)                    
+            if (forResp)                  
                 result = await cmd.sendCommandForResp();
             else
                 result = await cmd.sendCommand();
@@ -195,7 +195,13 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
             cmdId: Dts.ECommandId.signal_center_deliver,
             props: data,
             extra: dataExtra,
-            respTimeout: data.respTimeout
+            onResp: data.onResp,
+            onRespTimeout: data.onRespTimeout,
+            respTimeout: data.respTimeout,  
+            respMsg: data.respMsg,
+            respResult: data.respResult,
+            sessionId: data.sessionId,
+            type: data.type         
         }
         Services.Modules.RedisSignaler.SendFilter.on_signal_center_deliver(this, cmd);
         let result = await this.sendCommand(cmd, forResp);

@@ -1,4 +1,5 @@
 import * as Common from '../../common'
+import { CommandCommon } from '../../../cmds/common'
 
 export enum ECommandId {
     //signal-center
@@ -64,3 +65,14 @@ export interface ICommandUsersUpdateReqProps {
 
 export interface ICommandUsersRemoveReqProps extends ICommandUsersUpdateReqProps {}
 export interface ICommandUsersRefreshReqProps extends ICommandUsersUpdateReqProps {}
+
+[
+    ECommandId.signal_center_deliver
+].forEach(commanid => {
+    Common.CmdsCommon.CommandTypes.RegistCommandType({
+        cmdId: commanid,
+        name: commanid,
+        ReqClass: CommandCommon,
+        RespClass: CommandCommon
+    })
+})

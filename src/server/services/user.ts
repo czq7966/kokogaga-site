@@ -125,7 +125,7 @@ export class ServiceUser extends Cmds.Common.Base {
     }
     static async deliverCommand(signalClient: ISignalClient, sckUser: Modules.ISocketUser, cmd: Dts.ICommandData<any>, includeSelf?: boolean, forResp?: boolean) {
         if (signalClient) {
-            return signalClient.deliverUserCommand(sckUser, cmd, includeSelf, forResp);
+            return await signalClient.deliverUserCommand(sckUser, cmd, includeSelf, forResp);
         } else {
             throw "signal client is not loaded yet!"
         }

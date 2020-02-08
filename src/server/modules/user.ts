@@ -17,8 +17,8 @@ export interface ISocketUser extends Cmds.Common.IBase {
     dispatcher: Services.IDispatcher;
     openRooms: Cmds.Common.Helper.KeyValue<Dts.IRoom>;    
     onCommand: (cmd: Dts.ICommandData<any>, cb?: (result: boolean) => void) => void
-    sendCommand: (cmd: Dts.ICommandData<any>, includeSelf?: boolean, forResp?: boolean) => void
-    sendCommandForResp: (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => void
+    sendCommand: (cmd: Dts.ICommandData<any>, includeSelf?: boolean, forResp?: boolean) => Promise<any>
+    sendCommandForResp: (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => Promise<any>
     getDataNamespace(): IDataNamespace 
     isLogin(): boolean
     setLogin(login: boolean)
@@ -82,7 +82,7 @@ export class SocketUser  extends Cmds.Common.Base implements ISocketUser {
         }
     }
     sendCommand = async (cmd: Dts.ICommandData<any>, includeSelf?: boolean, forResp?: boolean) => {
-        return await Services.ServiceUser.sendCommand(this, cmd, includeSelf);
+        return await Services.ServiceUser.sendCommand(this, cmd, includeSelf, forResp);
     }
     sendCommandForResp = async (cmd: Dts.ICommandData<any>, includeSelf?: boolean) => {
         return await this.sendCommand(cmd, includeSelf, true);

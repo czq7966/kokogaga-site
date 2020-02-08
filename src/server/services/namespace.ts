@@ -58,7 +58,7 @@ export class ServiceNamespace  {
         let extra = dlvCmd.extra as  Dts.ICommandData<ICommandDeliverDataExtraProps>;
         switch (data.cmdId) {
             case Dts.ECommandId.adhoc_kickoff:
-                ServiceKickoff.onDeliverCommand_kickoff(namespace.users, data.props.user)
+                ServiceKickoff.onDeliverCommand_kickoff(namespace.users, data.props.user, dlvCmd)
                 break;
         }
     

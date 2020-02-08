@@ -33,7 +33,14 @@ export class SignalClientBase extends Modules_Namespace.SocketNamespace implemen
         let cmd: ADHOCCAST.Cmds.Common.ICommandData<any> = {
             cmdId: Dts.ECommandId.signal_center_deliver,
             props: data,
-            extra: dataExtra
+            extra: dataExtra,
+            onResp: data.onResp,
+            onRespTimeout: data.onRespTimeout,
+            respTimeout: data.respTimeout,  
+            respMsg: data.respMsg,
+            respResult: data.respResult,
+            sessionId: data.sessionId,
+            type: data.type         
         }
         if (forResp)
             return await this.sendCommandForResp(cmd)

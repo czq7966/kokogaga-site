@@ -27,24 +27,7 @@ export class ServiceKickoff extends Cmds.Common.Base {
                 }
             }
             else {
-                let nspUser = await sckUsers.getDataNamespace().getUser(user);
-                if (nspUser && nspUser.serverId && nspUser.serverId != sckUsers.snsp.server.getId()) {
-                    let cmd: Dts.ICommandData<Dts.ICommandReqDataProps> = {
-                        props: {
-                            user: nspUser
-                        },
-                        cmdId: Dts.ECommandId.adhoc_kickoff,
-                        to: {type: 'server', id: nspUser.serverId},
-                        respTimeout: 5 * 1000
-                    }
-                    try {
-                        await sckUser.sendCommandForResp(cmd);
-                    } catch (error) {
-                        
-                    }
-                   
-                    // await this.waitUserNotExist(sckUser, user);
-                }
+                await this.deliverCommand_kickoff_req(sckUser, user);
             }
         }      
     }
@@ -76,13 +59,47 @@ export class ServiceKickoff extends Cmds.Common.Base {
         }  
         return _checkNotExist();
     }
-    static async onDeliverCommand_kickoff(sckUsers: Modules.ISocketUsers, user: Dts.IUser): Promise<any> {
+    static async onDeliverCommand_kickoff(sckUsers: Modules.ISocketUsers, user: Dts.IUser, dlvCmd: Dts.ICommandData<any>): Promise<any> {
         if (user) {
-            let sckLoginUser = await ServiceUsers.getSocketUser(sckUsers, user);
-            if (sckLoginUser) {
-                await ServiceUser.logout(sckLoginUser as Modules.ISocketUser, null, true, true);
+            let sckUser = await ServiceUsers.getSocketUser(sckUsers, user);
+            if (sckUser) {
+                await ServiceUser.logout(sckUser as Modules.ISocketUser, null, true, false);
+                await this.deliverCommand_kickoff_resp(sckUser, user, dlvCmd)
+                sckUser.notDestroyed && sckUser.socket && sckUser.socket.connected && sckUser.socket.disconnect();
             }
         }
+    }
+    static async deliverCommand_kickoff_req(sckUser: Modules.ISocketUser, user: Dts.IUser) {
+        let sckUsers = sckUser.users;
+        let nspUser = await sckUsers.getDataNamespace().getUser(user);
+        if (nspUser && nspUser.serverId && nspUser.serverId != sckUsers.snsp.server.getId()) {
+            let cmd: Dts.ICommandData<Dts.ICommandReqDataProps> = {
+                props: {
+                    user: nspUser
+                },
+                cmdId: Dts.ECommandId.adhoc_kickoff,
+                to: {type: 'server', id: nspUser.serverId},
+                respTimeout: 5 * 1000,
+            }
+            try {
+                let result = await sckUser.sendCommandForResp(cmd);
+            } catch (error) {
+                
+            }
+        }
+    }
+    static async deliverCommand_kickoff_resp(sckUser: Modules.ISocketUser, user: Dts.IUser, dlvCmd: Dts.ICommandData<any>) {
+        let cmd: Dts.ICommandData<Dts.ICommandRespDataProps> = {
+            cmdId: Dts.ECommandId.adhoc_kickoff,
+            props: {
+                user: user
+            },
+            to: dlvCmd.from,
+            type: Dts.ECommandType.resp,
+            respResult: true,
+            sessionId: dlvCmd.sessionId
+        }    
+        await sckUser.sendCommand(cmd); 
     }
 
 }
