@@ -1,19 +1,52 @@
 {
-	"version": "2.13",
+	"version": "3.0",
 	"configUrl": "config.json",
-	"updateUrl": "http://betacs.101.com/v0.1/static/preproduction_content_adhoccast/signaler_server/mdm",
+	"updateUrl": "http://betacs.101.com/v0.1/static/preproduction_content_adhoccast/signaler_server/redis-mdm",
 	"autoUpdateConfig": true,
 	"namespaces": {
-		"admin": "dist/server/amd/admin/index.js",
-		"__cert-watcher": "dist/server/amd/cert-watcher/index.js",
-		"__cs-logger": null,
-		"nd": "dist/server/amd/common/index.js",
-		"promethean": "dist/server/amd/common/index.js",
-		"mdm": "dist/server/amd/common/index.js",
-		"test": "dist/server/amd/common/index.js"
+		"promethean": {
+			"url": "amd/common/index.js",
+			"type": "common",
+			"useSignalCenter": true
+		},
+		"mdm": {
+			"url": "amd/common/index.js",
+			"type": "common",
+			"useSignalCenter": true
+		},	
+		"nd": {
+			"url": "amd/common/index.js",
+			"type": "common",
+			"useSignalCenter": true
+		},			
+		"test": {
+			"url": "amd/common/index.js",
+			"type": "common",
+			"useSignalCenter": true
+		},	
+		"admin": {
+			"url": "amd/admin/index.js",
+			"type": "admin"
+		},
+		"certWatcher": {
+			"url": "amd/cert-watcher/index.js",
+			"type": "certWatcher"
+		},
+		"signalRedis": {
+			"url": "amd/redis-signaler/index.js",
+			"type": "signalRedis",
+			"extra": {				
+				"enabled": true,
+				"url": "redis://127.0.0.1:6379",
+				"handshakeInterval": 3000,
+				"handshakeTimeout":  22000,
+				"redundanceScript": "amd/redis-signaler/redundancy.lua"
+			}
+		}
 	},
 	"websites": {
-		"desktop": "/../desktop"
+		"desktop": "/../desktop",
+		"sdp-probe": "/../web/sdp-probe"
 	},
 	"http": [
 		{
@@ -47,6 +80,9 @@
 			]
 		}
 	],
+	"socketIOServer": {
+		"path": "socket.io"
+	},
 	"clientConfig": {
 		"rtcConfig": {
 			"iceTransportPolicy": "all",

@@ -1,18 +1,46 @@
 {
-    "version": "2.13",
-    "configUrl": "config.json",
-    "updateUrl": "",
-    "autoUpdateConfig": false,
+	"version": "3.0",
+	"configUrl": "config.json",
+	"updateUrl": "",
+	"autoUpdateConfig": false,
 
-    "namespaces": {
-        "admin": "amd/admin/index.js",
-        "__cert-watcher": "amd/cert-watcher/index.js",
-        "__cs-logger": null,
-        "nd": "amd/common/index.js",
-        "promethean": "amd/common/index.js",
-        "mdm": "amd/common/index.js",
-        "test": "amd/common/index.js"
-    },
+	"namespaces": {
+		"promethean": {
+			"url": "amd/common/index.js",
+			"type": "common",
+			"useSignalCenter": true
+		},
+		"mdm": {
+			"url": "amd/common/index.js",
+			"type": "common",
+			"useSignalCenter": true
+		},	
+		"nd": {
+			"url": "amd/common/index.js",
+			"type": "common",
+			"useSignalCenter": true
+		},			
+		"test": {
+			"url": "amd/common/index.js",
+			"type": "common",
+			"useSignalCenter": true
+		},	
+		"admin": {
+			"url": "amd/admin/index.js",
+			"type": "admin"
+		},
+		"signalRedis": {
+			"url": "amd/redis-signaler/index.js",
+			"type": "signalRedis",
+			"extra": {				
+				"enabled": true,
+				"url": "redis://127.0.0.1:6379",
+				"handshakeInterval": 3000,
+				"handshakeTimeout":  22000,
+				"redundanceScript": "amd/redis-signaler/redundancy.lua"
+			}
+		}
+    },    
     "websites": {
         "desktop" : "/../desktop"
     },
@@ -41,5 +69,8 @@
                 } 
             ]
         }        
-    }
+    },
+	"socketIOServer": {
+		"path": "socket.io"
+	}
 }
