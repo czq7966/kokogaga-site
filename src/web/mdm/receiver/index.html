@@ -34,9 +34,12 @@
   <script>
       MDM.ADHOCCAST.Cmds.Common.Helper.Debug.enabled = true;
       var device = new MDM.Device({
-        signalerBase: "https://mdm.hk.101.com:13670",
-        namespace: "mdm",
-        roomPrefix: "mdm_"
+        // signalerBase: "https://mdm.hk.101.com:13670",
+        // namespace: "mdm",
+        // roomPrefix: "mdm_"
+        signalerBase: "http://127.0.0.1:2770",
+        namespace: "promethean",
+        roomPrefix: "promethean_"
       })   
 
       function startConnect() {          

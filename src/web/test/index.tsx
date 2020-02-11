@@ -10,6 +10,7 @@ import ReactDOM = require('react-dom');
 import { ADHOCCAST } from '../../client/libex'
 import { Test } from './test';
 ADHOCCAST.Modules.Webrtc.Config.platform = ADHOCCAST.Modules.Webrtc.EPlatform.browser;
+ADHOCCAST.Cmds.Common.Helper.Debug.enabled = true;
 
 export interface IMainState {
     count: number
@@ -51,8 +52,9 @@ export class Main extends React.Component<IMainProp, IMainState> implements IMai
     }
 
     init(){
-        for (let index = 0; index < 10; index++) {
-            let ms = Math.random() * 10 * 1000;
+        for (let index = 0; index < 1; index++) {
+            // let ms = Math.random() * 10 * 1000;
+            let ms = 5 * 1000;
             setTimeout(() => {
                 new Test(this);            
             }, ms);

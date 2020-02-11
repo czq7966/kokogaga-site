@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
 import { ADHOCCAST } from '../libex/index'
+ADHOCCAST.Cmds.Common.Helper.Debug.enabled = true;
 
 export interface IConfig extends ADHOCCAST.IConnectionConstructorParams {
     roomPrefix: string;
@@ -76,7 +77,7 @@ export class Device {
     on_user_state_onchange (cmd: ADHOCCAST.Cmds.Common.ICommand) {
         let me = this.connection.rooms.getLoginRoom().me().item;
         let user = cmd.data.props.user as ADHOCCAST.Cmds.IUser;
-        if (me.room.id == user.room.id && me.id != user.id && user.sid == this.deviceID) {
+        if (me.room.id == user.room.id && me.id != user.id && user.sid != this.deviceID) {
             let values = user.extra as ADHOCCAST.Cmds.Common.Helper.IStateChangeValues
             if (ADHOCCAST.Cmds.Common.Helper.StateMachine.isset(values.chgStates, ADHOCCAST.Dts.EUserState.stream_room_sending) && 
                 ADHOCCAST.Cmds.Common.Helper.StateMachine.isset(values.newStates, ADHOCCAST.Dts.EUserState.stream_room_sending)) {
@@ -85,7 +86,7 @@ export class Device {
         }
     }   
     on_stream_webrtc_onrecvstream (cmd: ADHOCCAST.Cmds.Common.ICommand) {     
-        this.refreshPlayers();            
+        this.refreshPlayers(cmd.data.props.user);            
     }
     recvUserStream(instanceId: string, user: ADHOCCAST.Cmds.IUser): Promise<any> {
         return new Promise((resolve, reject) => {
@@ -149,23 +150,24 @@ export class Device {
             this.removePlayer(this.players[0]);
         }
     }
-    getRecvStream(): MediaStream {
+    getRecvStream(user?: ADHOCCAST.Cmds.IUser): MediaStream {
         let mLoginRoom = this.connection.isLogin() && this.connection.rooms.getLoginRoom();
-        let mDeviceUser = !!mLoginRoom && mLoginRoom.getUserBySid(this.deviceID);
+        let mDeviceUser = !!mLoginRoom && mLoginRoom.getUserBySid(user ? user.sid : this.deviceID);
         let mStreamRoom = !!mDeviceUser && mDeviceUser.getStreamRoom();
+        mStreamRoom = mStreamRoom || this.connection.rooms.getRoom(user.room.id);
         let mStreamMe = !!mStreamRoom && mStreamRoom.me();
         let mStreamPeer = !!mStreamMe && mStreamMe.peer;
         let streams = !!mStreamPeer && mStreamPeer.streams;
-        let stream = !!streams && (streams.recvs.count() > 0) && streams.recvs.values()[0];        
+        let stream = !!streams && (streams.recvs.count() > 0) && streams.recvs.values()[0];  
         return !!stream ? stream : null;
     }
-    attachPlayerStream(video: HTMLVideoElement) {
-        let stream = this.getRecvStream();
+    attachPlayerStream(video: HTMLVideoElement, user?: ADHOCCAST.Cmds.IUser) {
+        let stream = this.getRecvStream(user);
         video.srcObject = stream;
     }
-    attachPlayersStream() {
+    attachPlayersStream(user?: ADHOCCAST.Cmds.IUser) {
         this.players.forEach(player => {
-            this.attachPlayerStream(player);
+            this.attachPlayerStream(player, user);
         })
     }
     deattachPlayerStream(video: HTMLVideoElement) {
@@ -176,8 +178,8 @@ export class Device {
             this.deattachPlayerStream(player);
         })        
     }
-    refreshPlayers() {
-        this.attachPlayersStream();
+    refreshPlayers(user?: ADHOCCAST.Cmds.IUser) {
+        this.attachPlayersStream(user);
     }
 }
 

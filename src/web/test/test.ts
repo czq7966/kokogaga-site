@@ -29,10 +29,14 @@ export class Test {
         delete this.connnection;
     }
     async start(){
-        await this.tryLogin();
+        // await this.tryLogin();
+        // setTimeout(() => {
+        //     this.connnection.disconnect();
+        // }, Math.random() * 100000 * 1000);     
+         
         setTimeout(() => {
-            this.connnection.disconnect();
-        }, Math.random() * 10 * 1000);              
+            this.tryLogin();
+        },5 * 1000);                  
     }
 
     initEvents() {
@@ -48,9 +52,10 @@ export class Test {
             console.log('111111111')   
             let user: ADHOCCAST.Dts.IUser = {
                 id: null,
-                // room: {
-                //     id: ADHOCCAST.Cmds.Common.Helper.uuid()
-                // }
+                sid: '123456',
+                room: {
+                    id: 'promethean_123456'
+                }
 
             }
             let result = await this.connnection.retryLogin(user, null, null, 5 * 1000); 
