@@ -71,7 +71,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         let connParams: ADHOCCAST.IConnectionConstructorParams = {
             instanceId: this.instanceId,
             factorySignaler: SocketClient.SignalerName,
-            signalerBase: this.options.extra.url,            
+            signalerBase: this.options.extra.url || '',            
             namespace: "",
             path: this.config.socketIOServer.path,
             notInitDispatcherFilters: true,
@@ -153,8 +153,8 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         let extra = this.options.extra;
         if (extra && extra.enabled ) {
             try {
-                await this.conneciton.retryLogin(null, null, null, 5 * 1000, 12);        
-            } catch(e) {
+                await this.conneciton.retryLogin(null, null, null, 5 * 1000, 12);   
+           } catch(e) {
                 return await this.tryLogin()
             }            
         } else {
@@ -240,7 +240,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         return this.options.extra.options
     }
     getPath(): string {
-        return this.server.getConfig().socketIOServer.path;
+        return '{' + this.server.getConfig().socketIOServer.path + '}';
     }
     getPathChannel(id?: string): string {
         return Dts.ChannelKeys.Path + (id || this.getPath());
@@ -394,8 +394,8 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     pubmultiAsync(args: Array<Array<string | number>>): Promise<any[]>{
         return this.getSocketClient().pubmultiAsync(args)
     }
-    async eval(...args: (string | number)[]): Promise<any> {
-        return this.getSocketClient().eval(...args)
+    async eval(script: string, numKeys: number, ...args: Redis.ValueType[]): Promise<any> {
+        return this.getSocketClient().eval(script, numKeys, ...args)
     } 
     async redisconfig(...args: string[]): Promise<any> {
         return this.getSocketClient().redisconfig(...args)

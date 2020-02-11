@@ -14,10 +14,7 @@ export class SocketNamespace extends SignalClientBase implements ISignalClient {
     constructor(nsp: Modules_Namespace.ISocketIONamespace, server?: IServer, options?: Modules_Namespace.ISocketNamespaceOptions<any>) {
         super(nsp, server, options);
         this.init();
-        this.initEvents();
-        setTimeout(() => {
-            this.tryLogin();            
-        }, 2000);            
+        this.initEvents(); 
     }
     destroy() {
         this.unInitEvents();

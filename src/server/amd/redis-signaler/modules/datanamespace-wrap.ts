@@ -123,7 +123,7 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         let sid = ADHOCCAST.Cmds.Common.Helper.uuid(len, 10)
         let script = 
             `if (redis.call('get', KEYS[1]) == false) then
-                redis.call('set', KEYS[1], KEYS[2])
+                redis.call('set', KEYS[1], ARGV[1])
                 redis.call('expire', KEYS[1], 10)
                 return  KEYS[1]
             end`;
@@ -135,10 +135,8 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         let userStr = JSON.stringify(user);
 
         let shortChannel = this.getShortChannel(user.sid);
-        let result = await this.getSignaler().pubmultiAsync([
-            ['eval', script, 2, shortChannel, userStr]
-        ])
-         if (result && result[0] && result[0][1] == shortChannel) {
+        let result = await this.getSignaler().eval(script, 1, shortChannel, userStr)        
+         if (result && result == shortChannel) {
             return sid
         } else {
             return this.newUserShortID()
@@ -199,7 +197,7 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         //
         let script = 
             `if (redis.call('get', KEYS[1]) == false) then
-                redis.call('set', KEYS[1], KEYS[2])
+                redis.call('set', KEYS[1], ARGV[1])
                 redis.call('expire', KEYS[1], 10)
                 return  KEYS[2]
             else 
@@ -211,10 +209,9 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         }
         let roomStr = JSON.stringify(room);
         let roomChannel = this.getRoomChannel(room.id);
-        let result = await this.getSignaler().pubmultiAsync([
-            ['eval', script, 2, roomChannel, roomStr]
-        ])
-        if (result && result[0] && result[0][1]) roomStr = result[0][1];
+        let result = await this.getSignaler().eval(script, 1, roomChannel, roomStr)
+
+        if (result && result) roomStr = result;
 
         let uroom = JSON.parse(roomStr);
         if (room.sim == uroom.sim) {
@@ -304,7 +301,9 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         .hset(roomUsersChannel, userChannel, strUser)
         .del(userStreamRoomChannel)
         .del(userStreamRoomUsersChannel)
-        .exec().catch(e => {});
+        .exec().catch(e => {
+            Logging.error(e)
+        });
 
         this.getSignaler().subscribe(userChannel);
         this.getSignaler().subscribe(shortChannel);
@@ -326,7 +325,9 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
             .del(userChannel)
             .del(shortChannel)
             .hdel(serverUsersChannel, userChannel)     
-            .exec().catch(e => {});
+            .exec().catch(e => {
+                Logging.error(e)
+            });
 
             this.getSignaler().unsubscribe(userChannel)
             this.getSignaler().unsubscribe(shortChannel)
@@ -351,7 +352,9 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         this.getSignaler().pubmulti()
         .set(roomChannel, strRoom)
         .persist(roomChannel)
-        .exec().catch(e => {});
+        .exec().catch(e => {
+            Logging.error(e)
+        });
     }
     redis_onRoomDel =(id: string, room: ADHOCCAST.Dts.IRoom) => { 
         if (room) {
@@ -360,7 +363,9 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
             this.getSignaler().pubmulti()
             .del(roomChannel)
             .del(roomUsersChannel)
-            .exec().catch(e => {});       
+            .exec().catch(e => {
+                Logging.error(e)
+            });       
         }
     }
     redis_onRoomUsersAdd = (id: string, users: IDataUsers) => { 
@@ -399,7 +404,9 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         pubmulti && pubmulti
         .hdel(roomUsersChannel, userChannel)
         .eval(script, 2, roomUsersChannel, roomChannel)
-        .exec().catch(e => {});
+        .exec().catch(e => {
+            Logging.error(e)
+        });
      }    
     redis_sync() {
         this.redis_sync_keyvalue(this.namespace.users);

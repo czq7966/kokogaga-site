@@ -27,7 +27,7 @@ export interface IRedisClient {
     pubmulti(args?: Array<Array<string | number>>): Redis.Pipeline;
     submultiAsync(args: Array<Array<string | number>>): Promise<any[]>;  
     pubmultiAsync(args: Array<Array<string | number>>): Promise<any[]>;  
-    eval(...args: (string | number)[]): Promise<any>
+    eval(script: string, numKeys: number, ...args: Redis.ValueType[]): Promise<any>
     redisconfig(...args: string[]): Promise<any>
 }
 
