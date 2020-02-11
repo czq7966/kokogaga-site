@@ -33,10 +33,18 @@
 			"type": "signalRedis",
 			"extra": {
 				"enabled": true,
-				"url": "redis://127.0.0.1:6379",
-				"handshakeInterval": 3000,
+				"handshakeInterval": 10000,
 				"handshakeTimeout": 22000,
-				"redundanceScript": "amd/redis-signaler/redundancy.lua"
+				"redundanceScript": "amd/redis-signaler/redundancy.lua",
+				"nodes": [{
+					"port": 6379,
+					"host": "127.0.0.1",
+					"password": null
+				}],
+				"options": {
+					"enableReadyCheck": true,
+					"db": 1
+				}
 			}
 		}
 	},

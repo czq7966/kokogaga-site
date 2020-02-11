@@ -1,3 +1,5 @@
+import { RedisOptions, ClusterOptions } from 'ioredis';
+
 export * from '../signal-center/cmds/dts'
 
 export enum ChannelKeys {
@@ -19,7 +21,9 @@ export interface IOptionsExtra {
     url?: string,
     handshakeInterval?: number,
     handshakeTimeout?:  number,
-    redundanceScript?: string
+    redundanceScript?: string,
+    nodes?:RedisOptions[]
+    options?: RedisOptions | ClusterOptions
 }
 export interface IKeyspaceEvents {
     pattern: string,

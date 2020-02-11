@@ -138,7 +138,7 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         let result = await this.getSignaler().pubmultiAsync([
             ['eval', script, 2, shortChannel, userStr]
         ])
-        if (result && result[0] == shortChannel) {
+         if (result && result[0] && result[0][1] == shortChannel) {
             return sid
         } else {
             return this.newUserShortID()
@@ -214,7 +214,7 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         let result = await this.getSignaler().pubmultiAsync([
             ['eval', script, 2, roomChannel, roomStr]
         ])
-        if (result) roomStr = result[0];
+        if (result && result[0] && result[0][1]) roomStr = result[0][1];
 
         let uroom = JSON.parse(roomStr);
         if (room.sim == uroom.sim) {
@@ -295,7 +295,6 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         let roomUsersChannel = this.getRoomUsersChannel(user.room.id);
         let serverUsersChannel = this.getSignaler().getServerUsersChannel();
         let strUser = JSON.stringify(user);
-
         let pubmulti = this.getSignaler().pubmulti();
         pubmulti && pubmulti
         .hset(serverUsersChannel, userChannel, strUser)
@@ -305,13 +304,10 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         .hset(roomUsersChannel, userChannel, strUser)
         .del(userStreamRoomChannel)
         .del(userStreamRoomUsersChannel)
-        .exec();
+        .exec().catch(e => {});
 
-        let submulti = this.getSignaler().submulti();
-        submulti && submulti
-        .subscribe(userChannel)
-        .subscribe(shortChannel)
-        .exec();
+        this.getSignaler().subscribe(userChannel);
+        this.getSignaler().subscribe(shortChannel);
     }
     redis_onUserDel = (id: string, user: ADHOCCAST.Dts.IUser) => { 
          if (user) {
@@ -330,13 +326,10 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
             .del(userChannel)
             .del(shortChannel)
             .hdel(serverUsersChannel, userChannel)     
-            .exec();
+            .exec().catch(e => {});
 
-            let submulti = this.getSignaler().submulti();
-            submulti && submulti
-            .unsubscribe(userChannel)
-            .unsubscribe(shortChannel)
-            .exec();
+            this.getSignaler().unsubscribe(userChannel)
+            this.getSignaler().unsubscribe(shortChannel)
         }
     }
     redis_onShortUserAdd = (id: string, user: ADHOCCAST.Dts.IUser) => { 
@@ -358,7 +351,7 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         this.getSignaler().pubmulti()
         .set(roomChannel, strRoom)
         .persist(roomChannel)
-        .exec();
+        .exec().catch(e => {});
     }
     redis_onRoomDel =(id: string, room: ADHOCCAST.Dts.IRoom) => { 
         if (room) {
@@ -367,7 +360,7 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
             this.getSignaler().pubmulti()
             .del(roomChannel)
             .del(roomUsersChannel)
-            .exec()        
+            .exec().catch(e => {});       
         }
     }
     redis_onRoomUsersAdd = (id: string, users: IDataUsers) => { 
@@ -406,7 +399,7 @@ export class DataNamespaceWrap implements IDataNamespaceWrap {
         pubmulti && pubmulti
         .hdel(roomUsersChannel, userChannel)
         .eval(script, 2, roomUsersChannel, roomChannel)
-        .exec();
+        .exec().catch(e => {});
      }    
     redis_sync() {
         this.redis_sync_keyvalue(this.namespace.users);

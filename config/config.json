@@ -13,98 +13,63 @@
 			"url": "amd/common/index.js",
 			"type": "common",
 			"useSignalCenter": true
-		},	
+		},
 		"nd": {
 			"url": "amd/common/index.js",
 			"type": "common",
 			"useSignalCenter": true
-		},			
+		},
 		"test": {
 			"url": "amd/common/index.js",
 			"type": "common",
 			"useSignalCenter": true
-		},	
+		},
 		"admin": {
 			"url": "amd/admin/index.js",
 			"type": "admin"
 		},
-		"certWatcher": {
-			"url": "amd/cert-watcher/index.js",
-			"type": "certWatcher"
-		},
-		"signalCenter": {
-			"url": "amd/signal-center/index.js",
-			"type": "signalCenter"
-		},
-		"signalClient": {			
-			"url": "amd/signal-client/index.js",
-			"type": "signalClient",
-			"disabled": true
-		},		
 		"signalRedis": {
 			"url": "amd/redis-signaler/index.js",
 			"type": "signalRedis",
-			"extra": {				
+			"extra": {
 				"enabled": true,
-				"url": "redis://127.0.0.1:6379",
 				"handshakeInterval": 3000,
-				"handshakeTimeout":  22000,
-				"redundanceScript": "amd/redis-signaler/redundancy.lua"
+				"handshakeTimeout": 22000,
+				"redundanceScript": "amd/redis-signaler/redundancy.lua",
+				"nodes": [{
+					"port": 6379,
+					"host": "127.0.0.1",
+					"password": null
+				}],
+				"options": {
+					"enableReadyCheck": true,
+					"db": 1
+				}
 			}
 		}
 	},
 	"websites": {
-		"desktop": "/../desktop",
-		"sdp-probe": "/../web/sdp-probe"
+		"desktop": "/../desktop"
 	},
 	"http": [
 		{
 			"port": 2770
-		},
-		{
-			"port": 8080
 		}
 	],
-	"https": [
-		{
-			"port": 2771,
-			"key": [
-				"/etc/letsencrypt/live/adhoc-turn.ca.101.com/privkey.pem",
-				"/etc/letsencrypt/live/mdm.hk.101.com/privkey.pem"
-			],
-			"cert": [
-				"/etc/letsencrypt/live/adhoc-turn.ca.101.com/fullchain.pem",
-				"/etc/letsencrypt/live/mdm.hk.101.com/fullchain.pem"
-			]
-		},
-		{
-			"port": 13670,
-			"key": [
-				"/etc/letsencrypt/live/adhoc-turn.ca.101.com/privkey.pem",
-				"/etc/letsencrypt/live/mdm.hk.101.com/privkey.pem"
-			],
-			"cert": [
-				"/etc/letsencrypt/live/adhoc-turn.ca.101.com/fullchain.pem",
-				"/etc/letsencrypt/live/mdm.hk.101.com/fullchain.pem"
-			]
-		}
-	],
-	"socketIOServer": {
-		"path": "socket.io"
-	},
+	"https": [],
 	"clientConfig": {
 		"rtcConfig": {
 			"iceTransportPolicy": "all",
 			"iceServers": [
 				{
 					"urls": [
-						"stun:adhoc-turn.101.com:3478",
-						"stun:adhoc-turn.101.com:3478?transport=udp"
+						"stun:servicediscovery.mypromethean.com:3478",
+						"stun:servicediscovery.mypromethean.com:3478?transport=udp"
 					]
 				},
 				{
 					"urls": [
-						"turn:adhoc-turn.101.com:3478"
+						"turn:servicediscovery.mypromethean.com:3478"
 					],
 					"username": "u1",
 					"credential": "p1"
@@ -112,9 +77,7 @@
 			]
 		}
 	},
-	"signalCenter": {
-		"enabled": false,
-		"signalerBase": "http://127.0.0.1:2770",
-		"namespace": "signalCenter"
+	"socketIOServer": {
+		"path": "socket.io"
 	}
 }

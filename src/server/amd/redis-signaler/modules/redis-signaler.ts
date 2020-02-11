@@ -1,4 +1,4 @@
-import * as Redis from 'redis'
+import * as Redis from 'ioredis'
 import * as Dts from '../dts'
 import * as Network from '../network'
 import * as Services from '../services'
@@ -230,18 +230,12 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
                 break;
         }  
         return channel;  
-    }    
+    } 
+    getSocketNodes = (clientSocket: IClientSocket) => {
+        return this.options.extra.nodes
+    }   
     getSocketOptions = (clientSocket: IClientSocket) => {
-        let url = clientSocket.getUrl() || "";
-        url = url[url.length - 1] !== '/' ? url : url.substr(0, url.length - 1);  
-
-        let options: Redis.ClientOpts  = {
-            url: url,
-            retry_strategy: (options: Redis.RetryStrategyOptions) => {
-                return 5000;
-            }
-        }
-        return options;
+        return this.options.extra.options
     }
     getPath(): string {
         return this.server.getConfig().socketIOServer.path;
@@ -386,10 +380,10 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     async pexpire(key: string, milliseconds: number): Promise<boolean> {
         return this.getSocketClient().expire(key, milliseconds); 
     }     
-    submulti(args?: Array<Array<string | number>>): Redis.Multi {
+    submulti(args?: Array<Array<string>>): Redis.Pipeline {
         return this.getSocketClient().submulti(args)
     }
-    pubmulti(args?: Array<Array<string | number>>): Redis.Multi {
+    pubmulti(args?: Array<Array<string | number>>): Redis.Pipeline {
         return this.getSocketClient().pubmulti(args)
     }
     submultiAsync(args: Array<Array<string | number>>): Promise<any[]> {

@@ -1,20 +1,22 @@
 
 import { EventEmitter } from 'events';
-import * as Redis from 'redis'
-
+import IORedis = require('ioredis');
 import { ADHOCCAST } from '../libex'
 
-export interface IRedisSocket extends Redis.RedisClient {
+
+export interface IRedisSocket extends IORedis.Redis {
     id?: string
 }
 
 export interface IClientSocket extends ADHOCCAST.Network.ISignaler {
-    onGetOptions: (clientSocket: IClientSocket) => Redis.ClientOpts
+    onGetNodes: (clientSocket: IClientSocket) => IORedis.RedisOptions[]
+    onGetOptions: (clientSocket: IClientSocket) => IORedis.RedisOptions
     socket: IRedisSocket
 }
 
 export class ClientSocket implements IClientSocket {
-    onGetOptions: (clientSocket: IClientSocket) => Redis.ClientOpts
+    onGetNodes: (clientSocket: IClientSocket) => IORedis.RedisOptions[]
+    onGetOptions: (clientSocket: IClientSocket) => IORedis.RedisOptions
     socket: IRedisSocket
     eventEmitter: EventEmitter;
     _url: string;
@@ -25,7 +27,7 @@ export class ClientSocket implements IClientSocket {
     }
     destroy() {
         this.eventEmitter.removeAllListeners();
-        this.socket && this.socket.connected && this.socket.end();
+        this.connected() && this.socket.disconnect();
         this.unInitEvents(this.socket);
         delete this.eventEmitter;
         delete this.socket;
@@ -40,7 +42,7 @@ export class ClientSocket implements IClientSocket {
         this._url = value;
     }
     connected(): boolean {
-        return this.socket && this.socket.connected
+        return this.socket && (this.socket.status == 'ready' || this.socket.status == 'connect')
     }
     connecting(): boolean {
         return !!this._connectPromise;
@@ -57,18 +59,24 @@ export class ClientSocket implements IClientSocket {
         this._connectPromise = new Promise((resolve, reject) => {
             this.unInitEvents(this.socket);
             delete this.socket;
+            let nodes = this.getNodes();
             let options = this.getOptions();
-            this.socket = Redis.createClient(options.url,options);
+            if (nodes.length > 1) {
+                this.socket = new IORedis.Cluster(nodes, options) as any 
+            } else {
+                let node = Object.assign(nodes[0], options)
+                this.socket = new IORedis(node)
+            }
             this.socket.id = ADHOCCAST.Cmds.Common.Helper.uuid();
-            this.socket.once(ADHOCCAST.Dts.EClientSocketEvents.connect, () => {
+            // this.socket.once(ADHOCCAST.Dts.EClientSocketEvents.connect, () => {
  
-            })
+            // })
             this.socket.once('ready', () => {
                 resolve();
             })            
-            this.socket.once(ADHOCCAST.Dts.EClientSocketEvents.error, (error) => {
-                reject(error);
-            })   
+            // this.socket.once(ADHOCCAST.Dts.EClientSocketEvents.error, (error) => {
+            //     reject(error);
+            // })   
             this.initEvents(this.socket);                          
         })  
         this._connectPromise.then(() => {
@@ -79,7 +87,7 @@ export class ClientSocket implements IClientSocket {
         return this._connectPromise;   
 
     }
-    initEvents(socket: Redis.RedisClient) {
+    initEvents(socket: IRedisSocket) {
         socket.on("connect", (...args) => {
 
         })        
@@ -100,7 +108,7 @@ export class ClientSocket implements IClientSocket {
             this.eventEmitter.emit('pmessage', pattern, channel, message);            
         })    
     }    
-    unInitEvents(socket: Redis.RedisClient) {
+    unInitEvents(socket: IRedisSocket) {
         socket && socket.removeAllListeners();
     }   
 
@@ -113,16 +121,40 @@ export class ClientSocket implements IClientSocket {
         return Promise.resolve();
     }   
 
-    getOptions(): Redis.ClientOpts {
-        if (this.onGetOptions) return this.onGetOptions(this);
-        //
-        let url = this.getUrl() || "";
-        url = url[url.length - 1] !== '/' ? url : url.substr(0, url.length - 1);  
+    getNodes(): IORedis.RedisOptions[]{
+        if (this.onGetNodes) return this.onGetNodes(this);
 
-        let options: Redis.ClientOpts  = {
-            max_attempts: 1,
-            url: url
-        }
+        return [{}]
+    }
+    getOptions(): IORedis.RedisOptions {
+        let options: IORedis.RedisOptions = {}
+        if (this.onGetOptions) 
+            options =  JSON.parse(JSON.stringify(this.onGetOptions(this)));
+        
+        options.retryStrategy = this.retryStrategy;
+        // (options as any).clusterRetryStrategy = this.retryStrategy;
         return options;
+    }
+    _disconnected: boolean;
+    _retryStartTime: number;
+    retryStrategy = (times: number, err?: Error) => {
+        if (times == 1) {
+            this._disconnected = false;                
+            this._retryStartTime = new Date().valueOf();
+        }
+
+        if (!this._disconnected) {
+            let currTime = new Date().valueOf();
+            let options = this.getOptions();
+            let maxRetriesPerRequest = options.maxRetriesPerRequest || 20
+            let timeout = currTime - this._retryStartTime;
+            if (timeout > maxRetriesPerRequest * 1000) {
+                this._disconnected = true;
+                this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.disconnect);
+            }
+           
+        }
+        console.log('redis reconnecting', times)
+        return 100
     }
 }

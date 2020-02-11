@@ -35,7 +35,7 @@ export class ServiceUser extends Cmds.Common.Base {
             let user = Object.assign({}, data.props.user) as Dts.IUser;  
             user.room = room;
             sckUser.user = user;   
-            await ServiceUsers.addSocketUser(sckUser.users, sckUser)     
+            await ServiceUsers.addSocketUser(sckUser.users, sckUser)  
             await ServiceRoom.joinOrCreate(room.id, sckUser)
             sckUser.setLogin(true);
         } else {

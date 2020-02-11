@@ -1,2 +1,2 @@
-export * from './client-socket'
-export * from './socket-client'
+export * from './io-client-socket'
+export * from './io-socket-client'

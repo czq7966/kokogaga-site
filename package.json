@@ -101,10 +101,12 @@
 		"webrtc-adapter": "6.4.6"
 	},
 	"dependencies": {
+		"@types/ioredis": "4.14.7",
 		"adhoc-cast-connection": "^2.2.13",
 		"es6-object-assign": "1.1.0",
 		"express": "4.16.4",
 		"fs": "0.0.1-security",
+		"ioredis": "4.14.1",
 		"socket.io": "2.1.1",
 		"socket.io-client": "2.1.1",
 		"url": "0.11.0"
