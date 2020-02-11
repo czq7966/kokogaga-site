@@ -116,7 +116,8 @@ export class SocketClient implements ISocketClient {
     initEvents() {
         this.subSocket.onGetOptions = this.getSocketOptions.bind(this);
         this.pubSocket.onGetOptions = this.getSocketOptions.bind(this);
-
+        this.subSocket.onGetNodes = this.getSocketNodes.bind(this);
+        this.pubSocket.onGetNodes = this.getSocketNodes.bind(this);
         //Pub Events
         let connectEventEmitted = false;
         let disconnectEventEmitted = false;
@@ -181,6 +182,8 @@ export class SocketClient implements ISocketClient {
 
         this.subSocket.onGetOptions = null;
         this.pubSocket.onGetOptions = null;
+        this.subSocket.onGetNodes = null;
+        this.pubSocket.onGetNodes = null;
     }   
 
     disconnect() {

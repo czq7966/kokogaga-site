@@ -132,7 +132,7 @@ export class ClientSocket implements IClientSocket {
             options =  JSON.parse(JSON.stringify(this.onGetOptions(this)));
         
         options.retryStrategy = this.retryStrategy;
-        // (options as any).clusterRetryStrategy = this.retryStrategy;
+        (options as any).clusterRetryStrategy = this.retryStrategy;
         return options;
     }
     _disconnected: boolean;

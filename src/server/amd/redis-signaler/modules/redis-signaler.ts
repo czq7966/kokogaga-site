@@ -98,7 +98,8 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     } 
     initEvents() {
         (this.conneciton.signaler as Network.ISocketClient).onGetCmdChannel = this.getCmdChannel;
-        (this.conneciton.signaler as Network.ISocketClient).onGetSocketOptions = this.getSocketOptions
+        (this.conneciton.signaler as Network.ISocketClient).onGetSocketOptions = this.getSocketOptions;
+        (this.conneciton.signaler as Network.ISocketClient).onGetSocketNodes = this.getSocketNodes
         
         this.conneciton.dispatcher.recvFilter.onAfterRoot.add(this.recvFilter_onAfterRoot);
         this.conneciton.dispatcher.sendFilter.onAfterRoot.add(this.sendFilter_onAfterRoot);
@@ -112,6 +113,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
 
         (this.conneciton.signaler as Network.ISocketClient).onGetCmdChannel = null;
         (this.conneciton.signaler as Network.ISocketClient).onGetSocketOptions = null;
+        (this.conneciton.signaler as Network.ISocketClient).onGetSocketNodes = null;
     }       
     recvFilter_onAfterRoot = (cmd: ADHOCCAST.Cmds.Common.ICommandData<ADHOCCAST.Dts.ICommandDataProps>): any => {
         return Services.Modules.RedisSignaler.RecvFilter.onAfterRoot(this, cmd);
