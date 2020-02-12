@@ -1,9 +1,8 @@
 {
-	"version": "3.0",
+	"version": "3.0.0",
 	"configUrl": "config.json",
 	"updateUrl": "",
 	"autoUpdateConfig": false,
-
 	"namespaces": {
 		"promethean": {
 			"url": "amd/common/index.js",
@@ -14,17 +13,17 @@
 			"url": "amd/common/index.js",
 			"type": "common",
 			"useSignalCenter": true
-		},	
+		},
 		"nd": {
 			"url": "amd/common/index.js",
 			"type": "common",
 			"useSignalCenter": true
-		},			
+		},
 		"test": {
 			"url": "amd/common/index.js",
 			"type": "common",
 			"useSignalCenter": true
-		},	
+		},
 		"admin": {
 			"url": "amd/admin/index.js",
 			"type": "admin"
@@ -32,44 +31,79 @@
 		"signalRedis": {
 			"url": "amd/redis-signaler/index.js",
 			"type": "signalRedis",
-			"extra": {				
+			"extra": {
 				"enabled": true,
-				"url": "redis://127.0.0.1:6379",
-				"handshakeInterval": 3000,
-				"handshakeTimeout":  22000,
-				"redundanceScript": "amd/redis-signaler/redundancy.lua"
+				"handshakeInterval": 10000,
+				"handshakeTimeout": 22000,
+				"redundanceScript": "amd/redis-signaler/redundancy.lua",
+				"nodes": [
+					{
+						"host": "172.24.140.40",
+						"port": "11000",
+						"password": "mdmmdmmdm"
+					},
+					{
+						"host": "172.24.140.40",
+						"port": "11001",
+						"password": "mdmmdmmdm"
+					},
+					{
+						"host": "172.24.140.40",
+						"port": "11002",
+						"password": "mdmmdmmdm"
+					},
+					{
+						"host": "172.24.140.40",
+						"port": "11003",
+						"password": "mdmmdmmdm"
+					},
+					{
+						"host": "172.24.140.40",
+						"port": "11004",
+						"password": "mdmmdmmdm"
+					},
+					{
+						"host": "172.24.140.40",
+						"port": "11005",
+						"password": "mdmmdmmdm"
+					}  
+				],
+				"options": {
+					"enableReadyCheck": true,
+					"db": 0
+				}
 			}
 		}
-    },    
-    "websites": {
-        "desktop" : "/../desktop"
-    },
-    "http": [
-        {
-            "port": 2770
-        }
-    ],
-    "https": [ ],
-    "clientConfig": {
-        "rtcConfig": {
-            "iceTransportPolicy": "all",
-            "iceServers": [
-                {
-                    "urls": [
-                        "stun:servicediscovery.mypromethean.com:3478",
-                        "stun:servicediscovery.mypromethean.com:3478?transport=udp"
-                    ]
-                },
-                {
-                    "urls": [
-                        "turn:servicediscovery.mypromethean.com:3478"
-                    ],
-                    "username": "u1",
-                    "credential": "p1" 
-                } 
-            ]
-        }        
-    },
+	},
+	"websites": {
+		"desktop": "/../desktop"
+	},
+	"http": [
+		{
+			"port": 2770
+		}
+	],
+	"https": [],
+	"clientConfig": {
+		"rtcConfig": {
+			"iceTransportPolicy": "all",
+			"iceServers": [
+				{
+					"urls": [
+						"stun:servicediscovery.mypromethean.com:3478",
+						"stun:servicediscovery.mypromethean.com:3478?transport=udp"
+					]
+				},
+				{
+					"urls": [
+						"turn:servicediscovery.mypromethean.com:3478"
+					],
+					"username": "u1",
+					"credential": "p1"
+				}
+			]
+		}
+	},
 	"socketIOServer": {
 		"path": "socket.io"
 	}
