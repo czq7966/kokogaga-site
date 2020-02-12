@@ -1,6 +1,6 @@
 {
-	"name": "adhoc-cast-signaler-server-redis",
-	"version": "3.0.0",
+	"name": "adhoc-cast-signaler-server-promethean-redis",
+	"version": "3.0.1",
 	"description": "",
 	"main": "index.js",
 	"scripts": {
