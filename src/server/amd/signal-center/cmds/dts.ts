@@ -6,6 +6,8 @@ export enum ECommandId {
     signal_center_deliver = "signal_center_deliver",
     signal_center_pmessage = 'signal_center_pmessage',
     signal_center_keyspace_events = 'signal_center_keyspace_events',
+    signal_center_redis_node_add = 'signal_center_redis_node_add',
+    signal_center_redis_node_del = 'signal_center_redis_node_del',
     signal_center_users_remove = "signal_center_users_remove",
     signal_center_users_update = "signal_center_users_update",
     signal_center_users_refresh = "signal_center_users_refresh",
@@ -67,7 +69,9 @@ export interface ICommandUsersRemoveReqProps extends ICommandUsersUpdateReqProps
 export interface ICommandUsersRefreshReqProps extends ICommandUsersUpdateReqProps {}
 
 [
-    ECommandId.signal_center_deliver
+    ECommandId.signal_center_deliver,
+    ECommandId.signal_center_redis_node_add,
+    ECommandId.signal_center_redis_node_del
 ].forEach(commanid => {
     Common.CmdsCommon.CommandTypes.RegistCommandType({
         cmdId: commanid,

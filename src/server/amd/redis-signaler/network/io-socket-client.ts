@@ -1,5 +1,5 @@
 
-import * as Redis from 'ioredis'
+import * as IORedis from 'ioredis'
 import * as Dts from '../dts'
 import { EventEmitter } from 'events';
 import { ADHOCCAST } from '../libex'
@@ -23,11 +23,11 @@ export interface IRedisClient {
     persist(key: string): Promise<boolean> ;
     expire(key: string, seconds: number): Promise<boolean>     
     pexpire(key: string, milliseconds: number): Promise<boolean>   
-    submulti(args?: Array<Array<string | number>>): Redis.Pipeline;  
-    pubmulti(args?: Array<Array<string | number>>): Redis.Pipeline;
+    submulti(args?: Array<Array<string | number>>): IORedis.Pipeline;  
+    pubmulti(args?: Array<Array<string | number>>): IORedis.Pipeline;
     submultiAsync(args: Array<Array<string | number>>): Promise<any[]>;  
     pubmultiAsync(args: Array<Array<string | number>>): Promise<any[]>;  
-    eval(script: string, numKeys: number, ...args: Redis.ValueType[]): Promise<any>
+    eval(script: string, numKeys: number, ...args: IORedis.ValueType[]): Promise<any>
     redisconfig(...args: string[]): Promise<any>
 }
 
@@ -38,8 +38,8 @@ export interface ISocketClient extends ADHOCCAST.Network.ISignaler, IRedisClient
     sendCommand(cmd: any, channel?: string): Promise<any>
     delaySendCommand(cmd: any, channel?: string, delayTime?: number): Promise<any>
     onGetCmdChannel: (cmd: ADHOCCAST.Cmds.ICommandData<any>, namespace?: string) => string
-    onGetSocketNodes: (clientSocket: IClientSocket) => Redis.RedisOptions[]
-    onGetSocketOptions: (clientSocket: IClientSocket) => Redis.RedisOptions
+    onGetSocketNodes: (clientSocket: IClientSocket) => IORedis.RedisOptions[]
+    onGetSocketOptions: (clientSocket: IClientSocket) => IORedis.RedisOptions
     processPromise<T>(promise: Promise<any>): Promise<T>
 }
 
@@ -49,8 +49,8 @@ export class SocketClient implements ISocketClient {
     subSocket: IClientSocket
     pubSocket: IClientSocket
     onGetCmdChannel: (cmd: ADHOCCAST.Cmds.ICommandData<any>, namespace?: string) => string;
-    onGetSocketNodes: (clientSocket: IClientSocket) => Redis.RedisOptions[]
-    onGetSocketOptions: (clientSocket: IClientSocket) => Redis.RedisOptions
+    onGetSocketNodes: (clientSocket: IClientSocket) => IORedis.RedisOptions[]
+    onGetSocketOptions: (clientSocket: IClientSocket) => IORedis.RedisOptions
 
     constructor(url?: string) {
         this.eventEmitter = new EventEmitter();
@@ -77,18 +77,18 @@ export class SocketClient implements ISocketClient {
         this.subSocket.setUrl(value, path);
         this.pubSocket.setUrl(value, path);
     }
-    getSocketNodes(clientSocket: IClientSocket): Redis.RedisOptions[] {
+    getSocketNodes(clientSocket: IClientSocket): IORedis.RedisOptions[] {
         if (this.onGetSocketNodes) return this.onGetSocketNodes(clientSocket)
         //
 
-        let nodes: Redis.RedisOptions[]  = []
+        let nodes: IORedis.RedisOptions[]  = []
         return nodes;        
     }  
-    getSocketOptions(clientSocket: IClientSocket): Redis.RedisOptions {
+    getSocketOptions(clientSocket: IClientSocket): IORedis.RedisOptions {
         if (this.onGetSocketOptions) return this.onGetSocketOptions(clientSocket)
         //
 
-        let options: Redis.RedisOptions  = {
+        let options: IORedis.RedisOptions  = {
         }
         return options;        
     }  
@@ -175,6 +175,16 @@ export class SocketClient implements ISocketClient {
             Logging.log('/pmessage', channel, data)            
             this.eventEmitter.emit(ADHOCCAST.Dts.CommandID, data);            
         });
+        this.subSocket.eventEmitter.on('+node', (node: IORedis.Redis) => {
+            let data: ADHOCCAST.Cmds.ICommandData<Dts.IRedisNode> = {
+                cmdId: Dts.ECommandId.signal_center_redis_node_add,
+                props: {
+                    node: node,
+                    type: 'sub'
+                }
+            };
+            this.eventEmitter.emit(ADHOCCAST.Dts.CommandID, data);            
+        });
     }    
     unInitEvents() {        
         this.subSocket.eventEmitter.removeAllListeners();
@@ -254,10 +264,10 @@ export class SocketClient implements ISocketClient {
     pexpire(key: string, milliseconds: number): Promise<boolean> {
         return this.processPromise(this.pubSocket.socket.pexpire(key, milliseconds))        
     }
-    submulti(args?: Array<Array<string>>): Redis.Pipeline {
+    submulti(args?: Array<Array<string>>): IORedis.Pipeline {
         return this.subSocket.socket.multi(args)
     }
-    pubmulti(args?: Array<Array<string>>): Redis.Pipeline {  
+    pubmulti(args?: Array<Array<string>>): IORedis.Pipeline {  
         return this.pubSocket.socket.multi(args)
     }
     submultiAsync(args: Array<Array<string>>): Promise<any[]> {
@@ -266,7 +276,7 @@ export class SocketClient implements ISocketClient {
     pubmultiAsync(args: Array<Array<string>>): Promise<any[]>{
         return this.processPromise(this.pubSocket.socket.multi(args).exec())
     }
-    eval(script: string, numKeys: number, ...args: Redis.ValueType[]): Promise<any> {
+    eval(script: string, numKeys: number, ...args: IORedis.ValueType[]): Promise<any> {
         return this.processPromise(this.pubSocket.socket.eval(script, numKeys, ...args))
     }
     redisconfig(...args: any[]): Promise<any> {

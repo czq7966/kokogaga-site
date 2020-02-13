@@ -47,6 +47,9 @@ export interface IRedisSignaler extends ISignalClient, IRedisClient {
     deliverCommand(data: ADHOCCAST.Cmds.Common.ICommandData<any>, dataExtra: ADHOCCAST.Cmds.Common.ICommandData<Dts.ICommandDeliverDataExtraProps>, forResp?: boolean): Promise<any>
     onDeliverCommand(cmd: ADHOCCAST.Cmds.Common.ICommandData<any>): Promise<any>
 
+    //Other
+    processPromise<T>(promise: Promise<any>): Promise<T>
+
 }
 
 export class SocketNamespace  extends SignalClientBase implements IRedisSignaler {
@@ -329,7 +332,19 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         this._handshakeHandler = null;
     }
 
-
+    //Other
+    processPromise<T>(promise: Promise<any>): Promise<T> {
+        return new Promise((resolve, reject) => {
+            promise.then(v => {
+                resolve(v as T)
+            })
+            .catch(e => {
+                Logging.error(e.message);
+                resolve()    
+            })
+        })
+    }
+    
     //Redis client interface
     async subscribe(channel: string): Promise<any> {
         return this.getSocketClient().subscribe(channel);

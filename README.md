@@ -14,3 +14,8 @@ Adhoc Cast Signaler-Server
 #Signal-Center Dev启动流程
 1. npm run server:dev
 1. npm run amd:dev
+
+#Todo
+1. publish message zip
+2. change network exception cmd to logout cmd
+3. sub node key space

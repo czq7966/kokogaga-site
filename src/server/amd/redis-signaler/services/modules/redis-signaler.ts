@@ -3,6 +3,7 @@ import * as Modules from '../../modules'
 import { ADHOCCAST } from '../../libex'
 import { NetworkException } from '../cmds/network-exception';
 import { Redundance } from './redundance';
+import IORedis = require('ioredis');
 
 export class RedisSignaler {
     // onRecvFilter
@@ -110,6 +111,9 @@ export class RedisSignaler {
             case ADHOCCAST.Cmds.ECommandId.network_disconnect:
                 this.on_after_network_disconnect(signaler, cmd);
                 break;
+            case Dts.ECommandId.signal_center_redis_node_add:
+                    this.on_after_redis_node_add(signaler, cmd);
+                    break;
         }                
     }
     static async on_after_adhoc_login(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
@@ -132,6 +136,14 @@ export class RedisSignaler {
         signaler.stopHandshake();       
         NetworkException.req(signaler);
     }
+    static async on_after_redis_node_add(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
+        let data: ADHOCCAST.Cmds.ICommandData<Dts.IRedisNode> = cmd.data;
+        let node = data.props.node;
+        let type = data.props.type;
+        if (type == 'sub') {
+            this.subscribeServerKeyspace(signaler, node)
+        }
+    } 
     static async registServer(signaler:  Modules.IRedisSignaler) {
         let serversChannel = signaler.getServersChannel();
         let serverChannel = signaler.getServerChannel();
@@ -142,23 +154,35 @@ export class RedisSignaler {
         await signaler.set(serverExsitChannel, 'true');
         signaler.startHandshake();
     }
-    static async subscribeServerKeyspace(signaler: Modules.IRedisSignaler) {
+    static async subscribeServerKeyspace(signaler: Modules.IRedisSignaler, node?: IORedis.Redis) {
         // open notify-keyspace-events
         let notifyKeyspaceEvents = 'notify-keyspace-events';
         let kKey = 'K';
         let xKey = 'x';
-        let configKeys: string[] = await signaler.redisconfig('get', notifyKeyspaceEvents);
+        let configKeys: string[];
+
+        if (node)
+            configKeys = await signaler.processPromise<any>(node.config('GET', [notifyKeyspaceEvents]));
+        else 
+            configKeys = await signaler.redisconfig('get', notifyKeyspaceEvents);
+
         let keys = configKeys ? configKeys[1] : '';        
         let kIndex = keys.indexOf(kKey);
         let xIndex = keys.indexOf(xKey);
         if ( kIndex < 0 || xIndex < 0) {
             if (kIndex < 0) keys = kKey + keys;
             if (xIndex < 0) keys = keys + xKey;
-            await signaler.redisconfig('set', notifyKeyspaceEvents, keys);
+            if (node)
+                await signaler.processPromise(node.config('SET', notifyKeyspaceEvents, keys));
+            else 
+                await signaler.redisconfig('set', notifyKeyspaceEvents, keys);
         }
 
         // subscribe server channel expired event
         let serverKeyspacePChannel = signaler.getServerKeyspacePChannel();
-        await signaler.psubscribe(serverKeyspacePChannel);
+        if (node)
+            await signaler.processPromise(node.psubscribe(serverKeyspacePChannel));
+        else
+            await signaler.psubscribe(serverKeyspacePChannel);
     }  
 }

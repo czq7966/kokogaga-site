@@ -42,7 +42,7 @@ export class ClientSocket implements IClientSocket {
         this._url = value;
     }
     connected(): boolean {
-        return this.socket && (this.socket.status == 'ready' || this.socket.status == 'connect')
+        return this.socket && (this.socket.status == 'ready')
     }
     connecting(): boolean {
         return !!this._connectPromise;
@@ -106,7 +106,13 @@ export class ClientSocket implements IClientSocket {
         })  
         socket.on('pmessage', (pattern: string, channel: string, message: string) => {
             this.eventEmitter.emit('pmessage', pattern, channel, message);            
-        })    
+        })  
+        socket.on('+node', (node: IORedis.Redis) => {
+            this.eventEmitter.emit('+node', node);            
+        }) 
+        socket.on('-node', (node: IORedis.Redis) => {
+            this.eventEmitter.emit('-node', node);            
+        })  
     }    
     unInitEvents(socket: IRedisSocket) {
         socket && socket.removeAllListeners();

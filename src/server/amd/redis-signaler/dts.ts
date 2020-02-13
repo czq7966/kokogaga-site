@@ -1,4 +1,4 @@
-import { RedisOptions, ClusterOptions } from 'ioredis';
+import { RedisOptions, ClusterOptions, Redis } from 'ioredis';
 
 export * from '../signal-center/cmds/dts'
 
@@ -29,4 +29,8 @@ export interface IKeyspaceEvents {
     pattern: string,
     channel: string,
     message: string
+}
+export interface IRedisNode {
+    node: Redis,
+    type: 'pub' | 'sub',
 }
