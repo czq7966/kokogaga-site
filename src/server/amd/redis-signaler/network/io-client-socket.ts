@@ -104,9 +104,15 @@ export class ClientSocket implements IClientSocket {
         socket.on('message', (channel: string, message: string) => {
             this.eventEmitter.emit('message', channel, message);            
         })  
+        socket.on('messageBuffer', (channel: Buffer, message: Buffer) => {
+            this.eventEmitter.emit('messageBuffer', channel, message);            
+        }) 
         socket.on('pmessage', (pattern: string, channel: string, message: string) => {
             this.eventEmitter.emit('pmessage', pattern, channel, message);            
         })  
+        socket.on('pmessageBuffer', (pattern: Buffer, channel: Buffer, message: Buffer) => {
+            this.eventEmitter.emit('pmessageBuffer', pattern, channel, message);            
+        }) 
         socket.on('+node', (node: IORedis.Redis) => {
             this.eventEmitter.emit('+node', node);            
         }) 

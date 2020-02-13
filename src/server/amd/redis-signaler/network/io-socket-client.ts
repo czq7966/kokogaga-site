@@ -1,6 +1,7 @@
 
 import * as IORedis from 'ioredis'
 import * as Dts from '../dts'
+import * as zlib from 'zlib'
 import { EventEmitter } from 'events';
 import { ADHOCCAST } from '../libex'
 import { IClientSocket, ClientSocket } from './io-client-socket';
@@ -10,6 +11,7 @@ export interface IRedisClient {
     psubscribe(pchannel: string): Promise<any>
     unsubscribe(channel: string): Promise<any>
     publish(channel: string, cmd: ADHOCCAST.Cmds.ICommandData<any>): Promise<any>
+    publishBuffer(channel: string, buffer: Buffer): Promise<any>
     get(key: string): Promise<string>
     set(key: string, value: string): Promise<boolean>
     del(key: string): Promise<boolean>
@@ -159,9 +161,26 @@ export class SocketClient implements ISocketClient {
             }
         });                
         this.subSocket.eventEmitter.on('message', (channel: string, message: string) => {
-            let data: ADHOCCAST.Cmds.ICommandData<any> = JSON.parse(message);
-            Logging.log('/message', channel, data)            
-            this.eventEmitter.emit(ADHOCCAST.Dts.CommandID, data);            
+            // let data: ADHOCCAST.Cmds.ICommandData<any> = JSON.parse(message);
+            // Logging.log('/message', channel, data)            
+            // this.eventEmitter.emit(ADHOCCAST.Dts.CommandID, data);            
+        });
+        this.subSocket.eventEmitter.on('messageBuffer', (channelBuf: Buffer, messageBuf: Buffer) => {
+            let message: string;
+            let channel: string;
+            zlib.unzip(messageBuf, (err,  res) => {
+                if (err) {
+                    message = messageBuf.toString();
+                }
+                else {
+                    message = res.toString();
+                }
+                channel = channelBuf.toString()
+                let data: ADHOCCAST.Cmds.ICommandData<any> = JSON.parse(message);
+                Logging.log('/messageBuffer', channel, data)            
+                this.eventEmitter.emit(ADHOCCAST.Dts.CommandID, data);                
+            })
+           
         });
         this.subSocket.eventEmitter.on('pmessage', (pattern: string, channel: string, message: string) => {
             let data: ADHOCCAST.Cmds.ICommandData<Dts.IKeyspaceEvents> = {
@@ -222,8 +241,26 @@ export class SocketClient implements ISocketClient {
         return this.processPromise(this.subSocket.socket.unsubscribe(channel))
     }
     publish(channel: string, cmd: ADHOCCAST.Cmds.ICommandData<any>): Promise<any> {
-        let msg = JSON.stringify(cmd);  
-        return this.processPromise(this.pubSocket.socket.publish(channel, msg))
+        return new Promise((resolve, reject) => {
+            let msg = JSON.stringify(cmd);
+            let promise: Promise<any>;
+            zlib.gzip(msg, (err, buffer) => {
+                if (err) {
+                    promise = this.processPromise(this.pubSocket.socket.publish(channel, msg))
+                } else {
+                    promise = this.publishBuffer(channel, buffer)
+                }
+                promise.then(v => {
+                    resolve(v)
+                })
+                .catch(e => {
+                    reject(e)
+                })
+            })
+        })
+    }
+    publishBuffer(channel: string, buffer: Buffer): Promise<any> {
+        return this.processPromise(this.pubSocket.socket.publishBuffer(channel, buffer))
     }
     get(key: string): Promise<string> {
         return this.processPromise(this.pubSocket.socket.get(key))

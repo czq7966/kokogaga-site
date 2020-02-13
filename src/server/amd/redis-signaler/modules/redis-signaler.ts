@@ -344,7 +344,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
             })
         })
     }
-    
+
     //Redis client interface
     async subscribe(channel: string): Promise<any> {
         return this.getSocketClient().subscribe(channel);
@@ -357,6 +357,9 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     }
     async publish(channel: string, cmd: ADHOCCAST.Cmds.ICommandData<any>): Promise<any> {
         return this.getSocketClient().publish(channel, cmd);
+    }
+    async publishBuffer(channel: string, buffer: Buffer): Promise<any> {
+        return this.getSocketClient().publishBuffer(channel, buffer);
     }
     async get(key: string): Promise<string> {
         return this.getSocketClient().get(key);        
