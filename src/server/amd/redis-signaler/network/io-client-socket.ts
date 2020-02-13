@@ -158,9 +158,9 @@ export class ClientSocket implements IClientSocket {
         if (!this._disconnected) {
             let currTime = new Date().valueOf();
             let options = this.getOptions();
-            let maxRetriesPerRequest = options.maxRetriesPerRequest || 20
-            let timeout = currTime - this._retryStartTime;
-            if (timeout > maxRetriesPerRequest * 1000) {
+            let timeout = (options.maxRetriesPerRequest || 20) * 2 * 1000
+            let retryTime = currTime - this._retryStartTime;
+            if (retryTime > timeout) {
                 this._disconnected = true;
                 this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.disconnect);
             }
