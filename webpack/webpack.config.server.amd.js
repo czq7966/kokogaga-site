@@ -86,6 +86,7 @@ module.exports = env => {
                 'path': 'path',
                 'http': 'http',
                 'https': 'https',
+                'zlib': 'zlib',
                 'socket.io-client': 'socket.io-client'
             }
 

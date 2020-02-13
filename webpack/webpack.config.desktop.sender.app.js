@@ -90,6 +90,7 @@ module.exports = env => {
                 'path': 'path',
                 'http': 'http',
                 'https': 'https',
+                'zlib': 'zlib',
                 'electron': 'electron',
                 'robotjs': 'robotjs'
             }

@@ -80,7 +80,8 @@ module.exports = env => {
                 'fs': 'fs',
                 'path': 'path',
                 'http': 'http',
-                'https': 'https' 
+                'https': 'https',
+                'zlib': 'zlib'
             }
 
         ],
