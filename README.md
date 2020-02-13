@@ -16,6 +16,6 @@ Adhoc Cast Signaler-Server
 1. npm run amd:dev
 
 #Todo
-1. publish message zip
-2. change network exception cmd to logout cmd
+1. done: publish message zip
+2. done：change network exception cmd to logout cmd
 3. sub node key space

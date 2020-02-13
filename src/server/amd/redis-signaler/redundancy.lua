@@ -64,6 +64,31 @@ local function publishNetworkException(roomChannel)
     publishCommand(roomChannel, cmdStr)
 end
 
+local function publishUserLogout(roomChannel, user)
+    local namespace = getNamespaceByChannel(roomChannel)
+    local roomid = getRoomidByRoomChannel(roomChannel)
+    local data = {
+        cmdId = 'adhoc_logout',
+        props = { user = user },            
+        from = { type = 'server', id = '' },
+        to = { type = 'room', id = roomid }       
+    }
+    local extra = {
+        props = {namespace = namespace, includeSelf = true },
+        from = { type = 'server', id = 'redis' },
+        to = { type = 'room', id = roomid }        
+    }
+    local cmd = {
+        cmdId = 'signal_center_deliver',
+        props = data,
+        extra = extra,
+        from = { type = 'server', id = 'redis' },
+        to = { type = 'room', id = roomid }
+    }
+    local cmdStr = cjson.encode(cmd)
+    publishCommand(roomChannel, cmdStr)
+end
+
 local function delRoomChannelUser(roomChannel, userChannel)
     local roomUsersChannel = roomChannel..RoomUsersChannelKey;
     redis.call('hdel', roomUsersChannel, userChannel)
@@ -102,13 +127,18 @@ local function delUserChannel(serverChannel, userChannel, serverUser)
         delUserShortChannel(serverChannel, userShortChannel, serverUser)
         local sameServerUser = string.find(serverChannel, user.serverId, 1, true) ~= nil
         if ((user.room.id == serverUser.room.id) and (sameServerUser == true)) then            
-            local roomChannel = namespacePrefix..RoomChannelKey..user.room.id            
+            local roomChannel = namespacePrefix..RoomChannelKey..user.room.id
+            local roomUsersChannel = roomChannel..RoomUsersChannelKey          
             local userStreamRoomChannel = roomChannel..UserStreamRoomKey..user.id
             local userStreamRoomUsersChannel = userStreamRoomChannel..RoomUsersChannelKey
             redis.call('del', userStreamRoomChannel)
             redis.call('del', userStreamRoomUsersChannel)            
             delRoomChannelUser(roomChannel, userChannel)            
             redis.call('del', userChannel)
+            local count = redis.call('hlen', roomUsersChannel)
+            if (count >= 0) then
+                publishUserLogout(roomChannel, user)
+            end
         end
     end	    
 end
@@ -149,7 +179,7 @@ local function delServersChannel(serversChannel)
             delServers[serverChannel] = 'deleted'
         end
     end       
-    publishRedundanceRoomChannels(RedundanceRoomChannels)
+    -- publishRedundanceRoomChannels(RedundanceRoomChannels)
     RedundanceRoomChannels = {}
     return cjson.encode(RedundanceRoomChannels)
 end

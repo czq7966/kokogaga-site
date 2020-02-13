@@ -134,7 +134,8 @@ export class RedisSignaler {
     }      
     static async on_after_network_disconnect(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         signaler.stopHandshake();       
-        NetworkException.req(signaler);
+        // NetworkException.req(signaler);
+        NetworkException.disconnectAll(signaler)
     }
     static async on_after_redis_node_add(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         let data: ADHOCCAST.Cmds.ICommandData<Dts.IRedisNode> = cmd.data;

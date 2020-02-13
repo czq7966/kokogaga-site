@@ -17,6 +17,18 @@ export class NetworkException {
             snsp.nsp.emit(ADHOCCAST.Dts.CommandID, cmd);
         })
     }
+    static async disconnectAll(signaler: IRedisSignaler) {
+        signaler.server.snsps.keys().forEach(key => {
+            let snsp = signaler.server.snsps.get(key);
+            let users = snsp.users.users;
+            snsp.users.users.keys().forEach(key => {
+                let sckUser = users.get(key)
+                if (sckUser && sckUser.socket && sckUser.socket.connected) {
+                    sckUser.socket.disconnect()
+                }
+            })
+        })
+    }
     static async reqRoom(signaler: IRedisSignaler, namespace: string, roomid:string) {
         let cmd : ADHOCCAST.Dts.ICommandData<any> = {
             cmdId: ADHOCCAST.Dts.ECommandId.network_exception,
