@@ -138,10 +138,11 @@ export class RedisSignaler {
         NetworkException.disconnectAll(signaler)
     }
     static async on_after_redis_node_add(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
-        let data: ADHOCCAST.Cmds.ICommandData<Dts.IRedisNode> = cmd.data;
-        let clientSocket = data.props.clientSocket;
-        let node = data.props.node;
-        let type = data.props.type;
+        let data: ADHOCCAST.Cmds.ICommandData<any> = cmd.data;
+        let extra: Dts.IRedisNode = data.extra;
+        let clientSocket = extra.clientSocket;
+        let node = extra.node;
+        let type = extra.type;
         if (type == 'sub') {
             this.subscribeServerKeyspace(signaler, node)
             node.off('pmessage', clientSocket.on_pmessage)

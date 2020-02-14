@@ -195,9 +195,10 @@ export class SocketClient implements ISocketClient {
             this.eventEmitter.emit(ADHOCCAST.Dts.CommandID, data);            
         });
         this.subSocket.eventEmitter.on('+node', (node: IORedis.Redis, clientSocket: IClientSocket) => {
-            let data: ADHOCCAST.Cmds.ICommandData<Dts.IRedisNode> = {
+            let data: ADHOCCAST.Cmds.ICommandData<any> = {
                 cmdId: Dts.ECommandId.signal_center_redis_node_add,
-                props: {
+                props: {},
+                extra: {
                     clientSocket: clientSocket,
                     node: node,
                     type: 'sub'
