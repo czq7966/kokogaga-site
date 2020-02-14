@@ -139,10 +139,13 @@ export class RedisSignaler {
     }
     static async on_after_redis_node_add(signaler: Modules.IRedisSignaler, cmd: ADHOCCAST.Cmds.Common.ICommand) {
         let data: ADHOCCAST.Cmds.ICommandData<Dts.IRedisNode> = cmd.data;
+        let clientSocket = data.props.clientSocket;
         let node = data.props.node;
         let type = data.props.type;
         if (type == 'sub') {
             this.subscribeServerKeyspace(signaler, node)
+            node.off('pmessage', clientSocket.on_pmessage)
+            node.on('pmessage', clientSocket.on_pmessage)
         }
     } 
     static async registServer(signaler:  Modules.IRedisSignaler) {

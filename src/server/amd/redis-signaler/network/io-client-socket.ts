@@ -12,6 +12,16 @@ export interface IClientSocket extends ADHOCCAST.Network.ISignaler {
     onGetNodes: (clientSocket: IClientSocket) => IORedis.RedisOptions[]
     onGetOptions: (clientSocket: IClientSocket) => IORedis.RedisOptions
     socket: IRedisSocket
+    on_connect: (...args) => void
+    on_ready: (...args) => void
+    on_end: (...args) => void
+    on_error: (...args) => void
+    on_message: (channel: string, message: string) => void
+    on_message_buffer: (channel: Buffer, message: Buffer) => void
+    on_pmessage: (pattern: string, channel: string, message: string) => void
+    on_pmessage_buffer: (pattern: Buffer, channel: Buffer, message: Buffer) => void
+    on_node_add: (node: IORedis.Redis) => void
+    on_node_del: (node: IORedis.Redis) => void
 }
 
 export class ClientSocket implements IClientSocket {
@@ -88,40 +98,27 @@ export class ClientSocket implements IClientSocket {
 
     }
     initEvents(socket: IRedisSocket) {
-        socket.on("connect", (...args) => {
-
-        })        
-        socket.on("ready", (...args) => {
-            this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.connect, ...args)
-        })
-        socket.on("end", (...args) => {
-            this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.disconnect, ...args);
-            // this.unInitEvents(socket);
-        })
-        socket.on("error", (...args) => {            
-            this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.message_error, ...args);
-        })    
-        socket.on('message', (channel: string, message: string) => {
-            this.eventEmitter.emit('message', channel, message);            
-        })  
-        socket.on('messageBuffer', (channel: Buffer, message: Buffer) => {
-            this.eventEmitter.emit('messageBuffer', channel, message);            
-        }) 
-        socket.on('pmessage', (pattern: string, channel: string, message: string) => {
-            this.eventEmitter.emit('pmessage', pattern, channel, message);            
-        })  
-        socket.on('pmessageBuffer', (pattern: Buffer, channel: Buffer, message: Buffer) => {
-            this.eventEmitter.emit('pmessageBuffer', pattern, channel, message);            
-        }) 
-        socket.on('+node', (node: IORedis.Redis) => {
-            this.eventEmitter.emit('+node', node);            
-        }) 
-        socket.on('-node', (node: IORedis.Redis) => {
-            this.eventEmitter.emit('-node', node);            
-        })  
+        socket.on("connect", this.on_connect)        
+        socket.on("ready", this.on_ready)
+        socket.on("end", this.on_end)
+        socket.on("error", this.on_error)    
+        socket.on('message', this.on_message)  
+        socket.on('messageBuffer', this.on_message_buffer) 
+        socket.on('pmessage', this.on_pmessage)  
+        socket.on('pmessageBuffer', this.on_pmessage_buffer) 
+        socket.on('+node', this.on_node_add) 
+        socket.on('-node', this.on_node_del)  
     }    
     unInitEvents(socket: IRedisSocket) {
-        socket && socket.removeAllListeners();
+        if (socket) {
+            socket.removeAllListeners();
+            let cluster = socket as any as IORedis.Cluster;
+            if (cluster.nodes ) {
+                cluster.nodes().forEach(node => {
+                    node.removeAllListeners()                    
+                });
+            }
+        }
     }   
 
     disconnect() {
@@ -168,5 +165,37 @@ export class ClientSocket implements IClientSocket {
         }
         console.log('redis reconnecting', times)
         return 100
+    }
+
+    //node events
+    on_connect = (...args) => {
+
+    }
+    on_ready = (...args) => {
+        this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.connect, ...args)
+    }
+    on_end = (...args) => {
+        this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.disconnect, ...args);
+    }
+    on_error = (...args) => {
+        this.eventEmitter.emit(ADHOCCAST.Dts.EClientSocketEvents.message_error, ...args);
+    }
+    on_message = (channel: string, message: string) => {
+        this.eventEmitter.emit('message', channel, message);  
+    }
+    on_message_buffer = (channel: Buffer, message: Buffer) => {
+        this.eventEmitter.emit('messageBuffer', channel, message); 
+    }
+    on_pmessage = (pattern: string, channel: string, message: string) => {
+        this.eventEmitter.emit('pmessage', pattern, channel, message); 
+    }
+    on_pmessage_buffer = (pattern: Buffer, channel: Buffer, message: Buffer) => {
+        this.eventEmitter.emit('pmessageBuffer', pattern, channel, message);
+    }
+    on_node_add = (node: IORedis.Redis) => {
+        this.eventEmitter.emit('+node', node, this); 
+    }
+    on_node_del = (node: IORedis.Redis) => {
+        this.eventEmitter.emit('-node', node, this);       
     }
 }

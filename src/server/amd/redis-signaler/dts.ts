@@ -1,4 +1,5 @@
 import { RedisOptions, ClusterOptions, Redis } from 'ioredis';
+import { IClientSocket } from './network';
 
 export * from '../signal-center/cmds/dts'
 
@@ -31,6 +32,7 @@ export interface IKeyspaceEvents {
     message: string
 }
 export interface IRedisNode {
+    clientSocket: IClientSocket
     node: Redis,
     type: 'pub' | 'sub',
 }
