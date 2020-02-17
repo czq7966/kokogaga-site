@@ -1,4 +1,4 @@
-import * as Redis from 'ioredis'
+import * as IORedis from 'ioredis'
 import * as Dts from '../dts'
 import * as Network from '../network'
 import * as Services from '../services'
@@ -237,7 +237,33 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         return channel;  
     } 
     getSocketNodes = (clientSocket: IClientSocket) => {
-        return this.options.extra.nodes
+        let hostArgKey = 'CHROMECASTREDISIP';
+        let portArgKey = 'CHROMECASTREDISPORT';
+        let passArgKey = 'CHROMECASTREDISPASS';
+        let nodes = [];
+        let getEnvNode = (subfix: string) => {
+            let hostKey = hostArgKey + subfix;
+            let portKey = portArgKey + subfix;
+            let passKey = passArgKey + subfix;
+
+            let host = process.env[hostKey];
+            let port = process.env[portKey];
+            let pass = process.env[passKey];
+            host && console.log(host)
+            if (host && port) {
+                nodes.push({
+                    host: host,
+                    port: port,
+                    password: pass
+                })
+            }
+        }
+        getEnvNode('');
+        for (let idx = 0; idx < 100; idx++) {
+            getEnvNode(idx + '');            
+        }
+
+        return nodes.length > 0 ? nodes : this.options.extra.nodes
     }   
     getSocketOptions = (clientSocket: IClientSocket) => {
         return this.options.extra.options
@@ -400,10 +426,10 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     async pexpire(key: string, milliseconds: number): Promise<boolean> {
         return this.getSocketClient().expire(key, milliseconds); 
     }     
-    submulti(args?: Array<Array<string>>): Redis.Pipeline {
+    submulti(args?: Array<Array<string>>): IORedis.Pipeline {
         return this.getSocketClient().submulti(args)
     }
-    pubmulti(args?: Array<Array<string | number>>): Redis.Pipeline {
+    pubmulti(args?: Array<Array<string | number>>): IORedis.Pipeline {
         return this.getSocketClient().pubmulti(args)
     }
     submultiAsync(args: Array<Array<string | number>>): Promise<any[]> {
@@ -412,7 +438,7 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
     pubmultiAsync(args: Array<Array<string | number>>): Promise<any[]>{
         return this.getSocketClient().pubmultiAsync(args)
     }
-    async eval(script: string, numKeys: number, ...args: Redis.ValueType[]): Promise<any> {
+    async eval(script: string, numKeys: number, ...args: IORedis.ValueType[]): Promise<any> {
         return this.getSocketClient().eval(script, numKeys, ...args)
     } 
     async redisconfig(...args: string[]): Promise<any> {
