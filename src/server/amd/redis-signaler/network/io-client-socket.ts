@@ -131,9 +131,13 @@ export class ClientSocket implements IClientSocket {
     }   
 
     getNodes(): IORedis.RedisOptions[]{
-        if (this.onGetNodes) return this.onGetNodes(this);
-
-        return [{}]
+        let nodes;
+        if (this.onGetNodes) 
+            nodes = this.onGetNodes(this);        
+        
+        nodes = nodes ? nodes : [{}];
+        nodes = JSON.parse(JSON.stringify(nodes));
+        return nodes;
     }
     getOptions(): IORedis.RedisOptions {
         let options: IORedis.RedisOptions = {}

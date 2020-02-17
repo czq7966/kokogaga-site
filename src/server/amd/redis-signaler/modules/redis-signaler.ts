@@ -249,7 +249,6 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
             let host = process.env[hostKey];
             let port = process.env[portKey];
             let pass = process.env[passKey];
-            host && console.log(host)
             if (host && port) {
                 nodes.push({
                     host: host,
@@ -262,8 +261,8 @@ export class SocketNamespace  extends SignalClientBase implements IRedisSignaler
         for (let idx = 0; idx < 100; idx++) {
             getEnvNode(idx + '');            
         }
-
-        return nodes.length > 0 ? nodes : this.options.extra.nodes
+        nodes = nodes.length > 0 ? nodes : this.options.extra.nodes
+        return nodes;
     }   
     getSocketOptions = (clientSocket: IClientSocket) => {
         return this.options.extra.options
