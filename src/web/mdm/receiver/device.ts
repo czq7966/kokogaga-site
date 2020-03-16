@@ -154,7 +154,7 @@ export class Device {
         let mLoginRoom = this.connection.isLogin() && this.connection.rooms.getLoginRoom();
         let mDeviceUser = !!mLoginRoom && mLoginRoom.getUserBySid(user ? user.sid : this.deviceID);
         let mStreamRoom = !!mDeviceUser && mDeviceUser.getStreamRoom();
-        mStreamRoom = mStreamRoom || this.connection.rooms.getRoom(user.room.id);
+        mStreamRoom = mStreamRoom || user && this.connection.rooms.getRoom(user.room.id);
         let mStreamMe = !!mStreamRoom && mStreamRoom.me();
         let mStreamPeer = !!mStreamMe && mStreamMe.peer;
         let streams = !!mStreamPeer && mStreamPeer.streams;
