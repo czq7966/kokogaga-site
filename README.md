@@ -19,3 +19,6 @@ Adhoc Cast Signaler-Server
 1. done: publish message zip
 2. done：change network exception cmd to logout cmd
 3. sub node key space
+4. push local config file to docker to replace inside config file
+5. deploy readme file
+6. pass env args from docker cmd
