@@ -34,7 +34,7 @@
 			"extra": {
 				"enabled": true,
 				"handshakeInterval": 10000,
-				"handshakeTimeout": 22000,
+				"handshakeTimeout": 40000,
 				"redundanceScript": "amd/redis-signaler/redundancy.lua",
 				"nodes": [
 					{
@@ -66,9 +66,10 @@
 						"host": "172.24.140.40",
 						"port": "11005",
 						"password": "mdmmdmmdm"
-					}  
+					}
 				],
 				"options": {
+					"maxRetriesPerRequest": 20,
 					"enableReadyCheck": true,
 					"db": 0
 				}
