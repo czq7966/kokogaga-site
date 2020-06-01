@@ -12,9 +12,9 @@ export class ExpressApp {
         this.routes();
     }
     routes() {
-        this.nsps.forEach(key => {
-            this.express.use('/' + key, express.static(__dirname + '/../client'));
-        })      
+        // this.nsps.forEach(key => {
+        //     this.express.use('/' + key, express.static(__dirname + '/../client'));
+        // })      
 
         Object.keys(this.websites).forEach(key => {
             let dir = __dirname + this.websites[key];

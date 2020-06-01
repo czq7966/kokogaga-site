@@ -19,4 +19,6 @@ else if (process.env.NODE_MODULE === 'mdm-server')
 else if (process.env.NODE_MODULE === 'sdp-probe') 
     module.exports = require('./webpack/webpack.config.sdp-probe.js');  
 else if (process.env.NODE_MODULE === 'web-test') 
-    module.exports = require('./webpack/webpack.config.web-test.js');     
+    module.exports = require('./webpack/webpack.config.web-test.js');
+else if (process.env.NODE_MODULE === 'web-kokogaga') 
+    module.exports = require('./webpack/webpack.config.web-kokogaga.js');        
